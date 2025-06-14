@@ -16,6 +16,7 @@
           buildInputs = with pkgs; [
             go
             sqlc
+            goose
             air
             golangci-lint
             gotools
