@@ -1,5 +1,5 @@
 {
-  description = "APIRight - Framework to convert sqlc structs to ready APIs";
+  description = "APIRight - simple net/http Framework wrapper";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -22,9 +22,6 @@
             gotools
             gopls
             delve
-            postgresql
-            sqlite
-            git
           ];
 
           shellHook = ''
@@ -37,8 +34,6 @@
             echo "  - sqlc: Generate type-safe code from SQL"
             echo "  - air: Live reload for Go apps"
             echo "  - golangci-lint: Go linter"
-            echo "  - postgresql: PostgreSQL database"
-            echo "  - sqlite: SQLite database"
             echo ""
             echo "To get started:"
             echo "  1. Initialize your Go module: go mod init"
@@ -47,11 +42,11 @@
           '';
         };
 
-        packages.default = pkgs.buildGoModule {
-          pname = "apiright";
-          version = "0.1.0";
-          src = ./.;
-          vendorHash = null;
-        };
+        # packages.default = pkgs.buildGoModule {
+        #   pname = "apiright";
+        #   version = "0.1.0";
+        #   src = ./.;
+        #   vendorHash = null;
+        # };
       });
 }
