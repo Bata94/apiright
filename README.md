@@ -31,3 +31,22 @@ As long I haven't tagged or released a Version 1.X.X, you shouldn't use this in 
 ## Usage
 
 Install via go pkg and hope for the best :)
+
+## How to use
+
+As it is more or less a stdlib wrapper, most of the syntax is the same.
+
+### Adding Routes
+
+A difference to the stdlib pkg is, that the "/" path isn't a Catch-all route. I think this choice by go is rather strange, so in Apiright "/" is a valid route that only serves "/".
+You can implement a Catch-all route, if you want. It should mainly be used for a 404 or some redirecting logic.
+
+``` go
+app := apiright.NewApp()
+
+app.SetDefaultRoute(func(c *Ctx) error {
+	c.Writer.Write([]byte("Custom not found!"))
+	return nil
+})
+
+```

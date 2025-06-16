@@ -20,15 +20,109 @@ func (c AppConfig) GetListenAddress() string {
 	return fmt.Sprintf("%s:%s", c.host, c.port)
 }
 
-func NewRouterGroup() {}
+var defCatchallHandler = func(c *Ctx) error {
+	fmt.Println("Default CatchAll Handler")
+	c.Writer.Write([]byte("Not found!"))
+	return nil
+}
 
-type RouterGroup struct{}
+func newRouter(path string) *Router {
+	return &Router{
+		basePath: path,
+	}
+}
 
-type Route struct{}
+type Router struct {
+	groups []*Router
+	routes []*Route
 
-type Endpoint struct{}
+	basePath string
+}
 
-type Middleware func(http.Handler) http.Handler
+func (r *Router) GET(path string, handler Handler) {
+	r.addEndpoint(METHOD_GET, path, handler)
+}
+
+func (r *Router) routeExists(path string) int {
+	// Checks if route exists and returns the index. If false -1 is returned.
+	for i, route := range r.routes {
+		if route.path == path {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (r *Router) addEndpoint(m RequestMethod, p string, h Handler) {
+	routeIndex := r.routeExists(p)
+
+	if routeIndex == -1 {
+		r.routes = append(r.routes, &Route{
+			basePath:  p,
+			path:      fmt.Sprint(r.basePath, p),
+			endpoints: []Endpoint{},
+		})
+
+		routeIndex = len(r.routes) - 1
+	}
+
+	r.routes[routeIndex].endpoints = append(r.routes[routeIndex].endpoints, Endpoint{
+		method:     m,
+		handleFunc: h,
+	})
+}
+
+type Route struct {
+	basePath, path string
+	endpoints      []Endpoint
+}
+
+func (r Route) fullPath(m RequestMethod) string {
+	// Returns the "fullPath" for the net/http Handler input
+	return fmt.Sprintf("%s %s", m.toPathString(), r.path)
+}
+
+type RequestMethod int
+
+const (
+	METHOD_GET RequestMethod = iota
+	METHOD_POST
+	METHOD_PUT
+	METHOD_PATCH
+	METHOD_DELETE
+	METHOD_HEAD
+	METHOD_OPTIONS
+	METHOD_TRACE
+	METHOD_CONNECT
+)
+
+var (
+	requestMethodPathStrings = []string{
+		"GET",
+		"POST",
+		"PUT",
+		"PATCH",
+		"DELETE",
+		"HEAD",
+		"OPTIONS",
+		"TRACE",
+		"CONNECT",
+	}
+)
+
+func (m RequestMethod) toPathString() string {
+	return requestMethodPathStrings[m]
+}
+
+type Endpoint struct {
+	method     RequestMethod
+	handleFunc Handler
+}
+
+type Handler func(*Ctx) error
+
+type Middleware func(Handler) Handler
 
 type Response struct{}
 
@@ -49,8 +143,10 @@ func NewApp() App {
 	config := NewAppConfig()
 
 	return App{
-		Config:  &config,
-		handler: handler,
+		Config:          &config,
+		handler:         handler,
+		router:          newRouter(""),
+		defRouteHandler: defCatchallHandler,
 	}
 }
 
@@ -58,7 +154,21 @@ type App struct {
 	Config  *AppConfig
 	handler *http.ServeMux
 
-	routerGroups []*RouterGroup
+	defRouteHandler Handler
+	router          *Router
+}
+
+func (a *App) SetDefaultRoute(handler Handler) {
+	a.defRouteHandler = handler
+}
+
+func (a *App) NewRouter(path string) *Router {
+	// Creates and adds a new Router, with a BasePath
+	newRouter := newRouter(path)
+
+	a.router.groups = append(a.router.groups, newRouter)
+
+	return newRouter
 }
 
 func (a App) getHttpHandler() *http.ServeMux {
@@ -66,7 +176,7 @@ func (a App) getHttpHandler() *http.ServeMux {
 }
 
 func (a *App) GET(path string, handler func(*Ctx) error) {
-	a.handleFunc(fmt.Sprint("GET ", path), handler)
+	a.router.addEndpoint(METHOD_GET, path, handler)
 }
 
 // TODO: Prob move into a Middleware
@@ -76,9 +186,18 @@ func recoverFromPanic(w http.ResponseWriter) {
 	}
 }
 
-func (a *App) handleFunc(p string, h func(*Ctx) error) {
-	a.getHttpHandler().HandleFunc(p, func(w http.ResponseWriter, r *http.Request) {
+func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
+	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
+	fmt.Println(handlerPath)
+
+	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		defer recoverFromPanic(w)
+		h := endPoint.handleFunc
+
+		if route.basePath == "/" && r.URL.Path != "/" {
+			fmt.Println(router)
+			h = a.defRouteHandler
+		}
 
 		c := NewCtx(w, r)
 		err := h(c)
@@ -90,7 +209,28 @@ func (a *App) handleFunc(p string, h func(*Ctx) error) {
 	})
 }
 
-func (a App) Run() error {
-	return http.ListenAndServe(a.Config.GetListenAddress(), a.getHttpHandler())
+func (a App) addRoutesToHandler() {
+	fmt.Println("Available Routes")
+
+	fmt.Printf("Global Router with %d routes\n", len(a.router.routes))
+	for _, r := range a.router.routes {
+		for _, e := range r.endpoints {
+			a.handleFunc(*r, e, *a.router)
+		}
+	}
+
+	for _, group := range a.router.groups {
+		fmt.Printf("New Router with %d routes\n", len(group.routes))
+		for _, r := range group.routes {
+			for _, e := range r.endpoints {
+				a.handleFunc(*r, e, *group)
+			}
+		}
+	}
 }
 
+func (a App) Run() error {
+	a.addRoutesToHandler()
+
+	return http.ListenAndServe(a.Config.GetListenAddress(), a.getHttpHandler())
+}

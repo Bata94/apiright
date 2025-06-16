@@ -8,9 +8,14 @@ import (
 )
 
 func main() {
-	fmt.Print("Starting...")
+	fmt.Println("Starting...")
 
 	app := ar.NewApp()
+
+	// app.GET("*", func(c *ar.Ctx) error {
+	// 	_, err := c.Writer.Write([]byte("Catch All"))
+	// 	return err
+	// })
 
 	app.GET("/", func(c *ar.Ctx) error {
 		_, err := c.Writer.Write([]byte("Hello"))
@@ -26,11 +31,17 @@ func main() {
 		panic("Test Panic")
 	})
 
+	group := app.NewRouter("/group")
+	group.GET("/hello", func(c *ar.Ctx) error {
+		_, err := c.Writer.Write([]byte("Hello from Group"))
+		return err
+	})
+
 	err := app.Run()
 	if err != nil {
-		fmt.Print("Exited with err: ", err)
+		fmt.Println("Exited with err: ", err)
 		return
 	}
 
-	fmt.Print("Exited without err")
+	fmt.Println("Exited without err")
 }

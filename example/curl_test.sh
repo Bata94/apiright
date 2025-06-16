@@ -28,7 +28,8 @@ endpoints=(
     "/"
     "/err"
     "/panic"
-    "/test"
+    "/test_catch_all"
+    "/group/hello"
 )
 
 # Loop through each endpoint and call the function
