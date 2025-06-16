@@ -1,60 +1,236 @@
-// Package apiright provides a framework for converting SQLC structs to ready-to-use CRUD APIs
 package apiright
 
 import (
-	"github.com/bata94/apiright/pkg/apiright"
-	"github.com/bata94/apiright/pkg/crud"
-	"github.com/bata94/apiright/pkg/transform"
+	"fmt"
+	"net/http"
 )
 
-// Re-export main types and functions for easier usage
-type (
-	App         = apiright.App
-	Config      = apiright.Config
-	Middleware  = apiright.Middleware
-	Option      = apiright.Option
-	
-	CRUDConfig     = crud.Config
-	CRUDHandler[T any] = crud.CRUDHandler[T]
-	Transformer    = crud.Transformer
-	
-	ModelTransformer = transform.Transformer
-	JSONTransformer  = transform.JSONTransformer
+func NewAppConfig() AppConfig {
+	return AppConfig{
+		host: "127.0.0.1",
+		port: "5500",
+	}
+}
+
+type AppConfig struct {
+	host, port string
+}
+
+func (c AppConfig) GetListenAddress() string {
+	return fmt.Sprintf("%s:%s", c.host, c.port)
+}
+
+var defCatchallHandler = func(c *Ctx) error {
+	fmt.Println("Default CatchAll Handler")
+	c.Writer.Write([]byte("Not found!"))
+	return nil
+}
+
+func newRouter(path string) *Router {
+	return &Router{
+		basePath: path,
+	}
+}
+
+type Router struct {
+	groups []*Router
+	routes []*Route
+
+	basePath string
+}
+
+func (r *Router) GET(path string, handler Handler) {
+	r.addEndpoint(METHOD_GET, path, handler)
+}
+
+func (r *Router) routeExists(path string) int {
+	// Checks if route exists and returns the index. If false -1 is returned.
+	for i, route := range r.routes {
+		if route.path == path {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (r *Router) addEndpoint(m RequestMethod, p string, h Handler) {
+	routeIndex := r.routeExists(p)
+
+	if routeIndex == -1 {
+		r.routes = append(r.routes, &Route{
+			basePath:  p,
+			path:      fmt.Sprint(r.basePath, p),
+			endpoints: []Endpoint{},
+		})
+
+		routeIndex = len(r.routes) - 1
+	}
+
+	r.routes[routeIndex].endpoints = append(r.routes[routeIndex].endpoints, Endpoint{
+		method:     m,
+		handleFunc: h,
+	})
+}
+
+type Route struct {
+	basePath, path string
+	endpoints      []Endpoint
+}
+
+func (r Route) fullPath(m RequestMethod) string {
+	// Returns the "fullPath" for the net/http Handler input
+	return fmt.Sprintf("%s %s", m.toPathString(), r.path)
+}
+
+type RequestMethod int
+
+const (
+	METHOD_GET RequestMethod = iota
+	METHOD_POST
+	METHOD_PUT
+	METHOD_PATCH
+	METHOD_DELETE
+	METHOD_HEAD
+	METHOD_OPTIONS
+	METHOD_TRACE
+	METHOD_CONNECT
 )
 
-// App creation functions
 var (
-	New           = apiright.New
-	DefaultConfig = apiright.DefaultConfig
-	WithDatabase  = apiright.WithDatabase
-	WithConfig    = apiright.WithConfig
+	requestMethodPathStrings = []string{
+		"GET",
+		"POST",
+		"PUT",
+		"PATCH",
+		"DELETE",
+		"HEAD",
+		"OPTIONS",
+		"TRACE",
+		"CONNECT",
+	}
 )
 
-// Response functions
-var (
-	JSONResponse    = apiright.JSONResponse
-	ErrorResponse   = apiright.ErrorResponse
-	SuccessResponse = apiright.SuccessResponse
-)
+func (m RequestMethod) toPathString() string {
+	return requestMethodPathStrings[m]
+}
 
-// Middleware functions
-var (
-	CORSMiddleware = apiright.CORSMiddleware
-	LoggingMiddleware = apiright.LoggingMiddleware
-	JSONMiddleware = apiright.JSONMiddleware
-	AuthMiddleware = apiright.AuthMiddleware
-)
+type Endpoint struct {
+	method     RequestMethod
+	handleFunc Handler
+}
 
-// CRUD functions - Note: Generic functions cannot be assigned to variables in Go
+type Handler func(*Ctx) error
 
-// Transform functions
-var (
-	NewTransformer = transform.NewTransformer
-	TimeToString   = transform.TimeToString
-	StringToTime   = transform.StringToTime
-)
+type Middleware func(Handler) Handler
 
-// Register is a generic function to register CRUD endpoints for any type
-func Register[T any](app *App, config CRUDConfig) *CRUDHandler[T] {
-	return crud.Register[T](app, config)
+type Response struct{}
+
+func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
+	return &Ctx{
+		Writer:  w,
+		Request: r,
+	}
+}
+
+type Ctx struct {
+	Writer  http.ResponseWriter
+	Request *http.Request
+}
+
+func NewApp() App {
+	handler := http.NewServeMux()
+	config := NewAppConfig()
+
+	return App{
+		Config:          &config,
+		handler:         handler,
+		router:          newRouter(""),
+		defRouteHandler: defCatchallHandler,
+	}
+}
+
+type App struct {
+	Config  *AppConfig
+	handler *http.ServeMux
+
+	defRouteHandler Handler
+	router          *Router
+}
+
+func (a *App) SetDefaultRoute(handler Handler) {
+	a.defRouteHandler = handler
+}
+
+func (a *App) NewRouter(path string) *Router {
+	// Creates and adds a new Router, with a BasePath
+	newRouter := newRouter(path)
+
+	a.router.groups = append(a.router.groups, newRouter)
+
+	return newRouter
+}
+
+func (a App) getHttpHandler() *http.ServeMux {
+	return a.handler
+}
+
+func (a *App) GET(path string, handler func(*Ctx) error) {
+	a.router.addEndpoint(METHOD_GET, path, handler)
+}
+
+// TODO: Prob move into a Middleware
+func recoverFromPanic(w http.ResponseWriter) {
+	if r := recover(); r != nil {
+		w.Write([]byte("recoverFromPanic"))
+	}
+}
+
+func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
+	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
+	fmt.Println(handlerPath)
+
+	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+		defer recoverFromPanic(w)
+		h := endPoint.handleFunc
+
+		if route.basePath == "/" && r.URL.Path != "/" {
+			fmt.Println(router)
+			h = a.defRouteHandler
+		}
+
+		c := NewCtx(w, r)
+		err := h(c)
+
+		if err != nil {
+			err = fmt.Errorf("Error in HanlderFunc: %w", err)
+			w.Write([]byte(err.Error()))
+		}
+	})
+}
+
+func (a App) addRoutesToHandler() {
+	fmt.Println("Available Routes")
+
+	fmt.Printf("Global Router with %d routes\n", len(a.router.routes))
+	for _, r := range a.router.routes {
+		for _, e := range r.endpoints {
+			a.handleFunc(*r, e, *a.router)
+		}
+	}
+
+	for _, group := range a.router.groups {
+		fmt.Printf("New Router with %d routes\n", len(group.routes))
+		for _, r := range group.routes {
+			for _, e := range r.endpoints {
+				a.handleFunc(*r, e, *group)
+			}
+		}
+	}
+}
+
+func (a App) Run() error {
+	a.addRoutesToHandler()
+
+	return http.ListenAndServe(a.Config.GetListenAddress(), a.getHttpHandler())
 }
