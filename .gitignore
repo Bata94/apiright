@@ -1,2 +1,4 @@
 tmp/
 bin/
+example/example
+*.exe

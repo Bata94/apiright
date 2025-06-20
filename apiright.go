@@ -21,7 +21,7 @@ func (c AppConfig) GetListenAddress() string {
 }
 
 var defCatchallHandler = func(c *Ctx) error {
-	fmt.Println("Default CatchAll Handler")
+	Debug("Default CatchAll Handler")
 	c.Writer.Write([]byte("Not found!"))
 	return nil
 }
@@ -145,6 +145,7 @@ func NewApp() App {
 	return App{
 		Config:          &config,
 		handler:         handler,
+		Logger:          GetLogger(),
 		router:          newRouter(""),
 		defRouteHandler: defCatchallHandler,
 	}
@@ -153,6 +154,7 @@ func NewApp() App {
 type App struct {
 	Config  *AppConfig
 	handler *http.ServeMux
+	Logger  Logger
 
 	defRouteHandler Handler
 	router          *Router
@@ -160,6 +162,10 @@ type App struct {
 
 func (a *App) SetDefaultRoute(handler Handler) {
 	a.defRouteHandler = handler
+}
+
+func (a *App) SetLogger(logger Logger) {
+	a.Logger = logger
 }
 
 func (a *App) NewRouter(path string) *Router {
@@ -180,22 +186,23 @@ func (a *App) GET(path string, handler func(*Ctx) error) {
 }
 
 // TODO: Prob move into a Middleware
-func recoverFromPanic(w http.ResponseWriter) {
+func recoverFromPanic(w http.ResponseWriter, logger Logger) {
 	if r := recover(); r != nil {
-		w.Write([]byte("recoverFromPanic"))
+		logger.Errorf("Recovered from panic: %v", r)
+		w.Write([]byte("Internal Server Error"))
 	}
 }
 
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
-	fmt.Println(handlerPath)
+	a.Logger.Debugf("Registering route: %s", handlerPath)
 
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
-		defer recoverFromPanic(w)
+		defer recoverFromPanic(w, a.Logger)
 		h := endPoint.handleFunc
 
 		if route.basePath == "/" && r.URL.Path != "/" {
-			fmt.Println(router)
+			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
 			h = a.defRouteHandler
 		}
 
@@ -204,15 +211,16 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		if err != nil {
 			err = fmt.Errorf("Error in HanlderFunc: %w", err)
+			a.Logger.Errorf("Handler error: %v", err)
 			w.Write([]byte(err.Error()))
 		}
 	})
 }
 
 func (a App) addRoutesToHandler() {
-	fmt.Println("Available Routes")
+	a.Logger.Info("Registering available routes")
 
-	fmt.Printf("Global Router with %d routes\n", len(a.router.routes))
+	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
 	for _, r := range a.router.routes {
 		for _, e := range r.endpoints {
 			a.handleFunc(*r, e, *a.router)
@@ -220,7 +228,7 @@ func (a App) addRoutesToHandler() {
 	}
 
 	for _, group := range a.router.groups {
-		fmt.Printf("New Router with %d routes\n", len(group.routes))
+		a.Logger.Infof("Router group with %d routes", len(group.routes))
 		for _, r := range group.routes {
 			for _, e := range r.endpoints {
 				a.handleFunc(*r, e, *group)
