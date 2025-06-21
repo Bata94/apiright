@@ -5,6 +5,13 @@ import (
 	"net/http"
 )
 
+type ApiResponse struct {
+	StatusCode int    `json:"statusCode" xml:"statusCode"`
+	Success    bool   `json:"success" xml:"success"`
+	Message    string `json:"message" xml:"message"`
+	Data       any    `json:"data,omitempty" xml:"data,omitempty"`
+}
+
 func NewAppConfig() AppConfig {
 	return AppConfig{
 		host: "127.0.0.1",
