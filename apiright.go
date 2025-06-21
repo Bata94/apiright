@@ -5,11 +5,59 @@ import (
 	"net/http"
 )
 
+type Response any
+
 type ApiResponse struct {
-	StatusCode int    `json:"statusCode" xml:"statusCode"`
-	Success    bool   `json:"success" xml:"success"`
-	Message    string `json:"message" xml:"message"`
-	Data       any    `json:"data,omitempty" xml:"data,omitempty"`
+	Headers           map[string]string
+	StatusCode        int    `json:"statusCode" xml:"statusCode"`
+	InternalErrorCode int    ``
+	Message           string `json:"message" xml:"message"`
+	Data              any    `json:"data,omitempty" xml:"data,omitempty"`
+}
+
+func NewApiResponse() ApiResponse {
+	return ApiResponse{
+		StatusCode: http.StatusOK,
+	}
+}
+
+func (r *ApiResponse) AddHeader(k, v string) {
+	r.Headers = map[string]string{
+		k: v,
+	}
+}
+
+func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
+	if err != nil {
+		err = fmt.Errorf("Error in HanlderFunc: %w", err)
+		Errorf("Handler error: %v", err)
+		c.Response.SetMessage(err.Error())
+		c.Response.SetStatus(http.StatusInternalServerError)
+	}
+
+	for k, v := range c.Response.Headers {
+		if _, ok := w.Header()[k]; !ok {
+			w.Header().Add(k, v)
+		} else {
+			w.Header().Set(k, v)
+		}
+	}
+
+	w.WriteHeader(c.Response.StatusCode)
+
+	w.Write([]byte(c.Response.Message))
+}
+
+func (r *ApiResponse) SetStatus(code int) {
+	r.StatusCode = code
+}
+
+func (r *ApiResponse) SetMessage(msg string) {
+	r.Message = msg
+}
+
+func (r *ApiResponse) SetData(data any) {
+	r.Data = data
 }
 
 func NewAppConfig() AppConfig {
@@ -29,7 +77,7 @@ func (c AppConfig) GetListenAddress() string {
 
 var defCatchallHandler = func(c *Ctx) error {
 	Debug("Default CatchAll Handler")
-	c.Writer.Write([]byte("Not found!"))
+	c.Response.Message = "Not found!"
 	return nil
 }
 
@@ -131,18 +179,17 @@ type Handler func(*Ctx) error
 
 type Middleware func(Handler) Handler
 
-type Response struct{}
-
 func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 	return &Ctx{
-		Writer:  w,
-		Request: r,
+		Request:  r,
+		Response: NewApiResponse(),
 	}
 }
 
 type Ctx struct {
-	Writer  http.ResponseWriter
-	Request *http.Request
+	// TODO: Move to an Interface, prob to use HTML Responses as well
+	Response ApiResponse
+	Request  *http.Request
 }
 
 func NewApp() App {
@@ -208,6 +255,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		defer recoverFromPanic(w, a.Logger)
 		h := endPoint.handleFunc
 
+		// TODO: Need to ad check for index routes in Routergroups (see example /group/)
 		if route.basePath == "/" && r.URL.Path != "/" {
 			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
 			h = a.defRouteHandler
@@ -216,11 +264,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		c := NewCtx(w, r)
 		err := h(c)
 
-		if err != nil {
-			err = fmt.Errorf("Error in HanlderFunc: %w", err)
-			a.Logger.Errorf("Handler error: %v", err)
-			w.Write([]byte(err.Error()))
-		}
+		c.Response.SendingReturn(w, c, err)
 	})
 }
 

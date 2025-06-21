@@ -27,8 +27,11 @@ perform_curl_test() {
 endpoints=(
     "/"
     "/err"
+    "/err_inside"
     "/panic"
     "/test_catch_all"
+    "/group"
+    "/group/"
     "/group/hello"
 )
 

@@ -18,12 +18,18 @@ func main() {
 	// })
 
 	app.GET("/", func(c *ar.Ctx) error {
-		_, err := c.Writer.Write([]byte("Hello"))
-		return err
+		c.Response.Message = "Hello"
+		return nil
 	})
 
 	app.GET("/err", func(c *ar.Ctx) error {
 		err := errors.New("Test Error")
+		return err
+	})
+
+	app.GET("/err_inside", func(c *ar.Ctx) error {
+		err := errors.New("Test Error")
+		c.Response.StatusCode = 503
 		return err
 	})
 
@@ -32,9 +38,14 @@ func main() {
 	})
 
 	group := app.NewRouter("/group")
+	group.GET("/", func(c *ar.Ctx) error {
+		c.Response.Message = "Hello from Group Index"
+		return nil
+	})
+
 	group.GET("/hello", func(c *ar.Ctx) error {
-		_, err := c.Writer.Write([]byte("Hello from Group"))
-		return err
+		c.Response.Message = "Hello from Group"
+		return nil
 	})
 
 	err := app.Run()
