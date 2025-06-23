@@ -22,6 +22,7 @@
             gotools
             gopls
             delve
+            go-swag
           ];
 
           shellHook = ''

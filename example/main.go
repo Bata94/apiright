@@ -5,9 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	ar "github.com/bata94/apiright"
+	ar "github.com/bata94/apiright/pkg/core"
 )
 
+// @title My Go Web Framework API
+// @description This is a sample API for my Go web framework.
+// @version 1.0
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	fmt.Println("Starting...")
 
@@ -40,10 +49,7 @@ func main() {
 		return nil
 	})
 
-	app.GET("/err", func(c *ar.Ctx) error {
-		err := errors.New("Test Error")
-		return err
-	})
+	app.GET("/err", err_handler)
 
 	app.GET("/err_inside", func(c *ar.Ctx) error {
 		err := errors.New("Test Error")
@@ -73,4 +79,17 @@ func main() {
 	}
 
 	fmt.Println("Exited without err")
+}
+
+// GetUsers godoc
+// @Summary Get all users
+// @Description Retrieve a list of all users
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200
+// @Router /err [get]
+func err_handler(c *ar.Ctx) error {
+	err := errors.New("Test Error")
+	return err
 }

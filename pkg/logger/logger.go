@@ -1,4 +1,4 @@
-package apiright
+package logger
 
 import (
 	"fmt"
@@ -277,7 +277,7 @@ type StdLoggerWrapper struct {
 func NewStdLoggerWrapper(stdLogger *log.Logger) *StdLoggerWrapper {
 	return &StdLoggerWrapper{
 		logger: stdLogger,
-		level:  DebugLevel,
+		level:  InfoLevel,
 	}
 }
 
@@ -365,4 +365,3 @@ func (w *StdLoggerWrapper) GetLevel() LogLevel {
 func (w *StdLoggerWrapper) SetOutput(output io.Writer) {
 	w.logger.SetOutput(output)
 }
-
