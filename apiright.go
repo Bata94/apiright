@@ -12,7 +12,7 @@ type ApiResponse struct {
 	StatusCode        int    `json:"statusCode" xml:"statusCode"`
 	InternalErrorCode int    ``
 	Message           string `json:"message" xml:"message"`
-	Data              any    `json:"data,omitempty" xml:"data,omitempty"`
+	Data              []byte `json:"data,omitempty" xml:"data,omitempty"`
 }
 
 func NewApiResponse() ApiResponse {
@@ -45,7 +45,11 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 
 	w.WriteHeader(c.Response.StatusCode)
 
-	w.Write([]byte(c.Response.Message))
+	if c.Response.Data == nil {
+		w.Write([]byte(c.Response.Message))
+	} else {
+		w.Write(c.Response.Data)
+	}
 }
 
 func (r *ApiResponse) SetStatus(code int) {
@@ -56,7 +60,7 @@ func (r *ApiResponse) SetMessage(msg string) {
 	r.Message = msg
 }
 
-func (r *ApiResponse) SetData(data any) {
+func (r *ApiResponse) SetData(data []byte) {
 	r.Data = data
 }
 
@@ -76,7 +80,8 @@ func (c AppConfig) GetListenAddress() string {
 }
 
 var defCatchallHandler = func(c *Ctx) error {
-	Debug("Default CatchAll Handler")
+	Info("Default CatchAll Handler")
+	c.Response.SetStatus(404)
 	c.Response.Message = "Not found!"
 	return nil
 }
@@ -92,6 +97,17 @@ type Router struct {
 	routes []*Route
 
 	basePath string
+}
+
+func (r Router) GetBasePath() string {
+	if len(r.basePath) > 1 {
+		if string(r.basePath[len(r.basePath)-1]) != "/" {
+			return fmt.Sprintf("%s/", r.basePath)
+		}
+	} else if r.basePath == "" {
+		return "/"
+	}
+	return r.basePath
 }
 
 func (r *Router) GET(path string, handler Handler) {
@@ -239,10 +255,11 @@ func (a *App) GET(path string, handler func(*Ctx) error) {
 	a.router.addEndpoint(METHOD_GET, path, handler)
 }
 
-// TODO: Prob move into a Middleware
+// TODO: Prob move into a Middleware and use Ctx
 func recoverFromPanic(w http.ResponseWriter, logger Logger) {
 	if r := recover(); r != nil {
 		logger.Errorf("Recovered from panic: %v", r)
+		w.WriteHeader(500)
 		w.Write([]byte("Internal Server Error"))
 	}
 }
@@ -255,8 +272,8 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		defer recoverFromPanic(w, a.Logger)
 		h := endPoint.handleFunc
 
-		// TODO: Need to ad check for index routes in Routergroups (see example /group/)
-		if route.basePath == "/" && r.URL.Path != "/" {
+		Debugf("route BasePath: %s, r.URL.Path: %s, router.BasePath: %s", route.basePath, r.URL.Path, router.GetBasePath())
+		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
 			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
 			h = a.defRouteHandler
 		}

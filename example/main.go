@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	ar "github.com/bata94/apiright"
 )
@@ -18,7 +19,24 @@ func main() {
 	// })
 
 	app.GET("/", func(c *ar.Ctx) error {
-		c.Response.Message = "Hello"
+		c.Response.AddHeader("Content-Type", "text/html; charset=utf-8")
+
+		filePath := "./example/index.html"
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				c.Response.SetStatus(404)
+				c.Response.SetMessage("File not found")
+				return errors.New("File not found")
+			} else {
+				c.Response.SetStatus(500)
+				c.Response.SetMessage("File not readable")
+				return errors.New("File not readable")
+			}
+		}
+
+		c.Response.SetData(content)
+
 		return nil
 	})
 

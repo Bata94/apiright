@@ -109,7 +109,7 @@ func (l *DefaultLogger) logf(level LogLevel, format string, args ...any) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	message := fmt.Sprintf(format, args...)
 	logLine := fmt.Sprintf("[%s] %s: %s", timestamp, level.String(), message)
-	
+
 	l.logger.Println(logLine)
 }
 
@@ -122,7 +122,7 @@ func (l *DefaultLogger) log(level LogLevel, args ...any) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	message := fmt.Sprint(args...)
 	logLine := fmt.Sprintf("[%s] %s: %s", timestamp, level.String(), message)
-	
+
 	l.logger.Println(logLine)
 }
 
@@ -277,7 +277,7 @@ type StdLoggerWrapper struct {
 func NewStdLoggerWrapper(stdLogger *log.Logger) *StdLoggerWrapper {
 	return &StdLoggerWrapper{
 		logger: stdLogger,
-		level:  InfoLevel,
+		level:  DebugLevel,
 	}
 }
 
@@ -365,3 +365,4 @@ func (w *StdLoggerWrapper) GetLevel() LogLevel {
 func (w *StdLoggerWrapper) SetOutput(output io.Writer) {
 	w.logger.SetOutput(output)
 }
+
