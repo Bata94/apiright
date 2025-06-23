@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 )
 
 type Route struct {
@@ -68,10 +69,10 @@ type Ctx struct {
 	Request  *http.Request
 
 	ObjIn     any
-	ObjInType any
+	ObjInType reflect.Type
 
 	ObjOut     any
-	ObjOutType any
+	ObjOutType reflect.Type
 }
 
 type RouteOptionConfig struct {

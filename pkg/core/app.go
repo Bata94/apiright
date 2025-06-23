@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 
 	"github.com/bata94/apiright/pkg/logger"
 )
@@ -121,7 +122,8 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		c := NewCtx(w, r)
 
 		if endPoint.routeOptionConfig.ObjIn != nil {
-			c.ObjInType = endPoint.routeOptionConfig.ObjIn
+			c.ObjIn = endPoint.routeOptionConfig.ObjIn
+			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
 			objInByte, err := io.ReadAll(r.Body)
 			defer r.Body.Close()
@@ -131,16 +133,23 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				goto ClosingFunc
 			}
 
-			err = json.Unmarshal(objInByte, &c.ObjInType)
+			err = json.Unmarshal(objInByte, &c.ObjIn)
 			if err != nil {
 				c.Response.SetStatus(http.StatusInternalServerError)
 				c.Response.SetMessage("Body could not be parsed to Object, err: " + err.Error())
 				goto ClosingFunc
 			}
+
+			if reflect.TypeOf(c.ObjIn) != c.ObjInType {
+				c.Response.SetStatus(http.StatusInternalServerError)
+				c.Response.SetMessage("Parsed Object != wanted Object")
+				goto ClosingFunc
+			}
 		}
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
-			c.ObjOutType = endPoint.routeOptionConfig.ObjOut
+			c.ObjOut = endPoint.routeOptionConfig.ObjOut
+			c.ObjOutType = reflect.TypeOf(c.ObjOut)
 		}
 
 		err = h(c)
