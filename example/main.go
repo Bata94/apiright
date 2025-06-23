@@ -8,6 +8,10 @@ import (
 	ar "github.com/bata94/apiright/pkg/core"
 )
 
+type PostStruct struct {
+	Name string `json:"name"`
+}
+
 // @title My Go Web Framework API
 // @description This is a sample API for my Go web framework.
 // @version 1.0
@@ -61,6 +65,12 @@ func main() {
 		panic("Test Panic")
 	})
 
+	app.POST(
+		"/post",
+		post_test,
+		ar.WithObjIn(PostStruct{}),
+	)
+
 	group := app.NewRouter("/group")
 	group.GET("/", func(c *ar.Ctx) error {
 		c.Response.Message = "Hello from Group Index"
@@ -79,6 +89,11 @@ func main() {
 	}
 
 	fmt.Println("Exited without err")
+}
+
+func post_test(c *ar.Ctx) error {
+	fmt.Println("Post Test", c.ObjIn)
+	return nil
 }
 
 // GetUsers godoc

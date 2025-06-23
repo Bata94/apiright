@@ -51,7 +51,7 @@ func (r *Router) routeExists(path string) int {
 }
 
 func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteOption) {
-	// routeConfig := NewRouteOptionConfig(opt...)
+	routeConfig := NewRouteOptionConfig(opt...)
 	routeIndex := r.routeExists(p)
 
 	if routeIndex == -1 {
@@ -65,7 +65,8 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 	}
 
 	r.routes[routeIndex].endpoints = append(r.routes[routeIndex].endpoints, Endpoint{
-		method:     m,
-		handleFunc: h,
+		method:            m,
+		handleFunc:        h,
+		routeOptionConfig: *routeConfig,
 	})
 }

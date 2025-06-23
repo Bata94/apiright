@@ -48,8 +48,9 @@ func (m RequestMethod) toPathString() string {
 }
 
 type Endpoint struct {
-	method     RequestMethod
-	handleFunc Handler
+	method            RequestMethod
+	handleFunc        Handler
+	routeOptionConfig RouteOptionConfig
 }
 
 type Handler func(*Ctx) error
@@ -65,6 +66,12 @@ type Ctx struct {
 	// TODO: Move to an Interface, prob to use HTML Responses as well
 	Response ApiResponse
 	Request  *http.Request
+
+	ObjIn     any
+	ObjInType any
+
+	ObjOut     any
+	ObjOutType any
 }
 
 type RouteOptionConfig struct {

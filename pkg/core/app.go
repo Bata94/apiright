@@ -1,7 +1,9 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/bata94/apiright/pkg/logger"
@@ -105,6 +107,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		defer recoverFromPanic(w, a.Logger)
 		h := endPoint.handleFunc
+		var err error
 
 		log.Debugf("route BasePath: %s, r.URL.Path: %s, router.BasePath: %s", route.basePath, r.URL.Path, router.GetBasePath())
 		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
@@ -112,9 +115,37 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
-		c := NewCtx(w, r)
-		err := h(c)
+		logMiddleware := LogMiddleware(a.Logger)
+		h = logMiddleware(h)
 
+		c := NewCtx(w, r)
+
+		if endPoint.routeOptionConfig.ObjIn != nil {
+			c.ObjInType = endPoint.routeOptionConfig.ObjIn
+
+			objInByte, err := io.ReadAll(r.Body)
+			defer r.Body.Close()
+			if err != nil {
+				c.Response.SetStatus(http.StatusInternalServerError)
+				c.Response.SetMessage("Body could not be read, err: " + err.Error())
+				goto ClosingFunc
+			}
+
+			err = json.Unmarshal(objInByte, &c.ObjInType)
+			if err != nil {
+				c.Response.SetStatus(http.StatusInternalServerError)
+				c.Response.SetMessage("Body could not be parsed to Object, err: " + err.Error())
+				goto ClosingFunc
+			}
+		}
+
+		if endPoint.routeOptionConfig.ObjOut != nil {
+			c.ObjOutType = endPoint.routeOptionConfig.ObjOut
+		}
+
+		err = h(c)
+
+	ClosingFunc:
 		c.Response.SendingReturn(w, c, err)
 	})
 }
