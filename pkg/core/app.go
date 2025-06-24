@@ -138,12 +138,24 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			}
 		}
 
-		if endPoint.routeOptionConfig.ObjOut != nil {
-			c.ObjOut = endPoint.routeOptionConfig.ObjOut
-			c.ObjOutType = reflect.TypeOf(c.ObjOut)
-		}
-
 		err = h(c)
+		if err != nil { goto ClosingFunc }
+
+		if endPoint.routeOptionConfig.ObjOut != nil {
+			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
+			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
+				c.Response.SetStatus(http.StatusInternalServerError)
+				c.Response.SetMessage("Error marshaling JSON: " + err.Error())
+				goto ClosingFunc
+			}
+
+			c.Response.Data, err = json.Marshal(c.ObjOut)
+			if err != nil {
+				c.Response.SetStatus(http.StatusInternalServerError)
+				c.Response.SetMessage("Error marshaling JSON: " + err.Error())
+				goto ClosingFunc
+			}
+		}
 
 	ClosingFunc:
 		c.Response.SendingReturn(w, c, err)
