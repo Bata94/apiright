@@ -23,48 +23,48 @@ func QuickStart(title, description, version string) *Generator {
 	config.Version = version
 
 	// Add common servers
-	config.Servers = []Server{
-		{
-			URL:         "http://localhost:8080",
-			Description: "Development server",
-		},
-		{
-			URL:         "https://api.example.com",
-			Description: "Production server",
-		},
-	}
-
-	// Add common security schemes
-	config.SecuritySchemes = map[string]SecurityScheme{
-		"BearerAuth": {
-			Type:         "http",
-			Scheme:       "bearer",
-			BearerFormat: "JWT",
-			Description:  "JWT Bearer token authentication",
-		},
-		"ApiKeyAuth": {
-			Type:        "apiKey",
-			In:          "header",
-			Name:        "X-API-Key",
-			Description: "API key authentication",
-		},
-	}
-
-	// Add common tags
-	config.Tags = []Tag{
-		{
-			Name:        "auth",
-			Description: "Authentication endpoints",
-		},
-		{
-			Name:        "users",
-			Description: "User management endpoints",
-		},
-		{
-			Name:        "health",
-			Description: "Health check endpoints",
-		},
-	}
+	// config.Servers = []Server{
+	// 	{
+	// 		URL:         "http://localhost:8080",
+	// 		Description: "Development server",
+	// 	},
+	// 	{
+	// 		URL:         "https://api.example.com",
+	// 		Description: "Production server",
+	// 	},
+	// }
+	//
+	// // Add common security schemes
+	// config.SecuritySchemes = map[string]SecurityScheme{
+	// 	"BearerAuth": {
+	// 		Type:         "http",
+	// 		Scheme:       "bearer",
+	// 		BearerFormat: "JWT",
+	// 		Description:  "JWT Bearer token authentication",
+	// 	},
+	// 	"ApiKeyAuth": {
+	// 		Type:        "apiKey",
+	// 		In:          "header",
+	// 		Name:        "X-API-Key",
+	// 		Description: "API key authentication",
+	// 	},
+	// }
+	//
+	// // Add common tags
+	// config.Tags = []Tag{
+	// 	{
+	// 		Name:        "auth",
+	// 		Description: "Authentication endpoints",
+	// 	},
+	// 	{
+	// 		Name:        "users",
+	// 		Description: "User management endpoints",
+	// 	},
+	// 	{
+	// 		Name:        "health",
+	// 		Description: "Health check endpoints",
+	// 	},
+	// }
 
 	return NewGenerator(config)
 }
@@ -110,12 +110,12 @@ func RESTEndpoint(method, path, summary string, resourceType reflect.Type) *Endp
 // CRUDEndpoints creates a complete set of CRUD endpoints for a resource
 func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.Type, resourceName string) error {
 	// List resources
-	listBuilder := RESTEndpoint("GET", basePath, fmt.Sprintf("List %s", resourceName), 
+	listBuilder := RESTEndpoint("GET", basePath, fmt.Sprintf("List %s", resourceName),
 		reflect.TypeOf([]interface{}{})).
 		Tags(resourceName).
 		QueryParam("page", "Page number", false, reflect.TypeOf(0)).
 		QueryParam("limit", "Items per page", false, reflect.TypeOf(0))
-	
+
 	if err := generator.AddEndpointWithBuilder("GET", basePath, listBuilder); err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.T
 	// Create resource
 	createBuilder := RESTEndpoint("POST", basePath, fmt.Sprintf("Create %s", resourceName), resourceType).
 		Tags(resourceName)
-	
+
 	if err := generator.AddEndpointWithBuilder("POST", basePath, createBuilder); err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.T
 	getBuilder := RESTEndpoint("GET", getPath, fmt.Sprintf("Get %s by ID", resourceName), resourceType).
 		Tags(resourceName).
 		PathParam("id", "Resource ID", reflect.TypeOf(""))
-	
+
 	if err := generator.AddEndpointWithBuilder("GET", getPath, getBuilder); err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.T
 	updateBuilder := RESTEndpoint("PUT", getPath, fmt.Sprintf("Update %s", resourceName), resourceType).
 		Tags(resourceName).
 		PathParam("id", "Resource ID", reflect.TypeOf(""))
-	
+
 	if err := generator.AddEndpointWithBuilder("PUT", getPath, updateBuilder); err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.T
 	deleteBuilder := RESTEndpoint("DELETE", getPath, fmt.Sprintf("Delete %s", resourceName), nil).
 		Tags(resourceName).
 		PathParam("id", "Resource ID", reflect.TypeOf(""))
-	
+
 	if err := generator.AddEndpointWithBuilder("DELETE", getPath, deleteBuilder); err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func AuthEndpoints(generator *Generator) error {
 // GenerateAndServe generates documentation and starts a simple HTTP server to serve it
 func GenerateAndServe(generator *Generator, port int) error {
 	writer := NewWriter(generator)
-	
+
 	// Generate documentation files
 	if err := writer.WriteFiles(); err != nil {
 		return fmt.Errorf("failed to generate documentation: %w", err)
@@ -255,7 +255,7 @@ func GenerateAndServe(generator *Generator, port int) error {
 
 	fmt.Printf("OpenAPI documentation server starting on port %d\n", port)
 	fmt.Printf("Visit http://localhost:%d to view the documentation\n", port)
-	
+
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
@@ -265,7 +265,7 @@ func Middleware(generator *Generator) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Auto-document the endpoint if not already documented
 			if _, exists := generator.GetEndpoint(r.Method, r.URL.Path); !exists {
-				builder := SimpleEndpoint(r.Method, r.URL.Path, 
+				builder := SimpleEndpoint(r.Method, r.URL.Path,
 					fmt.Sprintf("%s %s", r.Method, r.URL.Path))
 				generator.AddEndpointWithBuilder(r.Method, r.URL.Path, builder)
 			}
@@ -285,7 +285,7 @@ func ValidateRequest(generator *Generator, method, path string, body interface{}
 	if options.RequestType != nil && body != nil {
 		bodyType := reflect.TypeOf(body)
 		if bodyType != options.RequestType {
-			return fmt.Errorf("request body type mismatch: expected %v, got %v", 
+			return fmt.Errorf("request body type mismatch: expected %v, got %v",
 				options.RequestType, bodyType)
 		}
 	}
