@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/bata94/apiright/pkg/logger"
 )
@@ -41,6 +42,142 @@ func PanicMiddleware() Middleware {
           c.Response.Message = fmt.Sprintf("Panic: %v", err)
         }
       }()
+			return next(c)
+		}
+	}
+}
+
+// CORSConfig holds the configuration for CORS middleware
+type CORSConfig struct {
+	// AllowOrigins is a list of origins a cross-domain request can be executed from.
+	// If the special "*" value is present in the list, all origins will be allowed.
+	// Default value is ["*"]
+	AllowOrigins []string
+
+	// AllowMethods is a list of methods the client is allowed to use with
+	// cross-domain requests. Default value is simple methods (GET, POST, PUT, DELETE)
+	AllowMethods []string
+
+	// AllowHeaders is a list of non-simple headers the client is allowed to use with
+	// cross-domain requests. Default value is []
+	AllowHeaders []string
+
+	// ExposeHeaders indicates which headers are safe to expose to the API of a CORS
+	// API specification. Default value is []
+	ExposeHeaders []string
+
+	// AllowCredentials indicates whether the request can include user credentials like
+	// cookies, HTTP authentication or client side SSL certificates. Default is false.
+	AllowCredentials bool
+
+	// MaxAge indicates how long (in seconds) the results of a preflight request
+	// can be cached. Default is 0 which stands for no max age.
+	MaxAge int
+}
+
+// DefaultCORSConfig returns a default CORS configuration
+func DefaultCORSConfig() CORSConfig {
+	return CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{},
+		AllowCredentials: false,
+		MaxAge:           86400, // 24 hours
+	}
+}
+
+// CORSMiddleware returns a middleware that handles CORS
+func CORSMiddleware(config CORSConfig) Middleware {
+	// Convert methods to uppercase and headers to canonical form for consistency
+	for i, method := range config.AllowMethods {
+		config.AllowMethods[i] = strings.ToUpper(method)
+	}
+	for i, header := range config.AllowHeaders {
+		config.AllowHeaders[i] = http.CanonicalHeaderKey(header)
+	}
+	for i, header := range config.ExposeHeaders {
+		config.ExposeHeaders[i] = http.CanonicalHeaderKey(header)
+	}
+
+	return func(next Handler) Handler {
+		return func(c *Ctx) error {
+			// Get origin from request
+			origin := c.Request.Header.Get("Origin")
+			
+			// Skip if no Origin header is present
+			if origin == "" {
+				return next(c)
+			}
+
+			// Check if the origin is allowed
+			allowedOrigin := ""
+			for _, o := range config.AllowOrigins {
+				if o == "*" {
+					allowedOrigin = "*"
+					break
+				}
+				if strings.EqualFold(o, origin) {
+					allowedOrigin = origin
+					break
+				}
+			}
+
+			// If origin is not allowed, proceed without CORS headers
+			if allowedOrigin == "" {
+				return next(c)
+			}
+
+			// Set CORS headers
+			c.Response.AddHeader("Access-Control-Allow-Origin", allowedOrigin)
+			
+			// Set Vary header for proper caching
+			if allowedOrigin != "*" {
+				c.Response.AddHeader("Vary", "Origin")
+			}
+
+			// Handle preflight requests
+			if c.Request.Method == http.MethodOptions {
+				// Set allowed methods
+				c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
+				
+				// Set allowed headers
+				if len(config.AllowHeaders) > 0 {
+					c.Response.AddHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
+				} else {
+					// If no specific headers are defined, allow the requested ones
+					reqHeaders := c.Request.Header.Get("Access-Control-Request-Headers")
+					if reqHeaders != "" {
+						c.Response.AddHeader("Access-Control-Allow-Headers", reqHeaders)
+						c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
+					}
+				}
+
+				// Set max age for preflight cache
+				if config.MaxAge > 0 {
+					c.Response.AddHeader("Access-Control-Max-Age", fmt.Sprintf("%d", config.MaxAge))
+				}
+
+				// Set credentials flag
+				if config.AllowCredentials {
+					c.Response.AddHeader("Access-Control-Allow-Credentials", "true")
+				}
+
+				// Return 204 No Content for preflight requests
+				c.Response.SetStatus(http.StatusNoContent)
+				return nil
+			}
+
+			// For non-preflight requests, set expose headers and credentials if needed
+			if len(config.ExposeHeaders) > 0 {
+				c.Response.AddHeader("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ", "))
+			}
+			
+			if config.AllowCredentials {
+				c.Response.AddHeader("Access-Control-Allow-Credentials", "true")
+			}
+
+			// Continue with the next handler
 			return next(c)
 		}
 	}
