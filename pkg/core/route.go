@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"time"
 )
 
 type Route struct {
@@ -60,6 +61,9 @@ func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 	return &Ctx{
 		Request:  r,
 		Response: NewApiResponse(),
+
+		conClosed: make(chan bool),
+		conStarted: time.Now(),
 	}
 }
 
@@ -68,11 +72,24 @@ type Ctx struct {
 	Response ApiResponse
 	Request  *http.Request
 
+	conClosed chan(bool)
+	conStarted time.Time
+	conEnded   time.Time
+
 	ObjIn     any
 	ObjInType reflect.Type
 
 	ObjOut     any
 	ObjOutType reflect.Type
+}
+
+func (c *Ctx) Close() {
+	c.conEnded = time.Now()
+  c.conClosed <- true
+}
+
+func (c *Ctx) IsClosed() bool {
+	return <- c.conClosed
 }
 
 type RouteOptionConfig struct {

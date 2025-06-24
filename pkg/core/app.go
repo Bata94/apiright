@@ -110,7 +110,6 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		h := endPoint.handleFunc
 		var err error
 
-		log.Debugf("route BasePath: %s, r.URL.Path: %s, router.BasePath: %s", route.basePath, r.URL.Path, router.GetBasePath())
 		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
 			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
 			h = a.defRouteHandler

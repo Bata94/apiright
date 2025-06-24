@@ -50,6 +50,8 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 	} else {
 		w.Write(c.Response.Data)
 	}
+
+	c.Close()
 }
 
 func (r *ApiResponse) SetStatus(code int) {
