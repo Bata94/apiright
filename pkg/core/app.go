@@ -92,6 +92,8 @@ func (a App) DELETE(path string, handler Handler, opt ...RouteOption) {
 	a.router.addEndpoint(METHOD_DELETE, path, handler, opt...)
 }
 
+// TODO: Refactor
+// TODO: Add XML and YAML support, based on Request Header
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("Registering route: %s", handlerPath)
@@ -145,7 +147,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
 				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Error marshaling JSON: " + err.Error())
+				c.Response.SetMessage("Error marshaling JSON, ObjOut != wanted ObjOut Type")
 				goto ClosingFunc
 			}
 

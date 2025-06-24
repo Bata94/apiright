@@ -34,7 +34,7 @@ func main() {
 	app.GET("/", func(c *ar.Ctx) error {
 		c.Response.AddHeader("Content-Type", "text/html; charset=utf-8")
 
-		filePath := "./example/index.html"
+		filePath := "./index.html"
 		content, err := os.ReadFile(filePath)
 		if err != nil {
 			if os.IsNotExist(err) {
