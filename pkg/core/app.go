@@ -92,21 +92,11 @@ func (a App) DELETE(path string, handler Handler, opt ...RouteOption) {
 	a.router.addEndpoint(METHOD_DELETE, path, handler, opt...)
 }
 
-// TODO: Prob move into a Middleware and use Ctx
-func recoverFromPanic(w http.ResponseWriter, logger logger.Logger) {
-	if r := recover(); r != nil {
-		logger.Errorf("Recovered from panic: %v", r)
-		w.WriteHeader(500)
-		w.Write([]byte("Internal Server Error"))
-	}
-}
-
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("Registering route: %s", handlerPath)
 
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
-		defer recoverFromPanic(w, a.Logger)
 		h := endPoint.handleFunc
 		var err error
 
@@ -115,7 +105,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
+		panicMiddleware := PanicMiddleware()
 		logMiddleware := LogMiddleware(a.Logger)
+		h = panicMiddleware(h)
 		h = logMiddleware(h)
 
 		c := NewCtx(w, r)
