@@ -7,12 +7,12 @@ So this Framework will be a wrapper for the stdlib net/http server, with some qu
 Therefore I will try to add the best features I have seen in other Frameworks into it.
 
 ## Features:
-    - [ ] "ExpressJS" like Router, with a global Error Handler and panic recovery
-    - [ ] Catch-all/default Route
+    - [X] "ExpressJS" like Router, with a global Error Handler and panic recovery
+    - [X] Catch-all/default Route
     - [ ] Multi domain support
-    - [ ] Routergroups
-    - [ ] Middlewares
-    - [ ] "Fastapi" like, streamlined simple CRUD Operations
+    - [X] Routergroups
+    - [~] Middlewares
+    - [~] "Fastapi" like, streamlined simple CRUD Operations
     - [ ] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support

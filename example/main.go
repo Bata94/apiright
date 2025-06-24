@@ -69,6 +69,7 @@ func main() {
 		"/post",
 		post_test,
 		ar.WithObjIn(&PostStruct{}),
+		ar.WithObjOut(&PostStruct{}),
 	)
 
 	group := app.NewRouter("/group")
@@ -94,13 +95,13 @@ func main() {
 func post_test(c *ar.Ctx) error {
 	fmt.Printf("Post Test ObjectIn: %v ObjInType: %v\n", c.ObjIn, c.ObjInType)
 	test, ok := c.ObjIn.(*PostStruct)
-	if ok == false {
-		fmt.Println(test, ok)
+	if !ok {
 		return errors.New("Object is not correctly parsed")
 	}
 
 	fmt.Println("Sucess!")
 	c.Response.SetMessage("Test ObjectIn: " + test.Name)
+	c.ObjOut = test
 
 	return nil
 }
