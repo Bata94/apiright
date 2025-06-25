@@ -166,6 +166,9 @@ func NewApp(opts ...AppOption) App {
 	}
 }
 
+// TODO: Add Timeout handling (Middleware??)
+// TODO: Add MaxConnection handling (Middleware??)
+// TODO: Add RateLimit handling (Middleware??)
 type App struct {
 	config  *AppConfig
 	handler *http.ServeMux
@@ -255,6 +258,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		c := NewCtx(w, r)
 
+		// BUG: Struct In Validation doesnt error out and just runs for ever without return, if struct is not valid...
 		if endPoint.routeOptionConfig.ObjIn != nil {
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
