@@ -7,6 +7,12 @@ import (
 
 type Response any
 
+type ErrorResponse struct {
+	Error   string `json:"error" xml:"error" description:"Error message"`
+	Code    int    `json:"code" xml:"code" description:"Error code"`
+	Details string `json:"details,omitempty" xml:"details,omitempty" description:"Additional error details"`
+}
+
 type ApiResponse struct {
 	Headers           map[string]string
 	StatusCode        int    `json:"statusCode" xml:"statusCode"`

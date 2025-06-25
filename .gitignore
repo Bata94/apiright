@@ -1,5 +1,6 @@
 tmp/
 bin/
+docs/
 example/docs
 *.exe
 .env

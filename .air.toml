@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "./bin/main"
+  bin = "./bin/example-main"
   cmd = "just build-example"
   delay = 100
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "docs"]
@@ -44,5 +44,3 @@ tmp_dir = "tmp"
 [screen]
   clear_on_rebuild = false
   keep_scroll = true
-
-

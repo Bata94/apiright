@@ -330,9 +330,9 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		// }).
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
 		Response(200, "Success", "application/json", objOutType).
-		Response(400, "Invalid request data", "application/json", reflect.TypeOf(openapi.ErrorResponse{})).
-		Response(422, "Validation errors in request data", "application/json", reflect.TypeOf(openapi.ErrorResponse{})).
-		Response(500, "Internal server error", "application/json", reflect.TypeOf(openapi.ErrorResponse{}))
+		Response(400, "Invalid request data", "application/json", reflect.TypeOf(ErrorResponse{})).
+		Response(422, "Validation errors in request data", "application/json", reflect.TypeOf(ErrorResponse{})).
+		Response(500, "Internal server error", "application/json", reflect.TypeOf(ErrorResponse{}))
 
 	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {
 		log.Fatal("Failed to add endpoint: ", err)
@@ -382,7 +382,7 @@ func (a *App) Run() error {
 
 	// Get and display statistics
 	stats := a.openapiGenerator.GetStatistics()
-	log.Info("\n📊 Documentation Statistics:")
+	log.Info("📊 Documentation Statistics:")
 	log.Infof("   Total endpoints: %d\n", stats.TotalEndpoints)
 	log.Infof("   Total schemas: %d\n", stats.TotalSchemas)
 	log.Infof("   Endpoints by method:\n")
@@ -396,14 +396,14 @@ func (a *App) Run() error {
 
 	// List all generated files
 	files := writer.GetGeneratedFiles()
-	log.Info("\n📁 Generated files:")
+	log.Info("📁 Generated files:")
 	for _, file := range files {
 		log.Infof("   %s\n", file)
 	}
 
 	// List all endpoints
 	endpoints := a.openapiGenerator.ListEndpoints()
-	log.Info("\n🔗 Generated endpoints:")
+	log.Info("🔗 Generated endpoints:")
 	for path, methods := range endpoints {
 		log.Infof("   %s: %v\n", path, methods)
 	}
