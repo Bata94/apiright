@@ -87,6 +87,13 @@ func (c *Ctx) IsClosed() bool {
 }
 
 type RouteOptionConfig struct {
+	openApiEnabled bool
+	openApiConfig struct{
+		summary, description string
+		tags []string
+		deprecated bool
+	}
+
 	ObjIn  any
 	ObjOut any
 }
@@ -94,7 +101,9 @@ type RouteOptionConfig struct {
 type RouteOption func(*RouteOptionConfig)
 
 func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
-	config := &RouteOptionConfig{}
+	config := &RouteOptionConfig{
+		openApiEnabled: true,
+	}
 
 	for _, opt := range opts {
 		opt(config)

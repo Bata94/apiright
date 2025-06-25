@@ -202,23 +202,23 @@ func (a App) getHttpHandler() *http.ServeMux {
 }
 
 func (a *App) GET(path string, handler Handler, opt ...RouteOption) {
-	a.router.addEndpoint(METHOD_GET, path, handler, opt...)
+	a.router.GET(path, handler, opt...)
 }
 
 func (a App) POST(path string, handler Handler, opt ...RouteOption) {
-	a.router.addEndpoint(METHOD_POST, path, handler, opt...)
+	a.router.POST(path, handler, opt...)
 }
 
 func (a App) PUT(path string, handler Handler, opt ...RouteOption) {
-	a.router.addEndpoint(METHOD_PUT, path, handler, opt...)
+	a.router.PUT(path, handler, opt...)
 }
 
 func (a App) DELETE(path string, handler Handler, opt ...RouteOption) {
-	a.router.addEndpoint(METHOD_DELETE, path, handler, opt...)
+	a.router.DELETE(path, handler, opt...)
 }
 
 func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
-	a.router.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
+	a.router.OPTIONS(path, handler, opt...)
 }
 
 // TODO: Refactor
