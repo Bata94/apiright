@@ -13,7 +13,7 @@ Therefore I will try to add the best features I have seen in other Frameworks in
     - [X] Routergroups
     - [~] Middlewares
     - [~] "Fastapi" like, streamlined simple CRUD Operations
-    - [ ] Automatic OpenAPI Documention
+    - [X] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support
     - [ ] Static File serving

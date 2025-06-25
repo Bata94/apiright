@@ -313,6 +313,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 
 	objInType := reflect.TypeOf(endPoint.routeOptionConfig.ObjIn)
 	objOutType := reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
+	errResType := reflect.TypeOf(&ErrorResponse{})
 
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary("Default Summary").
@@ -330,9 +331,10 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		// }).
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
 		Response(200, "Success", "application/json", objOutType).
-		Response(400, "Invalid request data", "application/json", reflect.TypeOf(ErrorResponse{})).
-		Response(422, "Validation errors in request data", "application/json", reflect.TypeOf(ErrorResponse{})).
-		Response(500, "Internal server error", "application/json", reflect.TypeOf(ErrorResponse{}))
+		// Response(200, "Success", "text/plain", reflect.TypeOf("i")).
+		Response(400, "Invalid request data", "application/json", errResType).
+		Response(422, "Validation errors in request data", "application/json",errResType).
+		Response(500, "Internal server error", "application/json", errResType)
 
 	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {
 		log.Fatal("Failed to add endpoint: ", err)
@@ -366,7 +368,8 @@ func (a *App) Run() error {
 	a.addRoutesToHandler()
 
 	// Generate the documentation
-	log.Info("\n📝 Generating documentation...")
+	log.Info("")
+	log.Info("📝 Generating documentation...")
 
 	writer := openapi.NewWriter(a.openapiGenerator)
 	if err := writer.WriteFiles(); err != nil {
@@ -382,30 +385,33 @@ func (a *App) Run() error {
 
 	// Get and display statistics
 	stats := a.openapiGenerator.GetStatistics()
+	log.Info("")
 	log.Info("📊 Documentation Statistics:")
-	log.Infof("   Total endpoints: %d\n", stats.TotalEndpoints)
-	log.Infof("   Total schemas: %d\n", stats.TotalSchemas)
-	log.Infof("   Endpoints by method:\n")
+	log.Infof("   Total endpoints: %d", stats.TotalEndpoints)
+	log.Infof("   Total schemas: %d", stats.TotalSchemas)
+	log.Infof("   Endpoints by method:")
 	for method, count := range stats.EndpointsByMethod {
-		log.Infof("     %s: %d\n", method, count)
+		log.Infof("     %s: %d", method, count)
 	}
-	log.Infof("   Endpoints by tag:\n")
+	log.Infof("   Endpoints by tag:")
 	for tag, count := range stats.EndpointsByTag {
-		log.Infof("     %s: %d\n", tag, count)
+		log.Infof("     %s: %d", tag, count)
 	}
 
 	// List all generated files
 	files := writer.GetGeneratedFiles()
+	log.Info("")
 	log.Info("📁 Generated files:")
 	for _, file := range files {
-		log.Infof("   %s\n", file)
+		log.Infof("   %s", file)
 	}
 
 	// List all endpoints
 	endpoints := a.openapiGenerator.ListEndpoints()
+	log.Info("")
 	log.Info("🔗 Generated endpoints:")
 	for path, methods := range endpoints {
-		log.Infof("   %s: %v\n", path, methods)
+		log.Infof("   %s: %v", path, methods)
 	}
 
 	for _, f := range files {

@@ -18,7 +18,7 @@ func LogMiddleware(logger logger.Logger) Middleware {
 					case <-c.conClosed:
 						duration := c.conEnded.Sub(c.conStarted)
 						// TODO: use tabs and colors to make logs more appealing
-						infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s\n", c.Response.StatusCode, duration.Microseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
+						infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s", c.Response.StatusCode, duration.Microseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
 						if c.Response.StatusCode >= 400 {
 							// TODO: add the error Msg here
 							logger.Error(infoLog)
@@ -104,7 +104,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 		return func(c *Ctx) error {
 			// Get origin from request
 			origin := c.Request.Header.Get("Origin")
-			
+
 			// Skip if no Origin header is present
 			if origin == "" {
 				return next(c)
@@ -130,7 +130,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 
 			// Set CORS headers
 			c.Response.AddHeader("Access-Control-Allow-Origin", allowedOrigin)
-			
+
 			// Set Vary header for proper caching
 			if allowedOrigin != "*" {
 				c.Response.AddHeader("Vary", "Origin")
@@ -140,7 +140,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 			if c.Request.Method == http.MethodOptions {
 				// Set allowed methods
 				c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
-				
+
 				// Set allowed headers
 				if len(config.AllowHeaders) > 0 {
 					c.Response.AddHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
@@ -172,7 +172,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 			if len(config.ExposeHeaders) > 0 {
 				c.Response.AddHeader("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ", "))
 			}
-			
+
 			if config.AllowCredentials {
 				c.Response.AddHeader("Access-Control-Allow-Credentials", "true")
 			}
