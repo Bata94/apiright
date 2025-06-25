@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"net/http"
 )
 
 var defCatchallHandler = func(c *Ctx) error {
@@ -71,10 +72,20 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 	routeIndex := r.routeExists(p)
 
 	if routeIndex == -1 {
+		optionEP := Endpoint{
+			method:            METHOD_OPTIONS,
+			handleFunc:        func(c *Ctx) error {
+				c.Response.SetStatus(http.StatusOK)
+				return nil
+			},
+			routeOptionConfig: RouteOptionConfig{},
+		}
 		r.routes = append(r.routes, &Route{
 			basePath:  p,
 			path:      fmt.Sprint(r.basePath, p),
-			endpoints: []Endpoint{},
+			endpoints: []Endpoint{
+				optionEP,
+			},
 		})
 
 		routeIndex = len(r.routes) - 1

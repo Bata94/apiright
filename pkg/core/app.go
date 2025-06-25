@@ -135,8 +135,15 @@ func NewApp(opts ...AppOption) App {
 	}
 
 	if len(config.servers) == 0 {
+		host := config.host
+		port := config.port
+
+		if host == "127.0.0.1" {
+			host = "localhost"
+		}
+
     openapiGenerator.AddServer(openapi.Server{
-			URL:         fmt.Sprintf("http://%s", config.GetListenAddress()),
+			URL:         fmt.Sprintf("http://%s:%s", host, port),
       Description: "Local DevServer",
     })
 	} else {
@@ -228,7 +235,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 				panicMiddleware := PanicMiddleware()
 				logMiddleware := LogMiddleware(a.Logger)
-				
+
 				// Create CORS config with permissive settings for quick integration
 				corsConfig := CORSConfig{
 					AllowOrigins:     []string{"*"},
@@ -239,7 +246,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 					MaxAge:           86400,
 				}
 				corsMiddleware := CORSMiddleware(corsConfig)
-				
+
 				// Apply middlewares in the correct order
 				// CORS should be first to handle preflight requests properly
 				h = logMiddleware(h)
@@ -299,6 +306,8 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 }
 
 func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, router Router) {
+	if endPoint.method == METHOD_OPTIONS { return }
+
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("OpenApiGen adding function for path: %s", handlerPath)
 

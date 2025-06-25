@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"net/http"
 	"reflect"
 	"time"
@@ -10,11 +9,6 @@ import (
 type Route struct {
 	basePath, path string
 	endpoints      []Endpoint
-}
-
-func (r Route) fullPath(m RequestMethod) string {
-	// Returns the "fullPath" for the net/http Handler input
-	return fmt.Sprintf("%s %s", m.toPathString(), r.path)
 }
 
 type RequestMethod int
