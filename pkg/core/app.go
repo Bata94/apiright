@@ -207,6 +207,10 @@ func (a App) DELETE(path string, handler Handler, opt ...RouteOption) {
 	a.router.addEndpoint(METHOD_DELETE, path, handler, opt...)
 }
 
+func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
+	a.router.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
+}
+
 // TODO: Refactor
 // TODO: Add XML and YAML support, based on Request Header
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
@@ -222,10 +226,25 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
-		panicMiddleware := PanicMiddleware()
-		logMiddleware := LogMiddleware(a.Logger)
-		h = panicMiddleware(h)
-		h = logMiddleware(h)
+				panicMiddleware := PanicMiddleware()
+				logMiddleware := LogMiddleware(a.Logger)
+				
+				// Create CORS config with permissive settings for quick integration
+				corsConfig := CORSConfig{
+					AllowOrigins:     []string{"*"},
+					AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+					AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+					ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+					AllowCredentials: true,
+					MaxAge:           86400,
+				}
+				corsMiddleware := CORSMiddleware(corsConfig)
+				
+				// Apply middlewares in the correct order
+				// CORS should be first to handle preflight requests properly
+				h = logMiddleware(h)
+				h = panicMiddleware(h)
+				h = corsMiddleware(h)
 
 		c := NewCtx(w, r)
 

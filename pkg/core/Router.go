@@ -39,6 +39,22 @@ func (r *Router) GET(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_GET, path, handler, opt...)
 }
 
+func (r *Router) POST(path string, handler Handler, opt ...RouteOption) {
+	r.addEndpoint(METHOD_POST, path, handler, opt...)
+}
+
+func (r *Router) PUT(path string, handler Handler, opt ...RouteOption) {
+	r.addEndpoint(METHOD_PUT, path, handler, opt...)
+}
+
+func (r *Router) DELETE(path string, handler Handler, opt ...RouteOption) {
+	r.addEndpoint(METHOD_DELETE, path, handler, opt...)
+}
+
+func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
+	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
+}
+
 func (r *Router) routeExists(path string) int {
 	// Checks if route exists and returns the index. If false -1 is returned.
 	for i, route := range r.routes {
