@@ -188,11 +188,23 @@ func (g *Generator) GenerateSpec() (*OpenAPISpec, error) {
 				builder.options.RequestBody.Schema = &schema
 			}
 
+			// Generate schemas for individual response types
+			for statusCode, response := range builder.options.Responses {
+				if response.Type != nil {
+					schema := g.schemaGenerator.GenerateSchema(response.Type)
+					response.Schema = &schema
+					builder.options.Responses[statusCode] = response
+				}
+			}
+
+			// Fallback: if ResponseType is set, apply it to responses without specific types
 			if options.ResponseType != nil {
 				schema := g.schemaGenerator.GenerateSchema(options.ResponseType)
 				for statusCode, response := range builder.options.Responses {
-					response.Schema = &schema
-					builder.options.Responses[statusCode] = response
+					if response.Schema == nil {
+						response.Schema = &schema
+						builder.options.Responses[statusCode] = response
+					}
 				}
 			}
 

@@ -313,7 +313,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 
 	objInType := reflect.TypeOf(endPoint.routeOptionConfig.ObjIn)
 	objOutType := reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
-	errResType := reflect.TypeOf(&ErrorResponse{})
+	errResType := reflect.TypeOf(ErrorResponse{})
 
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary("Default Summary").
