@@ -1,5 +1,15 @@
 # Apiright
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/bata94/apiright)](https://goreportcard.com/report/github.com/bata94/apiright)
+
+* [Description](#description)
+* [Features](#features)
+* [Limitation](#limitation)
+* [Usage](#usage)
+* [How to use](#how-to-use)
+
+## Description
+
 Apiright (Name is WIP), is yet another go Webframework, mainly for APIs. Why another one, aren't there enough?
 Probably yes... But I usually write my APIs with the stdlib and use often the same boilerplate.
 So this Framework will be a wrapper for the stdlib net/http server, with some quality of life additions.
