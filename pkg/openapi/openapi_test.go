@@ -297,20 +297,19 @@ func TestHelperFunctions(t *testing.T) {
 // Benchmark tests
 func BenchmarkSchemaGeneration(b *testing.B) {
 	type BenchStruct struct {
-		ID      string                 `json:"id"`
-		Name    string                 `json:"name"`
-		Count   int                    `json:"count"`
-		Active  bool                   `json:"active"`
-		Created time.Time              `json:"created_at"`
-		Data    map[string]interface{} `json:"data"`
-		Items   []string               `json:"items"`
+		ID      string         `json:"id"`
+		Name    string         `json:"name"`
+		Count   int            `json:"count"`
+		Active  bool           `json:"active"`
+		Created time.Time      `json:"created_at"`
+		Data    map[string]any `json:"data"`
+		Items   []string       `json:"items"`
 	}
 
 	sg := NewSchemaGenerator()
 	t := reflect.TypeOf(BenchStruct{})
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		sg.GenerateSchema(t)
 	}
 }
@@ -319,7 +318,7 @@ func BenchmarkSpecGeneration(b *testing.B) {
 	generator := NewGenerator(DefaultConfig())
 
 	// Add multiple endpoints
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		builder := NewEndpointBuilder().
 			Summary("Test endpoint").
 			Response(200, "Success", "application/json", nil)
@@ -329,8 +328,7 @@ func BenchmarkSpecGeneration(b *testing.B) {
 		}
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, err := generator.GenerateSpec()
 		if err != nil {
 			b.Fatal(err)

@@ -122,7 +122,7 @@ func RESTEndpoint(method, path, summary string, resourceType reflect.Type) *Endp
 func CRUDEndpoints(generator *Generator, basePath string, resourceType reflect.Type, resourceName string) error {
 	// List resources
 	listBuilder := RESTEndpoint("GET", basePath, fmt.Sprintf("List %s", resourceName),
-		reflect.TypeOf([]interface{}{})).
+		reflect.TypeOf([]any{})).
 		Tags(resourceName).
 		QueryParam("page", "Page number", false, reflect.TypeOf(0)).
 		QueryParam("limit", "Items per page", false, reflect.TypeOf(0))
@@ -290,7 +290,7 @@ func GenerateAndServe(generator *Generator, port int) error {
 // }
 
 // ValidateRequest validates a request against the OpenAPI specification
-func ValidateRequest(generator *Generator, method, path string, body interface{}) error {
+func ValidateRequest(generator *Generator, method, path string, body any) error {
 	options, exists := generator.GetEndpoint(method, path)
 	if !exists {
 		return fmt.Errorf("endpoint not documented: %s %s", method, path)

@@ -66,7 +66,7 @@ func (sg *SchemaGenerator) generateSchemaInternal(t reflect.Type, name string) S
 	case reflect.Struct:
 		return sg.generateStructSchema(t, name)
 	case reflect.Interface:
-		return Schema{} // Empty schema for interface{}
+		return Schema{} // Empty schema for any
 	default:
 		return Schema{Type: "object"}
 	}
@@ -156,7 +156,7 @@ func (sg *SchemaGenerator) generateStructSchema(t reflect.Type, name string) Sch
 	}
 
 	// Process struct fields
-	for i := 0; i < t.NumField(); i++ {
+	for i := range t.NumField() {
 		field := t.Field(i)
 
 		// Skip unexported fields
@@ -272,8 +272,8 @@ func (sg *SchemaGenerator) addValidationFromTags(field reflect.StructField, sche
 }
 
 func (sg *SchemaGenerator) parseValidationTag(validate string, schema *Schema) {
-	rules := strings.Split(validate, ",")
-	for _, rule := range rules {
+	rules := strings.SplitSeq(validate, ",")
+	for rule := range rules {
 		rule = strings.TrimSpace(rule)
 
 		if rule == "required" {
@@ -311,8 +311,8 @@ func (sg *SchemaGenerator) parseValidationTag(validate string, schema *Schema) {
 }
 
 func (sg *SchemaGenerator) parseBindingTag(binding string, schema *Schema) {
-	rules := strings.Split(binding, ",")
-	for _, rule := range rules {
+	rules := strings.SplitSeq(binding, ",")
+	for rule := range rules {
 		rule = strings.TrimSpace(rule)
 
 		if rule == "required" {
@@ -323,7 +323,7 @@ func (sg *SchemaGenerator) parseBindingTag(binding string, schema *Schema) {
 }
 
 // GenerateSchemaFromValue generates a schema from a value (useful for examples)
-func (sg *SchemaGenerator) GenerateSchemaFromValue(v interface{}) Schema {
+func (sg *SchemaGenerator) GenerateSchemaFromValue(v any) Schema {
 	if v == nil {
 		return Schema{}
 	}
@@ -333,7 +333,7 @@ func (sg *SchemaGenerator) GenerateSchemaFromValue(v interface{}) Schema {
 }
 
 // GenerateExample generates an example value for a schema
-func GenerateExample(schema Schema) interface{} {
+func GenerateExample(schema Schema) any {
 	switch schema.Type {
 	case "string":
 		if schema.Example != nil {
@@ -365,16 +365,16 @@ func GenerateExample(schema Schema) interface{} {
 		}
 		return true
 	case "array":
-		return []interface{}{}
+		return []any{}
 	case "object":
 		if len(schema.Properties) > 0 {
-			example := make(map[string]interface{})
+			example := make(map[string]any)
 			for name, prop := range schema.Properties {
 				example[name] = GenerateExample(prop)
 			}
 			return example
 		}
-		return map[string]interface{}{}
+		return map[string]any{}
 	default:
 		return nil
 	}

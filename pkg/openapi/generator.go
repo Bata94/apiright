@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"fmt"
+	"maps"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -235,9 +236,7 @@ func (g *Generator) GenerateSpec() (*OpenAPISpec, error) {
 	}
 
 	// Add generated schemas to components
-	for name, schema := range g.schemaGenerator.GetSchemas() {
-		g.spec.Components.Schemas[name] = schema
-	}
+	maps.Copy(g.spec.Components.Schemas, g.schemaGenerator.GetSchemas())
 
 	// Validate schemas if enabled
 	if g.config.ValidateSchemas {
@@ -399,9 +398,7 @@ func (g *Generator) Merge(other *Generator) error {
 	}
 
 	// Merge schemas
-	for name, schema := range other.schemaGenerator.GetSchemas() {
-		g.spec.Components.Schemas[name] = schema
-	}
+	maps.Copy(g.spec.Components.Schemas, other.schemaGenerator.GetSchemas())
 
 	return nil
 }

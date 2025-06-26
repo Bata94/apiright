@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -35,8 +36,8 @@ type EndpointOptions struct {
 	Security []SecurityRequirement
 
 	// Examples
-	RequestExample  interface{}
-	ResponseExample interface{}
+	RequestExample  any
+	ResponseExample any
 }
 
 // ParameterInfo contains information about a parameter
@@ -45,7 +46,7 @@ type ParameterInfo struct {
 	Description string
 	Required    bool
 	Type        reflect.Type
-	Example     interface{}
+	Example     any
 	Schema      *Schema
 }
 
@@ -55,7 +56,7 @@ type RequestBodyInfo struct {
 	Required    bool
 	ContentType string
 	Type        reflect.Type
-	Example     interface{}
+	Example     any
 	Schema      *Schema
 }
 
@@ -64,7 +65,7 @@ type ResponseInfo struct {
 	Description string
 	ContentType string
 	Type        reflect.Type
-	Example     interface{}
+	Example     any
 	Schema      *Schema
 	Headers     map[string]HeaderInfo
 }
@@ -73,7 +74,7 @@ type ResponseInfo struct {
 type HeaderInfo struct {
 	Description string
 	Type        reflect.Type
-	Example     interface{}
+	Example     any
 	Schema      *Schema
 }
 
@@ -209,13 +210,13 @@ func (eb *EndpointBuilder) Security(requirements ...SecurityRequirement) *Endpoi
 }
 
 // RequestExample sets the request example
-func (eb *EndpointBuilder) RequestExample(example interface{}) *EndpointBuilder {
+func (eb *EndpointBuilder) RequestExample(example any) *EndpointBuilder {
 	eb.options.RequestExample = example
 	return eb
 }
 
 // ResponseExample sets the response example
-func (eb *EndpointBuilder) ResponseExample(example interface{}) *EndpointBuilder {
+func (eb *EndpointBuilder) ResponseExample(example any) *EndpointBuilder {
 	eb.options.ResponseExample = example
 	return eb
 }
@@ -414,17 +415,17 @@ type ErrorResponse struct {
 
 // SuccessResponse represents a standard success response
 type SuccessResponse struct {
-	Message string      `json:"message" description:"Success message"`
-	Data    interface{} `json:"data,omitempty" description:"Response data"`
+	Message string `json:"message" description:"Success message"`
+	Data    any    `json:"data,omitempty" description:"Response data"`
 }
 
 // PaginatedResponse represents a paginated response
 type PaginatedResponse struct {
-	Data       interface{} `json:"data" description:"Response data"`
-	Page       int         `json:"page" description:"Current page number"`
-	PerPage    int         `json:"per_page" description:"Items per page"`
-	Total      int         `json:"total" description:"Total number of items"`
-	TotalPages int         `json:"total_pages" description:"Total number of pages"`
+	Data       any `json:"data" description:"Response data"`
+	Page       int `json:"page" description:"Current page number"`
+	PerPage    int `json:"per_page" description:"Items per page"`
+	Total      int `json:"total" description:"Total number of items"`
+	TotalPages int `json:"total_pages" description:"Total number of pages"`
 }
 
 // HTTPMethodFromString converts a string to an HTTP method
@@ -447,10 +448,5 @@ func IsValidHTTPMethod(method string) bool {
 	}
 
 	method = strings.ToUpper(method)
-	for _, valid := range validMethods {
-		if method == valid {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validMethods, method)
 }

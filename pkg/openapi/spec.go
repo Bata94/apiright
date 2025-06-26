@@ -99,7 +99,7 @@ type Parameter struct {
 	Explode         *bool                `json:"explode,omitempty" yaml:"explode,omitempty"`
 	AllowReserved   bool                 `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 	Schema          *Schema              `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Example         any                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples        map[string]Example   `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Content         map[string]MediaType `json:"content,omitempty" yaml:"content,omitempty"`
 }
@@ -114,7 +114,7 @@ type RequestBody struct {
 // MediaType provides schema and examples for the media type identified by its key
 type MediaType struct {
 	Schema   *Schema             `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example  interface{}         `json:"example,omitempty" yaml:"example,omitempty"`
+	Example  any                 `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples map[string]Example  `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Encoding map[string]Encoding `json:"encoding,omitempty" yaml:"encoding,omitempty"`
 }
@@ -146,27 +146,27 @@ type Header struct {
 	Explode         *bool                `json:"explode,omitempty" yaml:"explode,omitempty"`
 	AllowReserved   bool                 `json:"allowReserved,omitempty" yaml:"allowReserved,omitempty"`
 	Schema          *Schema              `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Example         interface{}          `json:"example,omitempty" yaml:"example,omitempty"`
+	Example         any                  `json:"example,omitempty" yaml:"example,omitempty"`
 	Examples        map[string]Example   `json:"examples,omitempty" yaml:"examples,omitempty"`
 	Content         map[string]MediaType `json:"content,omitempty" yaml:"content,omitempty"`
 }
 
 // Example object
 type Example struct {
-	Summary       string      `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description   string      `json:"description,omitempty" yaml:"description,omitempty"`
-	Value         interface{} `json:"value,omitempty" yaml:"value,omitempty"`
-	ExternalValue string      `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
+	Summary       string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Description   string `json:"description,omitempty" yaml:"description,omitempty"`
+	Value         any    `json:"value,omitempty" yaml:"value,omitempty"`
+	ExternalValue string `json:"externalValue,omitempty" yaml:"externalValue,omitempty"`
 }
 
 // Link represents a possible design-time link for a response
 type Link struct {
-	OperationRef string                 `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string                 `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Parameters   map[string]interface{} `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	RequestBody  interface{}            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
-	Description  string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Server       *Server                `json:"server,omitempty" yaml:"server,omitempty"`
+	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
+	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	Parameters   map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	RequestBody  any            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	Description  string         `json:"description,omitempty" yaml:"description,omitempty"`
+	Server       *Server        `json:"server,omitempty" yaml:"server,omitempty"`
 }
 
 // Callback is a map of possible out-of band callbacks related to the parent operation
@@ -195,31 +195,31 @@ type Schema struct {
 	Not                  *Schema           `json:"not,omitempty" yaml:"not,omitempty"`
 	Items                *Schema           `json:"items,omitempty" yaml:"items,omitempty"`
 	Properties           map[string]Schema `json:"properties,omitempty" yaml:"properties,omitempty"`
-	AdditionalProperties interface{}       `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
+	AdditionalProperties any               `json:"additionalProperties,omitempty" yaml:"additionalProperties,omitempty"`
 	Description          string            `json:"description,omitempty" yaml:"description,omitempty"`
 	Format               string            `json:"format,omitempty" yaml:"format,omitempty"`
-	Default              interface{}       `json:"default,omitempty" yaml:"default,omitempty"`
+	Default              any               `json:"default,omitempty" yaml:"default,omitempty"`
 
 	// Validation properties
-	MultipleOf       *float64      `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Maximum          *float64      `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	ExclusiveMaximum *bool         `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	Minimum          *float64      `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	ExclusiveMinimum *bool         `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	MaxLength        *int          `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MinLength        *int          `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	Pattern          string        `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	MaxItems         *int          `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinItems         *int          `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	UniqueItems      *bool         `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	MaxProperties    *int          `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
-	MinProperties    *int          `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
-	Required         []string      `json:"required,omitempty" yaml:"required,omitempty"`
-	Enum             []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
+	MultipleOf       *float64 `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
+	Maximum          *float64 `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	ExclusiveMaximum *bool    `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
+	Minimum          *float64 `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	ExclusiveMinimum *bool    `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
+	MaxLength        *int     `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
+	MinLength        *int     `json:"minLength,omitempty" yaml:"minLength,omitempty"`
+	Pattern          string   `json:"pattern,omitempty" yaml:"pattern,omitempty"`
+	MaxItems         *int     `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
+	MinItems         *int     `json:"minItems,omitempty" yaml:"minItems,omitempty"`
+	UniqueItems      *bool    `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
+	MaxProperties    *int     `json:"maxProperties,omitempty" yaml:"maxProperties,omitempty"`
+	MinProperties    *int     `json:"minProperties,omitempty" yaml:"minProperties,omitempty"`
+	Required         []string `json:"required,omitempty" yaml:"required,omitempty"`
+	Enum             []any    `json:"enum,omitempty" yaml:"enum,omitempty"`
 
 	// OpenAPI-specific properties
 	Title        string                 `json:"title,omitempty" yaml:"title,omitempty"`
-	Example      interface{}            `json:"example,omitempty" yaml:"example,omitempty"`
+	Example      any                    `json:"example,omitempty" yaml:"example,omitempty"`
 	ExternalDocs *ExternalDocumentation `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
 	Deprecated   *bool                  `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
 	ReadOnly     *bool                  `json:"readOnly,omitempty" yaml:"readOnly,omitempty"`
