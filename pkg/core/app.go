@@ -310,7 +310,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 }
 
 func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, router Router) {
-	if endPoint.method == METHOD_OPTIONS { return }
+	if endPoint.method == METHOD_OPTIONS || !endPoint.routeOptionConfig.openApiEnabled { return }
 
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("OpenApiGen adding function for path: %s", handlerPath)
@@ -319,11 +319,32 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	objOutType := reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 	errResType := reflect.TypeOf(ErrorResponse{})
 
+	// TODO: Choose between default summary and description
+	summary := "Default Summary"
+	desc := "Default Description"
+	if endPoint.routeOptionConfig.openApiConfig.summary != "" {
+		summary = endPoint.routeOptionConfig.openApiConfig.summary
+	}
+	if endPoint.routeOptionConfig.openApiConfig.description != "" {
+		desc = endPoint.routeOptionConfig.openApiConfig.description
+	}
+
 	newEndpointBuilder := openapi.NewEndpointBuilder().
-		Summary("Default Summary").
-		Description("Default Description").
-		// Tags("users", "bulk").
-		RequestType(objInType).
+		Summary(summary).
+		Description(desc).
+		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
+		Response(400, "Invalid request data", "application/json", errResType).
+		Response(422, "Validation errors in request data", "application/json",errResType).
+		Response(500, "Internal server error", "application/json", errResType)
+
+	if len(endPoint.routeOptionConfig.openApiConfig.tags) != 0 {
+		newEndpointBuilder.Tags(endPoint.routeOptionConfig.openApiConfig.tags...)
+	}
+	if endPoint.routeOptionConfig.openApiConfig.deprecated {
+		newEndpointBuilder.Deprecated()
+	}
+	if endPoint.routeOptionConfig.ObjIn != nil {
+		newEndpointBuilder.RequestType(objInType)
 		// RequestExample([]UpdateUserRequest{
 		// 	{
 		// 		FirstName: openapi.StringPtr("John"),
@@ -333,12 +354,13 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		// 		Avatar: openapi.StringPtr("https://example.com/new-avatar.jpg"),
 		// 	},
 		// }).
-		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
-		Response(200, "Success", "application/json", objOutType).
-		// Response(200, "Success", "text/plain", reflect.TypeOf("i")).
-		Response(400, "Invalid request data", "application/json", errResType).
-		Response(422, "Validation errors in request data", "application/json",errResType).
-		Response(500, "Internal server error", "application/json", errResType)
+	}
+	if endPoint.routeOptionConfig.ObjOut != nil {
+    newEndpointBuilder.Response(200, "Success", "application/json", objOutType)
+  } else {
+		// TODO: This reflet statement must be easier
+    newEndpointBuilder.Response(200, "Success", "text/plain", reflect.TypeOf("i"))
+	}
 
 	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {
 		log.Fatal("Failed to add endpoint: ", err)
