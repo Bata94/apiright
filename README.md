@@ -6,6 +6,8 @@ So this Framework will be a wrapper for the stdlib net/http server, with some qu
 
 Therefore I will try to add the best features I have seen in other Frameworks into it.
 
+Apiright won't be the fastest Go Webframework out there (but it will still be way fast enough for most use cases), the main goal is Development experience and Development speed.
+
 ## Features:
     - [X] "ExpressJS" like Router, with a global Error Handler and panic recovery
     - [X] Catch-all/default Route
