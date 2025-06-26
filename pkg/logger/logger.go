@@ -73,7 +73,7 @@ type DefaultLogger struct {
 // NewDefaultLogger creates a new instance of DefaultLogger
 func NewDefaultLogger() *DefaultLogger {
 	return &DefaultLogger{
-		level:  InfoLevel,
+		level:  WarnLevel,
 		output: os.Stdout,
 		logger: log.New(os.Stdout, "", 0),
 	}

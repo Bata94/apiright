@@ -95,7 +95,11 @@ func NewApp(opts ...AppOption) App {
 	handler := http.NewServeMux()
 
 	defaultLogger := logger.NewDefaultLogger()
-	defaultLogger.SetLevel(logger.TraceLevel)
+
+	if os.Getenv("ENV") == "dev" {
+		defaultLogger.SetLevel(logger.TraceLevel)
+		defaultLogger.Debug("ENV = dev, set log level to trace")
+	}
 
 	config := AppConfig{
 		host: "127.0.0.1",

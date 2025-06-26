@@ -6,6 +6,10 @@ mod-tidy:
 	@echo "go mod tidy ..."
 	go mod tidy
 
+# Develop with Example Application
+dev:
+  ENV=dev air
+
 # Build the application
 build-example:
 	@echo "Building..."
