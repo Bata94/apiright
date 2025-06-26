@@ -56,7 +56,7 @@ func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 		Request:  r,
 		Response: NewApiResponse(),
 
-		conClosed: make(chan bool),
+		conClosed:  make(chan bool),
 		conStarted: time.Now(),
 	}
 }
@@ -66,7 +66,7 @@ type Ctx struct {
 	Response ApiResponse
 	Request  *http.Request
 
-	conClosed chan(bool)
+	conClosed  chan (bool)
 	conStarted time.Time
 	conEnded   time.Time
 
@@ -79,20 +79,20 @@ type Ctx struct {
 
 func (c *Ctx) Close() {
 	c.conEnded = time.Now()
-  c.conClosed <- true
+	c.conClosed <- true
 }
 
 func (c *Ctx) IsClosed() bool {
-	return <- c.conClosed
+	return <-c.conClosed
 }
 
 // TODO: Add this to Router as well and set the Router values as default for Route
 type RouteOptionConfig struct {
 	openApiEnabled bool
-	openApiConfig struct{
+	openApiConfig  struct {
 		summary, description string
-		tags []string
-		deprecated bool
+		tags                 []string
+		deprecated           bool
 	}
 
 	ObjIn  any
@@ -133,28 +133,28 @@ func WithOpenApiDisabled() RouteOption {
 }
 
 func WithOpenApiEnabled(summary, description string) RouteOption {
-  return func(c *RouteOptionConfig) {
-    c.openApiEnabled = true
+	return func(c *RouteOptionConfig) {
+		c.openApiEnabled = true
 		c.openApiConfig.summary = summary
 		c.openApiConfig.description = description
-  }
+	}
 }
 
 func WithOpenApiInfos(summary, description string) RouteOption {
-  return func(c *RouteOptionConfig) {
-    c.openApiConfig.summary = summary
+	return func(c *RouteOptionConfig) {
+		c.openApiConfig.summary = summary
 		c.openApiConfig.description = description
-  }
+	}
 }
 
 func WithOpenApiDeprecated() RouteOption {
-  return func(c *RouteOptionConfig) {
-    c.openApiConfig.deprecated = true
-  }
+	return func(c *RouteOptionConfig) {
+		c.openApiConfig.deprecated = true
+	}
 }
 
 func WithOpenApiTags(tags ...string) RouteOption {
-  return func(c *RouteOptionConfig) {
-    c.openApiConfig.tags = tags
-  }
+	return func(c *RouteOptionConfig) {
+		c.openApiConfig.tags = tags
+	}
 }

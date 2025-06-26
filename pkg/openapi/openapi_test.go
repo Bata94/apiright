@@ -285,13 +285,13 @@ func TestHelperFunctions(t *testing.T) {
 // Benchmark tests
 func BenchmarkSchemaGeneration(b *testing.B) {
 	type BenchStruct struct {
-		ID       string    `json:"id"`
-		Name     string    `json:"name"`
-		Count    int       `json:"count"`
-		Active   bool      `json:"active"`
-		Created  time.Time `json:"created_at"`
-		Data     map[string]interface{} `json:"data"`
-		Items    []string  `json:"items"`
+		ID      string                 `json:"id"`
+		Name    string                 `json:"name"`
+		Count   int                    `json:"count"`
+		Active  bool                   `json:"active"`
+		Created time.Time              `json:"created_at"`
+		Data    map[string]interface{} `json:"data"`
+		Items   []string               `json:"items"`
 	}
 
 	sg := NewSchemaGenerator()

@@ -177,7 +177,7 @@ func main() {
 
 	// Generate the documentation
 	fmt.Println("\n📝 Generating documentation...")
-	
+
 	writer := openapi.NewWriter(generator)
 	if err := writer.WriteFiles(); err != nil {
 		log.Fatal("Failed to generate documentation:", err)

@@ -31,33 +31,33 @@ type Config struct {
 	ExternalDocs *ExternalDocumentation
 
 	// Output Configuration
-	OutputDir     string
-	GenerateJSON  bool
-	GenerateYAML  bool
-	GenerateHTML  bool
-	PrettyPrint   bool
+	OutputDir    string
+	GenerateJSON bool
+	GenerateYAML bool
+	GenerateHTML bool
+	PrettyPrint  bool
 
 	// Schema Generation Options
-	UseReferences      bool
-	IncludeExamples    bool
-	ValidateSchemas    bool
-	CustomTypeMapping  map[reflect.Type]Schema
+	UseReferences     bool
+	IncludeExamples   bool
+	ValidateSchemas   bool
+	CustomTypeMapping map[reflect.Type]Schema
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() Config {
 	return Config{
-		Title:           "API Documentation",
-		Description:     "Generated API documentation",
-		Version:         "1.0.0",
-		OutputDir:       "./docs",
-		GenerateJSON:    true,
-		GenerateYAML:    true,
-		GenerateHTML:    true,
-		PrettyPrint:     true,
-		UseReferences:   true,
-		IncludeExamples: true,
-		ValidateSchemas: true,
+		Title:             "API Documentation",
+		Description:       "Generated API documentation",
+		Version:           "1.0.0",
+		OutputDir:         "./docs",
+		GenerateJSON:      true,
+		GenerateYAML:      true,
+		GenerateHTML:      true,
+		PrettyPrint:       true,
+		UseReferences:     true,
+		IncludeExamples:   true,
+		ValidateSchemas:   true,
 		CustomTypeMapping: make(map[reflect.Type]Schema),
 	}
 }
@@ -113,7 +113,7 @@ func NewGenerator(config Config) *Generator {
 // AddEndpoint adds an endpoint to the documentation
 func (g *Generator) AddEndpoint(method, path string, options EndpointOptions) error {
 	method = strings.ToUpper(method)
-	
+
 	if !IsValidHTTPMethod(method) {
 		return fmt.Errorf("invalid HTTP method: %s", method)
 	}
@@ -134,7 +134,7 @@ func (g *Generator) AddEndpointWithBuilder(method, path string, builder *Endpoin
 // RemoveEndpoint removes an endpoint from the documentation
 func (g *Generator) RemoveEndpoint(method, path string) {
 	method = strings.ToUpper(method)
-	
+
 	if pathMethods, exists := g.endpoints[path]; exists {
 		delete(pathMethods, method)
 		if len(pathMethods) == 0 {
@@ -146,7 +146,7 @@ func (g *Generator) RemoveEndpoint(method, path string) {
 // GetEndpoint retrieves an endpoint's documentation
 func (g *Generator) GetEndpoint(method, path string) (EndpointOptions, bool) {
 	method = strings.ToUpper(method)
-	
+
 	if pathMethods, exists := g.endpoints[path]; exists {
 		if options, exists := pathMethods[method]; exists {
 			return options, true
@@ -359,7 +359,7 @@ func (g *Generator) Reset() {
 	g.endpoints = make(map[string]map[string]EndpointOptions)
 	g.spec = NewOpenAPISpec()
 	g.schemaGenerator = NewSchemaGenerator()
-	
+
 	// Restore basic info
 	g.spec.Info = Info{
 		Title:          g.config.Title,
@@ -374,14 +374,14 @@ func (g *Generator) Reset() {
 // Clone creates a copy of the generator
 func (g *Generator) Clone() *Generator {
 	newGen := NewGenerator(g.config)
-	
+
 	// Copy endpoints
 	for path, methods := range g.endpoints {
 		for method, options := range methods {
 			newGen.AddEndpoint(method, path, options)
 		}
 	}
-	
+
 	return newGen
 }
 
@@ -394,12 +394,12 @@ func (g *Generator) Merge(other *Generator) error {
 			}
 		}
 	}
-	
+
 	// Merge schemas
 	for name, schema := range other.schemaGenerator.GetSchemas() {
 		g.spec.Components.Schemas[name] = schema
 	}
-	
+
 	return nil
 }
 
@@ -410,8 +410,8 @@ func (g *Generator) GetOutputPath(filename string) string {
 
 // Statistics returns statistics about the generated documentation
 type Statistics struct {
-	TotalEndpoints int
-	TotalSchemas   int
+	TotalEndpoints    int
+	TotalSchemas      int
 	EndpointsByMethod map[string]int
 	EndpointsByTag    map[string]int
 }
@@ -427,7 +427,7 @@ func (g *Generator) GetStatistics() Statistics {
 		for method, options := range methods {
 			stats.TotalEndpoints++
 			stats.EndpointsByMethod[method]++
-			
+
 			for _, tag := range options.Tags {
 				stats.EndpointsByTag[tag]++
 			}
@@ -435,6 +435,6 @@ func (g *Generator) GetStatistics() Statistics {
 	}
 
 	stats.TotalSchemas = len(g.schemaGenerator.GetSchemas())
-	
+
 	return stats
 }

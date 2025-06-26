@@ -275,7 +275,7 @@ func (sg *SchemaGenerator) parseValidationTag(validate string, schema *Schema) {
 	rules := strings.Split(validate, ",")
 	for _, rule := range rules {
 		rule = strings.TrimSpace(rule)
-		
+
 		if rule == "required" {
 			// This is handled at the struct level
 			continue
@@ -314,7 +314,7 @@ func (sg *SchemaGenerator) parseBindingTag(binding string, schema *Schema) {
 	rules := strings.Split(binding, ",")
 	for _, rule := range rules {
 		rule = strings.TrimSpace(rule)
-		
+
 		if rule == "required" {
 			// This is handled at the struct level
 			continue

@@ -106,7 +106,7 @@ func post_test(c *ar.Ctx) error {
 		return errors.New("Object is not correctly parsed")
 	}
 
-	fmt.Println("Sucess!")
+	fmt.Println("Success!")
 	c.Response.SetMessage("Test ObjectIn: " + test.Name)
 	c.ObjOut = test
 

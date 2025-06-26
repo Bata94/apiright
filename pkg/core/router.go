@@ -73,16 +73,16 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 
 	if routeIndex == -1 {
 		optionEP := Endpoint{
-			method:            METHOD_OPTIONS,
-			handleFunc:        func(c *Ctx) error {
+			method: METHOD_OPTIONS,
+			handleFunc: func(c *Ctx) error {
 				c.Response.SetStatus(http.StatusOK)
 				return nil
 			},
 			routeOptionConfig: RouteOptionConfig{},
 		}
 		r.routes = append(r.routes, &Route{
-			basePath:  p,
-			path:      fmt.Sprint(r.basePath, p),
+			basePath: p,
+			path:     fmt.Sprint(r.basePath, p),
 			endpoints: []Endpoint{
 				optionEP,
 			},

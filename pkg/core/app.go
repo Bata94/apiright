@@ -19,72 +19,72 @@ var (
 
 type AppConfig struct {
 	title, serviceDescribtion, version, host, port string
-	contact struct{
+	contact                                        struct {
 		Name, Email, URL string
 	}
-	license struct{
+	license struct {
 		Name, URL string
 	}
-	servers []struct{
+	servers []struct {
 		URL, Description string
 	}
-	logger  logger.Logger
+	logger logger.Logger
 }
 
 type AppOption func(*AppConfig)
 
 func AppTitle(title string) AppOption {
-  return func(c *AppConfig) {
-    c.title = title
-  }
+	return func(c *AppConfig) {
+		c.title = title
+	}
 }
 
 func AppDescription(description string) AppOption {
-  return func(c *AppConfig) {
-    c.serviceDescribtion = description
-  }
+	return func(c *AppConfig) {
+		c.serviceDescribtion = description
+	}
 }
 
 func AppVersion(version string) AppOption {
-  return func(c *AppConfig) {
-    c.version = version
-  }
+	return func(c *AppConfig) {
+		c.version = version
+	}
 }
 
 func AppAddr(host, port string) AppOption {
-  return func(c *AppConfig) {
-    c.host = host
-    c.port = port
-  }
+	return func(c *AppConfig) {
+		c.host = host
+		c.port = port
+	}
 }
 
 func AppLogger(logger logger.Logger) AppOption {
-  return func(c *AppConfig) {
-    c.logger = logger
-  }
+	return func(c *AppConfig) {
+		c.logger = logger
+	}
 }
 
 func AppContact(name, email, url string) AppOption {
-  return func(c *AppConfig) {
-    c.contact.Name = name
-    c.contact.Email = email
-    c.contact.URL = url
-  }
+	return func(c *AppConfig) {
+		c.contact.Name = name
+		c.contact.Email = email
+		c.contact.URL = url
+	}
 }
 
 func AppLicense(name, url string) AppOption {
-  return func(c *AppConfig) {
-    c.license.Name = name
-    c.license.URL = url
-  }
+	return func(c *AppConfig) {
+		c.license.Name = name
+		c.license.URL = url
+	}
 }
 
 func AppAddServer(url, description string) AppOption {
-  return func(c *AppConfig) {
-    c.servers = append(c.servers, struct{
-      URL, Description string
-    }{url, description})
-  }
+	return func(c *AppConfig) {
+		c.servers = append(c.servers, struct {
+			URL, Description string
+		}{url, description})
+	}
 }
 
 func (c AppConfig) GetListenAddress() string {
@@ -102,17 +102,17 @@ func NewApp(opts ...AppOption) App {
 	}
 
 	config := AppConfig{
-		host: "127.0.0.1",
-		port: "5500",
-		logger: defaultLogger,
-		title: "My App",
+		host:               "127.0.0.1",
+		port:               "5500",
+		logger:             defaultLogger,
+		title:              "My App",
 		serviceDescribtion: "My App Description",
-		version: "0.0.0",
+		version:            "0.0.0",
 	}
 
 	for _, opt := range opts {
-    opt(&config)
-  }
+		opt(&config)
+	}
 
 	log = config.logger
 
@@ -124,12 +124,12 @@ func NewApp(opts ...AppOption) App {
 	)
 
 	if config.contact.Email != "" || config.contact.Name != "" || config.contact.URL != "" {
-    openapiGenerator.GetSpec().Info.Contact = &openapi.Contact{
-    	Name:  config.contact.Name,
-    	URL:  config.contact.URL,
-    	Email:config.contact.Email,
-    }
-  }
+		openapiGenerator.GetSpec().Info.Contact = &openapi.Contact{
+			Name:  config.contact.Name,
+			URL:   config.contact.URL,
+			Email: config.contact.Email,
+		}
+	}
 
 	if config.license.Name != "" || config.license.URL != "" {
 		openapiGenerator.GetSpec().Info.License = &openapi.License{
@@ -146,10 +146,10 @@ func NewApp(opts ...AppOption) App {
 			host = "localhost"
 		}
 
-    openapiGenerator.AddServer(openapi.Server{
+		openapiGenerator.AddServer(openapi.Server{
 			URL:         fmt.Sprintf("http://%s:%s", host, port),
-      Description: "Local DevServer",
-    })
+			Description: "Local DevServer",
+		})
 	} else {
 		for _, server := range config.servers {
 			openapiGenerator.AddServer(openapi.Server{
@@ -161,11 +161,11 @@ func NewApp(opts ...AppOption) App {
 
 	// Return App Object
 	return App{
-		config:          &config,
-		handler:         handler,
-		Logger:          config.logger,
-		router:          newRouter(""),
-		defRouteHandler: defCatchallHandler,
+		config:           &config,
+		handler:          handler,
+		Logger:           config.logger,
+		router:           newRouter(""),
+		defRouteHandler:  defCatchallHandler,
 		openapiGenerator: openapiGenerator,
 	}
 }
@@ -240,25 +240,25 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
-				panicMiddleware := PanicMiddleware()
-				logMiddleware := LogMiddleware(a.Logger)
+		panicMiddleware := PanicMiddleware()
+		logMiddleware := LogMiddleware(a.Logger)
 
-				// Create CORS config with permissive settings for quick integration
-				corsConfig := CORSConfig{
-					AllowOrigins:     []string{"*"},
-					AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-					AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-					ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-					AllowCredentials: true,
-					MaxAge:           86400,
-				}
-				corsMiddleware := CORSMiddleware(corsConfig)
+		// Create CORS config with permissive settings for quick integration
+		corsConfig := CORSConfig{
+			AllowOrigins:     []string{"*"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+			ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+			AllowCredentials: true,
+			MaxAge:           86400,
+		}
+		corsMiddleware := CORSMiddleware(corsConfig)
 
-				// Apply middlewares in the correct order
-				// CORS should be first to handle preflight requests properly
-				h = logMiddleware(h)
-				h = panicMiddleware(h)
-				h = corsMiddleware(h)
+		// Apply middlewares in the correct order
+		// CORS should be first to handle preflight requests properly
+		h = logMiddleware(h)
+		h = panicMiddleware(h)
+		h = corsMiddleware(h)
 
 		c := NewCtx(w, r)
 
@@ -290,7 +290,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 
 		err = h(c)
-		if err != nil { goto ClosingFunc }
+		if err != nil {
+			goto ClosingFunc
+		}
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
@@ -314,7 +316,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 }
 
 func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, router Router) {
-	if endPoint.method == METHOD_OPTIONS || !endPoint.routeOptionConfig.openApiEnabled { return }
+	if endPoint.method == METHOD_OPTIONS || !endPoint.routeOptionConfig.openApiEnabled {
+		return
+	}
 
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("OpenApiGen adding function for path: %s", handlerPath)
@@ -338,7 +342,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		Description(desc).
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
 		Response(400, "Invalid request data", "application/json", errResType).
-		Response(422, "Validation errors in request data", "application/json",errResType).
+		Response(422, "Validation errors in request data", "application/json", errResType).
 		Response(500, "Internal server error", "application/json", errResType)
 
 	if len(endPoint.routeOptionConfig.openApiConfig.tags) != 0 {
@@ -360,10 +364,10 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		// }).
 	}
 	if endPoint.routeOptionConfig.ObjOut != nil {
-    newEndpointBuilder.Response(200, "Success", "application/json", objOutType)
-  } else {
+		newEndpointBuilder.Response(200, "Success", "application/json", objOutType)
+	} else {
 		// TODO: This reflet statement must be easier
-    newEndpointBuilder.Response(200, "Success", "text/plain", reflect.TypeOf("i"))
+		newEndpointBuilder.Response(200, "Success", "text/plain", reflect.TypeOf("i"))
 	}
 
 	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {
@@ -466,14 +470,14 @@ func (a *App) Run() error {
 			}
 
 			switch strings.Split(f, ".")[1] {
-				case "html":
-					w.Header().Add("Content-Type", "text/html; charset=utf-8")
-				case "json":
-					w.Header().Add("Content-Type", "application/json")
-				case "yml":
-					fallthrough
-				case "yaml":
-					w.Header().Add("Content-Type", "application/yaml")
+			case "html":
+				w.Header().Add("Content-Type", "text/html; charset=utf-8")
+			case "json":
+				w.Header().Add("Content-Type", "application/json")
+			case "yml":
+				fallthrough
+			case "yaml":
+				w.Header().Add("Content-Type", "application/yaml")
 			}
 			w.WriteHeader(200)
 			w.Write(content)

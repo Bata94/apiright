@@ -2,6 +2,9 @@ set dotenv-load := true
 
 BINARY_NAME := "ApiRight"
 
+default:
+  @just --list
+
 mod-tidy:
 	@echo "go mod tidy ..."
 	go mod tidy
@@ -32,5 +35,19 @@ test:
 clean:
   @echo "Cleaning..."
   rm -rf example/tmp/*
+  rm -rf example/docs
   rm -rf bin/*
   rm -rf tmp/*
+  rm -rf docs
+
+check:
+  go vet ./...
+
+fmt:
+  go fmt ./...
+
+lint:
+  golangci-lint run ./...
+
+pre-release: clean mod-tidy fmt check lint test
+  @echo "Ran check, fmt and lint"

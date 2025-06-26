@@ -243,7 +243,7 @@ func (w *Writer) GetGeneratedFiles() []string {
 	}
 
 	if w.generator.config.GenerateHTML {
-		files = append(files, 
+		files = append(files,
 			w.generator.GetOutputPath("index.html"),
 			w.generator.GetOutputPath("spec.json"),
 		)
@@ -255,7 +255,7 @@ func (w *Writer) GetGeneratedFiles() []string {
 // CleanOutputDir removes all generated files
 func (w *Writer) CleanOutputDir() error {
 	files := w.GetGeneratedFiles()
-	
+
 	for _, file := range files {
 		if err := os.Remove(file); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to remove file %s: %w", file, err)
