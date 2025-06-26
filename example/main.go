@@ -70,13 +70,20 @@ func main() {
 		post_test,
 		ar.WithObjIn(&PostStruct{}),
 		ar.WithObjOut(&PostStruct{}),
+		ar.WithOpenApiInfos("Post Test", "A simple Route to test Posting with ObjectIn and ObjectOut Structs"),
+		ar.WithOpenApiTags("Test", "post"),
 	)
 
 	group := app.NewRouter("/group")
-	group.GET("/", func(c *ar.Ctx) error {
-		c.Response.Message = "Hello from Group Index"
-		return nil
-	})
+	group.GET(
+		"/",
+		func(c *ar.Ctx) error {
+			c.Response.Message = "Hello from Group Index"
+			return nil
+		},
+		ar.WithOpenApiInfos("Group Index", "A simple Route in a Group"),
+		ar.WithOpenApiDeprecated(),
+	)
 
 	group.GET("/hello", func(c *ar.Ctx) error {
 		c.Response.Message = "Hello from Group"

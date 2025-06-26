@@ -86,6 +86,7 @@ func (c *Ctx) IsClosed() bool {
 	return <- c.conClosed
 }
 
+// TODO: Add this to Router as well and set the Router values as default for Route
 type RouteOptionConfig struct {
 	openApiEnabled bool
 	openApiConfig struct{
@@ -101,6 +102,7 @@ type RouteOptionConfig struct {
 type RouteOption func(*RouteOptionConfig)
 
 func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
+	// TODO: Make default settable in AppConfig and pass through
 	config := &RouteOptionConfig{
 		openApiEnabled: true,
 	}
@@ -122,4 +124,37 @@ func WithObjOut(obj any) RouteOption {
 	return func(c *RouteOptionConfig) {
 		c.ObjOut = obj
 	}
+}
+
+func WithOpenApiDisabled() RouteOption {
+	return func(c *RouteOptionConfig) {
+		c.openApiEnabled = false
+	}
+}
+
+func WithOpenApiEnabled(summary, description string) RouteOption {
+  return func(c *RouteOptionConfig) {
+    c.openApiEnabled = true
+		c.openApiConfig.summary = summary
+		c.openApiConfig.description = description
+  }
+}
+
+func WithOpenApiInfos(summary, description string) RouteOption {
+  return func(c *RouteOptionConfig) {
+    c.openApiConfig.summary = summary
+		c.openApiConfig.description = description
+  }
+}
+
+func WithOpenApiDeprecated() RouteOption {
+  return func(c *RouteOptionConfig) {
+    c.openApiConfig.deprecated = true
+  }
+}
+
+func WithOpenApiTags(tags ...string) RouteOption {
+  return func(c *RouteOptionConfig) {
+    c.openApiConfig.tags = tags
+  }
 }
