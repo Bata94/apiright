@@ -117,7 +117,7 @@ func NewApp(opts ...AppOption) App {
 	log = config.logger
 
 	// Setup OpenApi Builder
-	openapiGenerator := openapi.QuickStart(
+	openapiGenerator := openapi.NewBasicGenerator(
 		config.title,
 		config.serviceDescribtion,
 		config.version,
@@ -268,7 +268,10 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
 			objInByte, err := io.ReadAll(r.Body)
-			defer r.Body.Close()
+			defer func() {
+				_ = r.Body.Close()
+			}()
+
 			if err != nil {
 				c.Response.SetStatus(http.StatusInternalServerError)
 				c.Response.SetMessage("Body could not be read, err: " + err.Error())
@@ -460,11 +463,11 @@ func (a *App) Run() error {
 			if err != nil {
 				if os.IsNotExist(err) {
 					w.WriteHeader(404)
-					w.Write([]byte("File not found"))
+					_, _ = w.Write([]byte("File not found"))
 					return
 				} else {
 					w.WriteHeader(500)
-					w.Write([]byte("File not readable"))
+					_, _ = w.Write([]byte("File not readable"))
 					return
 				}
 			}
@@ -480,7 +483,7 @@ func (a *App) Run() error {
 				w.Header().Add("Content-Type", "application/yaml")
 			}
 			w.WriteHeader(200)
-			w.Write(content)
+			_, _ = w.Write(content)
 		})
 	}
 

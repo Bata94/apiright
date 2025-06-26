@@ -35,8 +35,8 @@ func (r *ApiResponse) AddHeader(k, v string) {
 
 func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 	if err != nil {
-		err = fmt.Errorf("Error in HanlderFunc: %w", err)
-		log.Errorf("Handler error: %v", err)
+		err = fmt.Errorf("error in HanlderFunc: %w", err)
+		log.Errorf("handler error: %v", err)
 		c.Response.SetMessage(err.Error())
 		c.Response.SetStatus(http.StatusInternalServerError)
 	}
@@ -52,9 +52,9 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 	w.WriteHeader(c.Response.StatusCode)
 
 	if c.Response.Data == nil {
-		w.Write([]byte(c.Response.Message))
+		_, _ = w.Write([]byte(c.Response.Message))
 	} else {
-		w.Write(c.Response.Data)
+		_, _ = w.Write(c.Response.Data)
 	}
 
 	c.Close()

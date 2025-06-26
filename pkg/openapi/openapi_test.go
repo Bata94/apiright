@@ -141,7 +141,10 @@ func TestSpecGeneration(t *testing.T) {
 		Summary("Test endpoint").
 		Response(200, "Success", "application/json", nil)
 
-	generator.AddEndpointWithBuilder("GET", "/test", builder)
+	err := generator.AddEndpointWithBuilder("GET", "/test", builder)
+	if err != nil {
+		t.Fatalf("error in OpenApi_Test, adding HealthCheckEndpoint: %v", err)
+	}
 
 	// Generate spec
 	spec, err := generator.GenerateSpec()
@@ -219,9 +222,18 @@ func TestStatistics(t *testing.T) {
 	builder2 := NewEndpointBuilder().Summary("POST endpoint").Tags("api")
 	builder3 := NewEndpointBuilder().Summary("Another GET").Tags("api", "users")
 
-	generator.AddEndpointWithBuilder("GET", "/test1", builder1)
-	generator.AddEndpointWithBuilder("POST", "/test2", builder2)
-	generator.AddEndpointWithBuilder("GET", "/test3", builder3)
+	err := generator.AddEndpointWithBuilder("GET", "/test1", builder1)
+	if err != nil {
+		t.Fatalf("error in OpenApi_Test, adding HealthCheckEndpoint: %v", err)
+	}
+	err = generator.AddEndpointWithBuilder("POST", "/test2", builder2)
+	if err != nil {
+		t.Fatalf("error in OpenApi_Test, adding HealthCheckEndpoint: %v", err)
+	}
+	err = generator.AddEndpointWithBuilder("GET", "/test3", builder3)
+	if err != nil {
+		t.Fatalf("error in OpenApi_Test, adding HealthCheckEndpoint: %v", err)
+	}
 
 	stats := generator.GetStatistics()
 
@@ -311,11 +323,17 @@ func BenchmarkSpecGeneration(b *testing.B) {
 		builder := NewEndpointBuilder().
 			Summary("Test endpoint").
 			Response(200, "Success", "application/json", nil)
-		generator.AddEndpointWithBuilder("GET", "/test"+string(rune(i)), builder)
+		err := generator.AddEndpointWithBuilder("GET", "/test"+string(rune(i)), builder)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		generator.GenerateSpec()
+		_, err := generator.GenerateSpec()
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

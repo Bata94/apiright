@@ -15,6 +15,17 @@ const Version = "1.0.0"
 
 // Quick start functions for common use cases
 
+// TODO: Add a Logger to the Package and handle panics more gracefully
+
+func NewBasicGenerator(title, description, version string) *Generator {
+	config := DefaultConfig()
+	config.Title = title
+	config.Description = description
+	config.Version = version
+
+	return NewGenerator(config)
+}
+
 // QuickStart creates a generator with sensible defaults and basic configuration
 func QuickStart(title, description, version string) *Generator {
 	config := DefaultConfig()
@@ -23,48 +34,48 @@ func QuickStart(title, description, version string) *Generator {
 	config.Version = version
 
 	// Add common servers
-	// config.Servers = []Server{
-	// 	{
-	// 		URL:         "http://localhost:8080",
-	// 		Description: "Development server",
-	// 	},
-	// 	{
-	// 		URL:         "https://api.example.com",
-	// 		Description: "Production server",
-	// 	},
-	// }
-	//
-	// // Add common security schemes
-	// config.SecuritySchemes = map[string]SecurityScheme{
-	// 	"BearerAuth": {
-	// 		Type:         "http",
-	// 		Scheme:       "bearer",
-	// 		BearerFormat: "JWT",
-	// 		Description:  "JWT Bearer token authentication",
-	// 	},
-	// 	"ApiKeyAuth": {
-	// 		Type:        "apiKey",
-	// 		In:          "header",
-	// 		Name:        "X-API-Key",
-	// 		Description: "API key authentication",
-	// 	},
-	// }
-	//
-	// // Add common tags
-	// config.Tags = []Tag{
-	// 	{
-	// 		Name:        "auth",
-	// 		Description: "Authentication endpoints",
-	// 	},
-	// 	{
-	// 		Name:        "users",
-	// 		Description: "User management endpoints",
-	// 	},
-	// 	{
-	// 		Name:        "health",
-	// 		Description: "Health check endpoints",
-	// 	},
-	// }
+	config.Servers = []Server{
+		{
+			URL:         "http://localhost:8080",
+			Description: "Development server",
+		},
+		{
+			URL:         "https://api.example.com",
+			Description: "Production server",
+		},
+	}
+
+	// Add common security schemes
+	config.SecuritySchemes = map[string]SecurityScheme{
+		"BearerAuth": {
+			Type:         "http",
+			Scheme:       "bearer",
+			BearerFormat: "JWT",
+			Description:  "JWT Bearer token authentication",
+		},
+		"ApiKeyAuth": {
+			Type:        "apiKey",
+			In:          "header",
+			Name:        "X-API-Key",
+			Description: "API key authentication",
+		},
+	}
+
+	// Add common tags
+	config.Tags = []Tag{
+		{
+			Name:        "auth",
+			Description: "Authentication endpoints",
+		},
+		{
+			Name:        "users",
+			Description: "User management endpoints",
+		},
+		{
+			Name:        "health",
+			Description: "Health check endpoints",
+		},
+	}
 
 	return NewGenerator(config)
 }
@@ -260,20 +271,23 @@ func GenerateAndServe(generator *Generator, port int) error {
 }
 
 // Middleware creates HTTP middleware that automatically documents endpoints
-func Middleware(generator *Generator) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Auto-document the endpoint if not already documented
-			if _, exists := generator.GetEndpoint(r.Method, r.URL.Path); !exists {
-				builder := SimpleEndpoint(r.Method, r.URL.Path,
-					fmt.Sprintf("%s %s", r.Method, r.URL.Path))
-				generator.AddEndpointWithBuilder(r.Method, r.URL.Path, builder)
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}
+// func Middleware(generator *Generator) func(http.Handler) http.Handler {
+// 	return func(next http.Handler) http.Handler {
+// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			// Auto-document the endpoint if not already documented
+// 			if _, exists := generator.GetEndpoint(r.Method, r.URL.Path); !exists {
+// 				builder := SimpleEndpoint(r.Method, r.URL.Path,
+// 					fmt.Sprintf("%s %s", r.Method, r.URL.Path))
+// 					err := generator.AddEndpointWithBuilder(r.Method, r.URL.Path, builder)
+// 					if err != nil {
+// 						panic(fmt.Errorf("middleware failed to document endpoint: %w", err))
+// 					}
+// 			}
+//
+// 			next.ServeHTTP(w, r)
+// 		})
+// 	}
+// }
 
 // ValidateRequest validates a request against the OpenAPI specification
 func ValidateRequest(generator *Generator, method, path string, body interface{}) error {
@@ -391,10 +405,16 @@ func ExampleUsage() {
 	generator := QuickStart("My API", "A sample API", "1.0.0")
 
 	// Add health check endpoint
-	HealthCheckEndpoint(generator)
+	err := HealthCheckEndpoint(generator)
+	if err != nil {
+		panic(fmt.Errorf("error in ExampleUsage, adding HealthCheckEndpoint: %w", err))
+	}
 
 	// Add authentication endpoints
-	AuthEndpoints(generator)
+	err = AuthEndpoints(generator)
+	if err != nil {
+		panic(fmt.Errorf("error in ExampleUsage, adding AuthEndpoints: %w", err))
+	}
 
 	// Define a user type
 	type User struct {
@@ -405,7 +425,10 @@ func ExampleUsage() {
 	}
 
 	// Add CRUD endpoints for users
-	CRUDEndpoints(generator, "/users", reflect.TypeOf(User{}), "users")
+	err = CRUDEndpoints(generator, "/users", reflect.TypeOf(User{}), "users")
+	if err != nil {
+		panic(fmt.Errorf("error in ExampleUsage, adding CRUDEndpoints: %w", err))
+	}
 
 	// Add a custom endpoint
 	customBuilder := NewEndpointBuilder().
@@ -417,11 +440,17 @@ func ExampleUsage() {
 		Security(SecurityRequirement{"BearerAuth": []string{}}).
 		Response(200, "User statistics", "application/json", nil)
 
-	generator.AddEndpointWithBuilder("GET", "/users/{id}/stats", customBuilder)
+	err = generator.AddEndpointWithBuilder("GET", "/users/{id}/stats", customBuilder)
+	if err != nil {
+		panic(fmt.Errorf("error in ExampleUsage, adding Endpoint: %w", err))
+	}
 
 	// Generate and write documentation
 	writer := NewWriter(generator)
-	writer.WriteFiles()
+	err = writer.WriteFiles()
+	if err != nil {
+		panic(fmt.Errorf("error in ExampleUsage, writing files: %w", err))
+	}
 
 	// Or serve the documentation
 	// GenerateAndServe(generator, 8080)

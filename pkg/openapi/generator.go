@@ -378,7 +378,10 @@ func (g *Generator) Clone() *Generator {
 	// Copy endpoints
 	for path, methods := range g.endpoints {
 		for method, options := range methods {
-			newGen.AddEndpoint(method, path, options)
+			err := newGen.AddEndpoint(method, path, options)
+			if err != nil {
+				panic(fmt.Errorf("failed to clone endpoint %s %s: %w", method, path, err))
+			}
 		}
 	}
 

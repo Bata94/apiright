@@ -40,11 +40,11 @@ func main() {
 			if os.IsNotExist(err) {
 				c.Response.SetStatus(404)
 				c.Response.SetMessage("File not found")
-				return errors.New("File not found")
+				return errors.New("file not found")
 			} else {
 				c.Response.SetStatus(500)
 				c.Response.SetMessage("File not readable")
-				return errors.New("File not readable")
+				return errors.New("file not readable")
 			}
 		}
 
@@ -56,7 +56,7 @@ func main() {
 	app.GET("/err", err_handler)
 
 	app.GET("/err_inside", func(c *ar.Ctx) error {
-		err := errors.New("Test Error")
+		err := errors.New("test error")
 		c.Response.StatusCode = 503
 		return err
 	})
@@ -103,7 +103,7 @@ func post_test(c *ar.Ctx) error {
 	fmt.Printf("Post Test ObjectIn: %v ObjInType: %v\n", c.ObjIn, c.ObjInType)
 	test, ok := c.ObjIn.(*PostStruct)
 	if !ok {
-		return errors.New("Object is not correctly parsed")
+		return errors.New("object is not correctly parsed")
 	}
 
 	fmt.Println("Success!")
@@ -122,6 +122,6 @@ func post_test(c *ar.Ctx) error {
 // @Success 200
 // @Router /err [get]
 func err_handler(c *ar.Ctx) error {
-	err := errors.New("Test Error")
+	err := errors.New("test Error")
 	return err
 }

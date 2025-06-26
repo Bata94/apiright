@@ -140,7 +140,9 @@ func (w *Writer) writeSwaggerUI() error {
 	if err != nil {
 		return fmt.Errorf("failed to create HTML file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	if err := tmpl.Execute(file, data); err != nil {
 		return fmt.Errorf("failed to execute template: %w", err)
@@ -225,7 +227,9 @@ func (w *Writer) writeHTMLToFile(spec *OpenAPISpec, filename string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	return tmpl.Execute(file, data)
 }
