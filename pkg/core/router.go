@@ -139,20 +139,19 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 	if !strings.HasSuffix(pattern, "/") {
 		pattern += "/"
 	}
-	
+
 	// Use wildcard patterns to match all paths under the directory
 	// In Go 1.22+, we need {path...} for wildcard matching
 	getPattern := "GET " + pattern + "{path...}"
 	headPattern := "HEAD " + pattern + "{path...}"
-	
-	a.getHttpHandler().HandleFunc(getPattern, func(w http.ResponseWriter, r *http.Request) {
+
+	h:=func(w http.ResponseWriter, r *http.Request) {
 		// Strip the URL prefix to match the file system path
 		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
-	})
-	a.getHttpHandler().HandleFunc(headPattern, func(w http.ResponseWriter, r *http.Request) {
-		// Strip the URL prefix to match the file system path
-		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
-	})
+	}
+
+	a.getHttpHandler().HandleFunc(getPattern, h)
+	a.getHttpHandler().HandleFunc(headPattern, h)
 }
 
 func (r *Router) routeExists(path string) int {
@@ -185,7 +184,7 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 		} else {
 			endpoints = []Endpoint{}
 		}
-		
+
 		r.routes = append(r.routes, &Route{
 			basePath: p,
 			path:     fmt.Sprint(r.basePath, p),
