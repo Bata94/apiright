@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"reflect"
-	"strings"
 
 	"github.com/bata94/apiright/pkg/logger"
 	"github.com/bata94/apiright/pkg/openapi"
@@ -19,7 +18,8 @@ var (
 
 type AppConfig struct {
 	title, serviceDescribtion, version, host, port string
-	contact                                        struct {
+
+	contact struct {
 		Name, Email, URL string
 	}
 	license struct {
@@ -225,6 +225,14 @@ func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	a.router.OPTIONS(path, handler, opt...)
 }
 
+func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
+  a.router.ServeStaticFile(urlPath, filePath, opt...)
+}
+
+func (a App) ServeStaticDir(urlPath, dirPath string) {
+	a.router.ServeStaticDir(urlPath, dirPath, a)
+}
+
 // TODO: Refactor
 // TODO: Add XML and YAML support, based on Request Header
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
@@ -343,6 +351,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary(summary).
 		Description(desc).
+		// TODO: Implement
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
 		Response(400, "Invalid request data", "application/json", errResType).
 		Response(422, "Validation errors in request data", "application/json", errResType).
@@ -356,6 +365,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	}
 	if endPoint.routeOptionConfig.ObjIn != nil {
 		newEndpointBuilder.RequestType(objInType)
+		// TODO: Implement
 		// RequestExample([]UpdateUserRequest{
 		// 	{
 		// 		FirstName: openapi.StringPtr("John"),
@@ -385,7 +395,6 @@ func (a App) addRoutesToHandler() {
 	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
 	for _, r := range a.router.routes {
 		for _, e := range r.endpoints {
-			a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
 			a.handleFunc(*r, e, *a.router)
 		}
 	}
@@ -394,98 +403,88 @@ func (a App) addRoutesToHandler() {
 		a.Logger.Infof("Router group with %d routes", len(group.routes))
 		for _, r := range group.routes {
 			for _, e := range r.endpoints {
-				a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
 				a.handleFunc(*r, e, *group)
 			}
 		}
 	}
 }
 
-func (a *App) Run() error {
-	a.addRoutesToHandler()
+func (a App) addRoutesToOpenApi() {
+	a.Logger.Info("Documenting available routes")
 
+	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
+	for _, r := range a.router.routes {
+		for _, e := range r.endpoints {
+			a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
+		}
+	}
+
+	for _, group := range a.router.groups {
+		a.Logger.Infof("Router group with %d routes", len(group.routes))
+		for _, r := range group.routes {
+			for _, e := range r.endpoints {
+				a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
+			}
+		}
+	}
+}
+
+func (a *App) genOpenApiFiles() []string {
 	// Generate the documentation
-	log.Info("")
-	log.Info("📝 Generating documentation...")
+	a.Logger.Info("")
+	a.Logger.Info("📝 Generating documentation...")
 
 	writer := openapi.NewWriter(a.openapiGenerator)
 	if err := writer.WriteFiles(); err != nil {
 		log.Fatal("Failed to generate documentation:", err)
 	}
-	log.Info("✅ Documentation files generated")
+	a.Logger.Info("✅ Documentation files generated")
 
 	// Generate markdown documentation
 	if err := writer.GenerateMarkdownDocs(); err != nil {
-		log.Fatal("Failed to generate markdown documentation:", err)
+		a.Logger.Fatal("Failed to generate markdown documentation:", err)
 	}
-	log.Info("✅ Markdown documentation generated")
+	a.Logger.Info("✅ Markdown documentation generated")
 
 	// Get and display statistics
 	stats := a.openapiGenerator.GetStatistics()
-	log.Info("")
-	log.Info("📊 Documentation Statistics:")
-	log.Infof("   Total endpoints: %d", stats.TotalEndpoints)
-	log.Infof("   Total schemas: %d", stats.TotalSchemas)
-	log.Infof("   Endpoints by method:")
+	a.Logger.Info("")
+	a.Logger.Info("📊 Documentation Statistics:")
+	a.Logger.Infof("   Total endpoints: %d", stats.TotalEndpoints)
+	a.Logger.Infof("   Total schemas: %d", stats.TotalSchemas)
+	a.Logger.Infof("   Endpoints by method:")
 	for method, count := range stats.EndpointsByMethod {
-		log.Infof("     %s: %d", method, count)
+		a.Logger.Infof("     %s: %d", method, count)
 	}
-	log.Infof("   Endpoints by tag:")
+	a.Logger.Infof("   Endpoints by tag:")
 	for tag, count := range stats.EndpointsByTag {
-		log.Infof("     %s: %d", tag, count)
+		a.Logger.Infof("     %s: %d", tag, count)
 	}
 
 	// List all generated files
 	files := writer.GetGeneratedFiles()
-	log.Info("")
-	log.Info("📁 Generated files:")
+	a.Logger.Info("")
+	a.Logger.Info("📁 Generated files:")
 	for _, file := range files {
-		log.Infof("   %s", file)
+		a.Logger.Infof("   %s", file)
 	}
 
 	// List all endpoints
 	endpoints := a.openapiGenerator.ListEndpoints()
-	log.Info("")
-	log.Info("🔗 Generated endpoints:")
+	a.Logger.Info("")
+	a.Logger.Info("🔗 Generated endpoints:")
 	for path, methods := range endpoints {
-		log.Infof("   %s: %v", path, methods)
+		a.Logger.Infof("   %s: %v", path, methods)
 	}
+	 return files
+}
 
-	for _, f := range files {
-		p := f
+func (a *App) Run() error {
+	a.addRoutesToOpenApi()
+	a.genOpenApiFiles()
+	a.ServeStaticDir("/docs", "docs")
 
-		if p == "docs/index.html" {
-			p = "docs/"
-		}
-		a.getHttpHandler().HandleFunc(fmt.Sprintf("GET /%s", p), func(w http.ResponseWriter, r *http.Request) {
-
-			content, err := os.ReadFile(f)
-			if err != nil {
-				if os.IsNotExist(err) {
-					w.WriteHeader(404)
-					_, _ = w.Write([]byte("File not found"))
-					return
-				} else {
-					w.WriteHeader(500)
-					_, _ = w.Write([]byte("File not readable"))
-					return
-				}
-			}
-
-			switch strings.Split(f, ".")[1] {
-			case "html":
-				w.Header().Add("Content-Type", "text/html; charset=utf-8")
-			case "json":
-				w.Header().Add("Content-Type", "application/json")
-			case "yml":
-				fallthrough
-			case "yaml":
-				w.Header().Add("Content-Type", "application/yaml")
-			}
-			w.WriteHeader(200)
-			_, _ = w.Write(content)
-		})
-	}
+	a.addRoutesToHandler()
 
 	return http.ListenAndServe(a.config.GetListenAddress(), a.getHttpHandler())
 }

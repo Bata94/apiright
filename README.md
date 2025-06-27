@@ -35,6 +35,8 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] Multiworker scaling
     - [ ] CLI-Mode
     - [ ] Extensive Testsuite
+    - [ ] HTTP/2.0 Support
+    - [ ] HTTP/3.0 Support (I think in Go stdlib it's not prod ready)
 
 ## Limitation
 

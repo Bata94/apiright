@@ -31,6 +31,9 @@ func main() {
 	// 	return err
 	// })
 
+	app.ServeStaticFile("/index", "./example/index.html", ar.WithPreCache())
+	// app.ServeStaticDir("/static", "docs/")
+
 	app.GET("/", func(c *ar.Ctx) error {
 		c.Response.AddHeader("Content-Type", "text/html; charset=utf-8")
 

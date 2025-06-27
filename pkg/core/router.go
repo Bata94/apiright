@@ -1,8 +1,10 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 var defCatchallHandler = func(c *Ctx) error {
@@ -56,6 +58,84 @@ func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
 }
 
+type StaticSevFileConfig struct {
+	preCache bool
+	contentType string
+}
+
+type StaticServFileOption func(*StaticSevFileConfig)
+
+func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
+	c := &StaticSevFileConfig{
+		preCache:    false,
+		contentType: "",
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
+}
+
+func WithPreCache() StaticServFileOption {
+	// Read the file content once when the handler is created.
+	// This is efficient for files that don't change frequently.
+  return func(c *StaticSevFileConfig) {
+    c.preCache = true
+  }
+}
+
+func WithContentType(contentType string) StaticServFileOption {
+  return func(c *StaticSevFileConfig) {
+    c.contentType = contentType
+  }
+}
+
+func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) error {
+	config := NewStaticServeFileConfig(opt...)
+
+	if config.preCache {
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			err = errors.New(fmt.Sprintf("static directory '%s' does not exist. Please create it and add your files.", filePath))
+			log.Error(err)
+			return err
+		}
+
+		content, err := os.ReadFile(filePath)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("static directory '%s' exists, but is not readable. Please verify permissions.", filePath))
+			log.Error(err)
+			return err
+		}
+
+		h := func(c *Ctx) error {
+      c.Response.SetStatus(200)
+      c.Response.SetData(content)
+      c.Response.AddHeader("Content-Type", config.contentType)
+      return nil
+    }
+
+		r.addEndpoint(
+			METHOD_GET,
+			urlPath,
+			h,
+			WithOpenApiDisabled(),
+		)
+	} else {
+		// TODO: Implement this
+		return errors.New("not implemented")
+	}
+
+	return nil
+}
+
+// TODO: Rethink/Implement do use more of the Framework
+func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
+	fs := http.FileServer(http.Dir(dirPath))
+	a.getHttpHandler().Handle(urlPath, fs)
+}
+
 func (r *Router) routeExists(path string) int {
 	// Checks if route exists and returns the index. If false -1 is returned.
 	for i, route := range r.routes {
@@ -72,13 +152,16 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 	routeIndex := r.routeExists(p)
 
 	if routeIndex == -1 {
-		optionEP := Endpoint{
-			method: METHOD_OPTIONS,
-			handleFunc: func(c *Ctx) error {
-				c.Response.SetStatus(http.StatusOK)
-				return nil
-			},
-			routeOptionConfig: RouteOptionConfig{},
+		var optionEP Endpoint
+		if p != "/" {
+			optionEP = Endpoint{
+				method: METHOD_OPTIONS,
+				handleFunc: func(c *Ctx) error {
+					c.Response.SetStatus(http.StatusOK)
+					return nil
+				},
+				routeOptionConfig: RouteOptionConfig{},
+			}
 		}
 		r.routes = append(r.routes, &Route{
 			basePath: p,
