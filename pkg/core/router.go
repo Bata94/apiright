@@ -140,15 +140,18 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 		pattern += "/"
 	}
 	
-	// Use method-specific patterns to avoid conflicts with other method-specific routes
-	getPattern := "GET " + pattern
-	headPattern := "HEAD " + pattern
+	// Use wildcard patterns to match all paths under the directory
+	// In Go 1.22+, we need {path...} for wildcard matching
+	getPattern := "GET " + pattern + "{path...}"
+	headPattern := "HEAD " + pattern + "{path...}"
 	
 	a.getHttpHandler().HandleFunc(getPattern, func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
+		// Strip the URL prefix to match the file system path
+		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
 	})
 	a.getHttpHandler().HandleFunc(headPattern, func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
+		// Strip the URL prefix to match the file system path
+		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
 	})
 }
 
