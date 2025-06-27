@@ -36,6 +36,7 @@ endpoints=(
     "/group/hello"
     "/docs/"
     "/docs/spec.json"
+    "/timeout"
 )
 
 # Loop through each endpoint and call the function

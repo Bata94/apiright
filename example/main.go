@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	ar "github.com/bata94/apiright/pkg/core"
 )
@@ -12,19 +13,10 @@ type PostStruct struct {
 	Name string `json:"name"`
 }
 
-// @title My Go Web Framework API
-// @description This is a sample API for my Go web framework.
-// @version 1.0
-// @host localhost:8080
-// @BasePath /api/v1
-// @schemes http
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
 func main() {
 	fmt.Println("Starting...")
 
-	app := ar.NewApp()
+	app := ar.NewApp(ar.AppTimeout(time.Duration(10)*time.Second))
 
 	// app.GET("*", func(c *ar.Ctx) error {
 	// 	_, err := c.Writer.Write([]byte("Catch All"))
@@ -32,7 +24,7 @@ func main() {
 	// })
 
 	app.ServeStaticFile("/index", "./example/index.html", ar.WithPreCache())
-	// app.ServeStaticDir("/static", "docs/")
+	app.ServeStaticDir("/static", "docs/")
 
 	app.GET("/", func(c *ar.Ctx) error {
 		c.Response.AddHeader("Content-Type", "text/html; charset=utf-8")
@@ -55,6 +47,16 @@ func main() {
 
 		return nil
 	})
+
+	app.GET("/timeout", func(c *ar.Ctx) error {
+		fmt.Println("Waiting 30 seconds")
+    time.Sleep(time.Duration(30) * time.Second)
+		fmt.Println("Done waiting")
+
+		c.Response.SetStatus(200)
+    c.Response.SetMessage("Test Timeout")
+    return nil
+  })
 
 	app.GET("/err", err_handler)
 
@@ -116,14 +118,6 @@ func post_test(c *ar.Ctx) error {
 	return nil
 }
 
-// GetUsers godoc
-// @Summary Get all users
-// @Description Retrieve a list of all users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Success 200
-// @Router /err [get]
 func err_handler(c *ar.Ctx) error {
 	err := errors.New("test Error")
 	return err

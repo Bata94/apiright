@@ -53,11 +53,11 @@ type TimeoutConfig struct {
 	// Timeout is the maximum duration for a request to complete
 	// Default is 30 seconds
 	Timeout time.Duration
-	
+
 	// TimeoutMessage is the message returned when a request times out
 	// Default is "Request timeout"
 	TimeoutMessage string
-	
+
 	// TimeoutStatusCode is the HTTP status code returned when a request times out
 	// Default is 408 (Request Timeout)
 	TimeoutStatusCode int
@@ -72,6 +72,7 @@ func DefaultTimeoutConfig() TimeoutConfig {
 	}
 }
 
+// BUG: Exec of HandlerFunc is not prob stopped!
 // TimeoutMiddleware returns a middleware that handles request timeouts
 func TimeoutMiddleware(config TimeoutConfig) Middleware {
 	return func(next Handler) Handler {
@@ -79,18 +80,18 @@ func TimeoutMiddleware(config TimeoutConfig) Middleware {
 			// Create a context with timeout
 			ctx, cancel := context.WithTimeout(c.Request.Context(), config.Timeout)
 			defer cancel()
-			
+
 			// Replace the request context with the timeout context
 			c.Request = c.Request.WithContext(ctx)
-			
+
 			// Create a channel to receive the result of the handler
 			done := make(chan error, 1)
-			
+
 			// Run the handler in a goroutine
 			go func() {
 				done <- next(c)
 			}()
-			
+
 			// Wait for either the handler to complete or the timeout
 			select {
 			case err := <-done:
