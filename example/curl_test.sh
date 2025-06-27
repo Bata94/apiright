@@ -26,6 +26,7 @@ perform_curl_test() {
 # Define an array of endpoints
 endpoints=(
     "/"
+    "/index"
     "/err"
     "/err_inside"
     "/panic"
@@ -33,6 +34,8 @@ endpoints=(
     "/group"
     "/group/"
     "/group/hello"
+    "/docs/"
+    "/docs/spec.json"
 )
 
 # Loop through each endpoint and call the function
