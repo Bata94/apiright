@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var defCatchallHandler = func(c *Ctx) error {
@@ -133,7 +134,22 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 // TODO: Rethink/Implement do use more of the Framework
 func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 	fs := http.FileServer(http.Dir(dirPath))
-	a.getHttpHandler().Handle(urlPath, fs)
+	// Ensure the pattern ends with / to avoid conflicts with method-specific patterns
+	pattern := urlPath
+	if !strings.HasSuffix(pattern, "/") {
+		pattern += "/"
+	}
+	
+	// Use method-specific patterns to avoid conflicts with other method-specific routes
+	getPattern := "GET " + pattern
+	headPattern := "HEAD " + pattern
+	
+	a.getHttpHandler().HandleFunc(getPattern, func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	})
+	a.getHttpHandler().HandleFunc(headPattern, func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	})
 }
 
 func (r *Router) routeExists(path string) int {
@@ -152,9 +168,9 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 	routeIndex := r.routeExists(p)
 
 	if routeIndex == -1 {
-		var optionEP Endpoint
+		var endpoints []Endpoint
 		if p != "/" {
-			optionEP = Endpoint{
+			optionEP := Endpoint{
 				method: METHOD_OPTIONS,
 				handleFunc: func(c *Ctx) error {
 					c.Response.SetStatus(http.StatusOK)
@@ -162,13 +178,15 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 				},
 				routeOptionConfig: RouteOptionConfig{},
 			}
+			endpoints = []Endpoint{optionEP}
+		} else {
+			endpoints = []Endpoint{}
 		}
+		
 		r.routes = append(r.routes, &Route{
 			basePath: p,
 			path:     fmt.Sprint(r.basePath, p),
-			endpoints: []Endpoint{
-				optionEP,
-			},
+			endpoints: endpoints,
 		})
 
 		routeIndex = len(r.routes) - 1
