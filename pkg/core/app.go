@@ -9,7 +9,7 @@ import (
 	"reflect"
 
 	"github.com/bata94/apiright/pkg/logger"
-	"github.com/bata94/apiright/pkg/openapi"
+	"github.com/bata94/gogen-openapi"
 )
 
 var (
