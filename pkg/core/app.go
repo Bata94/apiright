@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"time"
 
 	"github.com/bata94/apiright/pkg/logger"
 	"github.com/bata94/gogen-openapi"
@@ -28,7 +29,8 @@ type AppConfig struct {
 	servers []struct {
 		URL, Description string
 	}
-	logger logger.Logger
+	logger  logger.Logger
+	timeout time.Duration
 }
 
 type AppOption func(*AppConfig)
@@ -84,6 +86,12 @@ func AppAddServer(url, description string) AppOption {
 		c.servers = append(c.servers, struct {
 			URL, Description string
 		}{url, description})
+	}
+}
+
+func AppTimeout(timeout time.Duration) AppOption {
+	return func(c *AppConfig) {
+		c.timeout = timeout
 	}
 }
 
@@ -159,6 +167,12 @@ func NewApp(opts ...AppOption) App {
 		}
 	}
 
+	// Initialize timeout configuration
+	timeoutConfig := DefaultTimeoutConfig()
+	if config.timeout > 0 {
+		timeoutConfig.Timeout = config.timeout
+	}
+
 	// Return App Object
 	return App{
 		config:           &config,
@@ -167,10 +181,10 @@ func NewApp(opts ...AppOption) App {
 		router:           newRouter(""),
 		defRouteHandler:  defCatchallHandler,
 		openapiGenerator: openapiGenerator,
+		timeoutConfig:    timeoutConfig,
 	}
 }
 
-// TODO: Add Timeout handling (Middleware??)
 // TODO: Add MaxConnection handling (Middleware??)
 // TODO: Add RateLimit handling (Middleware??)
 type App struct {
@@ -182,10 +196,23 @@ type App struct {
 	router          *Router
 
 	openapiGenerator *openapi.Generator
+	
+	// Timeout configuration for request handling
+	timeoutConfig TimeoutConfig
 }
 
 func (a *App) SetDefaultRoute(handler Handler) {
 	a.defRouteHandler = handler
+}
+
+// SetTimeout configures the request timeout for the application
+func (a *App) SetTimeout(timeout time.Duration) {
+	a.timeoutConfig.Timeout = timeout
+}
+
+// SetTimeoutConfig configures the complete timeout configuration for the application
+func (a *App) SetTimeoutConfig(config TimeoutConfig) {
+	a.timeoutConfig = config
 }
 
 func (a *App) SetLogger(logger logger.Logger) {
@@ -250,6 +277,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		panicMiddleware := PanicMiddleware()
 		logMiddleware := LogMiddleware(a.Logger)
+		timeoutMiddleware := TimeoutMiddleware(a.timeoutConfig)
 
 		// Create CORS config with permissive settings for quick integration
 		corsConfig := CORSConfig{
@@ -263,9 +291,11 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		corsMiddleware := CORSMiddleware(corsConfig)
 
 		// Apply middlewares in the correct order
+		// Timeout should be applied early to ensure all processing is within time limits
 		// CORS should be first to handle preflight requests properly
 		h = logMiddleware(h)
 		h = panicMiddleware(h)
+		h = timeoutMiddleware(h)
 		h = corsMiddleware(h)
 
 		c := NewCtx(w, r)

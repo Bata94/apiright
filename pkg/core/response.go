@@ -38,7 +38,10 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 		err = fmt.Errorf("error in HanlderFunc: %w", err)
 		log.Errorf("handler error: %v", err)
 		c.Response.SetMessage(err.Error())
-		c.Response.SetStatus(http.StatusInternalServerError)
+		// Only set status to 500 if no status has been set yet (still default 200)
+		if c.Response.StatusCode == http.StatusOK {
+			c.Response.SetStatus(http.StatusInternalServerError)
+		}
 	}
 
 	for k, v := range c.Response.Headers {
