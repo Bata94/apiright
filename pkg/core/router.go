@@ -26,6 +26,11 @@ type Router struct {
 	routes []*Route
 
 	basePath string
+	middlewares []Middleware
+}
+
+func (r *Router) Use(m Middleware) {
+  r.middlewares = append(r.middlewares, m)
 }
 
 func (r Router) GetBasePath() string {
@@ -198,5 +203,6 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 		method:            m,
 		handleFunc:        h,
 		routeOptionConfig: *routeConfig,
+		middlewares:       routeConfig.middlewares,
 	})
 }

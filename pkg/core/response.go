@@ -34,6 +34,11 @@ func (r *ApiResponse) AddHeader(k, v string) {
 }
 
 func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
+	defer func() {
+		log.Debug("Closing Connection")
+		c.Close()
+	}()
+
 	if err != nil {
 		err = fmt.Errorf("error in HanlderFunc: %w", err)
 		log.Errorf("handler error: %v", err)
@@ -44,6 +49,7 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 		}
 	}
 
+	log.Debug("Adding/Setting Return Headers")
 	for k, v := range c.Response.Headers {
 		if _, ok := w.Header()[k]; !ok {
 			w.Header().Add(k, v)
@@ -52,15 +58,22 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 		}
 	}
 
+	log.Debug("WriteHeaders")
 	w.WriteHeader(c.Response.StatusCode)
 
+	log.Debug("Writing Body")
 	if c.Response.Data == nil {
-		_, _ = w.Write([]byte(c.Response.Message))
+		log.Debug("Write MSG")
+		_, err = w.Write([]byte(c.Response.Message))
 	} else {
-		_, _ = w.Write(c.Response.Data)
+		log.Debug("Write Data")
+		_, err = w.Write(c.Response.Data)
 	}
 
-	c.Close()
+	if err != nil {
+    log.Errorf("error writing body: %v", err)
+		panic(err)
+  }
 }
 
 func (r *ApiResponse) SetStatus(code int) {
@@ -69,6 +82,10 @@ func (r *ApiResponse) SetStatus(code int) {
 
 func (r *ApiResponse) SetMessage(msg string) {
 	r.Message = msg
+	if r.StatusCode == 0 {
+		log.Debug("StatusCode not set before Message, setting to 200")
+		r.StatusCode = 200
+	}
 }
 
 func (r *ApiResponse) SetData(data []byte) {

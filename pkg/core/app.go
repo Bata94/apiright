@@ -222,10 +222,15 @@ func (a *App) SetLogger(logger logger.Logger) {
 func (a *App) NewRouter(path string) *Router {
 	// Creates and adds a new Router, with a BasePath
 	newRouter := newRouter(path)
+	newRouter.middlewares = a.router.middlewares
 
 	a.router.groups = append(a.router.groups, newRouter)
 
 	return newRouter
+}
+
+func (a *App) Use(m Middleware) {
+	a.router.Use(m)
 }
 
 func (a App) getHttpHandler() *http.ServeMux {
@@ -267,6 +272,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	a.Logger.Debugf("Registering route: %s", handlerPath)
 
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+		log.Debug("Handling request: ", r.URL.Path)
 		h := endPoint.handleFunc
 		var err error
 
@@ -275,33 +281,28 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
-		panicMiddleware := PanicMiddleware()
-		logMiddleware := LogMiddleware(a.Logger)
-		timeoutMiddleware := TimeoutMiddleware(a.timeoutConfig)
-
-		// Create CORS config with permissive settings for quick integration
-		corsConfig := CORSConfig{
-			AllowOrigins:     []string{"*"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-			ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-			AllowCredentials: true,
-			MaxAge:           86400,
+		// Add middlewares
+		if len(router.middlewares) > 0 {
+		log.Debug("Adding middlewares, from Router...")
+			for _, m := range router.middlewares {
+				h = m(h)
+			}
 		}
-		corsMiddleware := CORSMiddleware(corsConfig)
 
-		// Apply middlewares in the correct order
-		// Timeout should be applied early to ensure all processing is within time limits
-		// CORS should be first to handle preflight requests properly
-		h = logMiddleware(h)
-		h = panicMiddleware(h)
-		h = timeoutMiddleware(h)
-		h = corsMiddleware(h)
+		if len(endPoint.middlewares) > 0 {
+			log.Debug("Adding middlewares, from Route...")
+			for _, m := range endPoint.middlewares {
+				h = m(h)
+			}
+		}
 
+		log.Debug("Setting CTX")
 		c := NewCtx(w, r)
+		r = r.WithContext(c.Request.Context())
 
 		// BUG: Struct In Validation doesnt error out and just runs for ever without return, if struct is not valid...
 		if endPoint.routeOptionConfig.ObjIn != nil {
+			log.Debug("Setting up ObjIn")
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
@@ -330,12 +331,14 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			}
 		}
 
+		log.Debug("Sending to handleFunc")
 		err = h(c)
 		if err != nil {
 			goto ClosingFunc
 		}
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
+			log.Debug("Receiving ObjOut")
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
 				c.Response.SetStatus(http.StatusInternalServerError)
@@ -352,6 +355,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 
 	ClosingFunc:
+		log.Debug("To Sending Return")
 		c.Response.SendingReturn(w, c, err)
 	})
 }

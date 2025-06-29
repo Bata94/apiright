@@ -10,6 +10,7 @@ import (
 	"github.com/bata94/apiright/pkg/logger"
 )
 
+// TODO: Think Errorandling either here or in CTX
 type Middleware func(Handler) Handler
 
 func LogMiddleware(logger logger.Logger) Middleware {
@@ -70,6 +71,10 @@ func DefaultTimeoutConfig() TimeoutConfig {
 		TimeoutMessage:    "Request timeout",
 		TimeoutStatusCode: http.StatusRequestTimeout,
 	}
+}
+
+func TimeoutConfigFromApp(a App) TimeoutConfig {
+  return a.timeoutConfig
 }
 
 // BUG: Exec of HandlerFunc is not prob stopped!

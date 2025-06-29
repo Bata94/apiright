@@ -46,6 +46,7 @@ func (m RequestMethod) toPathString() string {
 type Endpoint struct {
 	method            RequestMethod
 	handleFunc        Handler
+	middlewares       []Middleware
 	routeOptionConfig RouteOptionConfig
 }
 
@@ -56,7 +57,7 @@ func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 		Request:  r,
 		Response: NewApiResponse(),
 
-		conClosed:  make(chan bool),
+		conClosed:  make(chan bool, 1),
 		conStarted: time.Now(),
 	}
 }
@@ -97,6 +98,7 @@ type RouteOptionConfig struct {
 
 	ObjIn  any
 	ObjOut any
+	middlewares []Middleware
 }
 
 type RouteOption func(*RouteOptionConfig)
@@ -112,6 +114,12 @@ func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
 	}
 
 	return config
+}
+
+func Use(m Middleware) RouteOption {
+  return func(c *RouteOptionConfig) {
+		c.middlewares = append(c.middlewares, m)
+  }
 }
 
 func WithObjIn(obj any) RouteOption {
