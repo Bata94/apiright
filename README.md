@@ -23,7 +23,7 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [X] Catch-all/default Route
     - [ ] Multi domain support
     - [X] Routergroups
-    - [~] Middlewares
+    - [X] Middlewares
     - [~] "Fastapi" like, streamlined simple CRUD Operations
     - [X] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
@@ -35,7 +35,7 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] Multiworker scaling
     - [ ] CLI-Mode
     - [ ] Extensive Testsuite
-    - [X] HTTP/2.0 Support (Handles automaticly in net/http)
+    - [X] HTTP/2.0 Support (Handled automatically in net/http)
     - [ ] HTTP/3.0 Support (I think in Go net/http it's not prod ready)
 
 ## Limitation
