@@ -196,7 +196,7 @@ type App struct {
 	router          *Router
 
 	openapiGenerator *openapi.Generator
-	
+
 	// Timeout configuration for request handling
 	timeoutConfig TimeoutConfig
 }
@@ -409,7 +409,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	if endPoint.routeOptionConfig.ObjOut != nil {
 		newEndpointBuilder.Response(200, "Success", "application/json", objOutType)
 	} else {
-		// TODO: This reflet statement must be easier
+		// TODO: This reflect statement must be easier
 		newEndpointBuilder.Response(200, "Success", "text/plain", reflect.TypeOf("i"))
 	}
 
