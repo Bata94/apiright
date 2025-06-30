@@ -16,7 +16,7 @@ type PostStruct struct {
 func main() {
 	fmt.Println("Starting...")
 
-	app := ar.NewApp(ar.AppTimeout(time.Duration(10)*time.Second))
+	app := ar.NewApp(ar.AppTimeout(time.Duration(10) * time.Second))
 
 	// Create CORS config with permissive settings for quick integration
 	corsConfig := ar.CORSConfig{
@@ -64,13 +64,13 @@ func main() {
 
 	app.GET("/timeout", func(c *ar.Ctx) error {
 		fmt.Println("Waiting 30 seconds")
-    time.Sleep(time.Duration(30) * time.Second)
+		time.Sleep(time.Duration(30) * time.Second)
 		fmt.Println("Done waiting")
 
 		c.Response.SetStatus(200)
-    c.Response.SetMessage("Test Timeout")
-    return nil
-  })
+		c.Response.SetMessage("Test Timeout")
+		return nil
+	})
 
 	app.GET("/err", err_handler)
 

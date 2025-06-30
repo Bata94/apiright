@@ -26,13 +26,13 @@ type Router struct {
 	groups []*Router
 	routes []*Route
 
-	basePath string
+	basePath    string
 	middlewares []Middleware
 }
 
 // Use adds a middleware to the router.
 func (r *Router) Use(m Middleware) {
-  r.middlewares = append(r.middlewares, m)
+	r.middlewares = append(r.middlewares, m)
 }
 
 // GetBasePath returns the base path of the router.
@@ -74,7 +74,7 @@ func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
-	preCache bool
+	preCache    bool
 	contentType string
 }
 
@@ -99,16 +99,16 @@ func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig
 func WithPreCache() StaticServFileOption {
 	// Read the file content once when the handler is created.
 	// This is efficient for files that don't change frequently.
-  return func(c *StaticSevFileConfig) {
-    c.preCache = true
-  }
+	return func(c *StaticSevFileConfig) {
+		c.preCache = true
+	}
 }
 
 // WithContentType sets the content type of the file.
 func WithContentType(contentType string) StaticServFileOption {
-  return func(c *StaticSevFileConfig) {
-    c.contentType = contentType
-  }
+	return func(c *StaticSevFileConfig) {
+		c.contentType = contentType
+	}
 }
 
 // ServeStaticFile serves a static file.
@@ -117,24 +117,24 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 
 	if config.preCache {
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			err = errors.New(fmt.Sprintf("static directory '%s' does not exist. Please create it and add your files.", filePath))
+			err = fmt.Errorf("static directory '%s' does not exist. Please create it and add your files", filePath)
 			log.Error(err)
 			return err
 		}
 
 		content, err := os.ReadFile(filePath)
 		if err != nil {
-			err = errors.New(fmt.Sprintf("static directory '%s' exists, but is not readable. Please verify permissions.", filePath))
+			err = fmt.Errorf("static directory '%s' exists, but is not readable. Please verify permissions", filePath)
 			log.Error(err)
 			return err
 		}
 
 		h := func(c *Ctx) error {
-      c.Response.SetStatus(200)
-      c.Response.SetData(content)
-      c.Response.AddHeader("Content-Type", config.contentType)
-      return nil
-    }
+			c.Response.SetStatus(200)
+			c.Response.SetData(content)
+			c.Response.AddHeader("Content-Type", config.contentType)
+			return nil
+		}
 
 		r.addEndpoint(
 			METHOD_GET,
@@ -164,7 +164,7 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 	getPattern := "GET " + pattern + "{path...}"
 	headPattern := "HEAD " + pattern + "{path...}"
 
-	h:=func(w http.ResponseWriter, r *http.Request) {
+	h := func(w http.ResponseWriter, r *http.Request) {
 		// Strip the URL prefix to match the file system path
 		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
 	}
@@ -205,8 +205,8 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 		}
 
 		r.routes = append(r.routes, &Route{
-			basePath: p,
-			path:     fmt.Sprint(r.basePath, p),
+			basePath:  p,
+			path:      fmt.Sprint(r.basePath, p),
 			endpoints: endpoints,
 		})
 

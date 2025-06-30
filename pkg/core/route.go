@@ -114,8 +114,8 @@ type RouteOptionConfig struct {
 		deprecated           bool
 	}
 
-	ObjIn  any
-	ObjOut any
+	ObjIn       any
+	ObjOut      any
 	middlewares []Middleware
 }
 
@@ -138,9 +138,9 @@ func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
 
 // Use adds a middleware to the route.
 func Use(m Middleware) RouteOption {
-  return func(c *RouteOptionConfig) {
+	return func(c *RouteOptionConfig) {
 		c.middlewares = append(c.middlewares, m)
-  }
+	}
 }
 
 // WithObjIn sets the input object for the route.

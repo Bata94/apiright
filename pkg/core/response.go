@@ -77,9 +77,9 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 	}
 
 	if err != nil {
-    log.Errorf("error writing body: %v", err)
+		log.Errorf("error writing body: %v", err)
 		panic(err)
-  }
+	}
 }
 
 // SetStatus sets the status code of the response.

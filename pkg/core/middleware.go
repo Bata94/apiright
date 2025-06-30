@@ -78,7 +78,7 @@ func DefaultTimeoutConfig() TimeoutConfig {
 
 // TimeoutConfigFromApp returns a TimeoutConfig from an App instance.
 func TimeoutConfigFromApp(a App) TimeoutConfig {
-  return a.timeoutConfig
+	return a.timeoutConfig
 }
 
 // BUG: Exec of HandlerFunc is not prob stopped!

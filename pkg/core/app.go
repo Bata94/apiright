@@ -275,7 +275,10 @@ func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 }
 
 func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
-  a.router.ServeStaticFile(urlPath, filePath, opt...)
+	err := a.router.ServeStaticFile(urlPath, filePath, opt...)
+	if err != nil {
+		panic(fmt.Errorf("error serving static file: %w", err))
+	}
 }
 
 func (a App) ServeStaticDir(urlPath, dirPath string) {
@@ -300,7 +303,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		// Add middlewares
 		if len(router.middlewares) > 0 {
-		log.Debug("Adding middlewares, from Router...")
+			log.Debug("Adding middlewares, from Router...")
 			for _, m := range router.middlewares {
 				h = m(h)
 			}
@@ -527,7 +530,7 @@ func (a *App) genOpenApiFiles() []string {
 	for path, methods := range endpoints {
 		a.Logger.Infof("   %s: %v", path, methods)
 	}
-	 return files
+	return files
 }
 
 func (a *App) Run() error {
