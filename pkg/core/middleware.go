@@ -10,9 +10,11 @@ import (
 	"github.com/bata94/apiright/pkg/logger"
 )
 
+// Middleware is a function that wraps a Handler to add functionality.
 // TODO: Think Errorandling either here or in CTX
 type Middleware func(Handler) Handler
 
+// LogMiddleware is a middleware that logs requests.
 func LogMiddleware(logger logger.Logger) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
@@ -35,6 +37,7 @@ func LogMiddleware(logger logger.Logger) Middleware {
 	}
 }
 
+// PanicMiddleware is a middleware that recovers from panics.
 func PanicMiddleware() Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
@@ -73,6 +76,7 @@ func DefaultTimeoutConfig() TimeoutConfig {
 	}
 }
 
+// TimeoutConfigFromApp returns a TimeoutConfig from an App instance.
 func TimeoutConfigFromApp(a App) TimeoutConfig {
   return a.timeoutConfig
 }

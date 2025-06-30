@@ -17,6 +17,7 @@ var (
 	log logger.Logger
 )
 
+// AppConfig holds the configuration for the application.
 type AppConfig struct {
 	title, serviceDescribtion, version, host, port string
 
@@ -33,26 +34,31 @@ type AppConfig struct {
 	timeout time.Duration
 }
 
+// AppOption is a function that configures an AppConfig.
 type AppOption func(*AppConfig)
 
+// AppTitle sets the title of the application.
 func AppTitle(title string) AppOption {
 	return func(c *AppConfig) {
 		c.title = title
 	}
 }
 
+// AppDescription sets the description of the application.
 func AppDescription(description string) AppOption {
 	return func(c *AppConfig) {
 		c.serviceDescribtion = description
 	}
 }
 
+// AppVersion sets the version of the application.
 func AppVersion(version string) AppOption {
 	return func(c *AppConfig) {
 		c.version = version
 	}
 }
 
+// AppAddr sets the host and port the application will listen on.
 func AppAddr(host, port string) AppOption {
 	return func(c *AppConfig) {
 		c.host = host
@@ -60,12 +66,14 @@ func AppAddr(host, port string) AppOption {
 	}
 }
 
+// AppLogger sets the logger for the application.
 func AppLogger(logger logger.Logger) AppOption {
 	return func(c *AppConfig) {
 		c.logger = logger
 	}
 }
 
+// AppContact sets the contact information for the application.
 func AppContact(name, email, url string) AppOption {
 	return func(c *AppConfig) {
 		c.contact.Name = name
@@ -74,6 +82,7 @@ func AppContact(name, email, url string) AppOption {
 	}
 }
 
+// AppLicense sets the license information for the application.
 func AppLicense(name, url string) AppOption {
 	return func(c *AppConfig) {
 		c.license.Name = name
@@ -81,6 +90,7 @@ func AppLicense(name, url string) AppOption {
 	}
 }
 
+// AppAddServer adds a server to the list of servers for the application.
 func AppAddServer(url, description string) AppOption {
 	return func(c *AppConfig) {
 		c.servers = append(c.servers, struct {
@@ -89,16 +99,19 @@ func AppAddServer(url, description string) AppOption {
 	}
 }
 
+// AppTimeout sets the timeout for the application.
 func AppTimeout(timeout time.Duration) AppOption {
 	return func(c *AppConfig) {
 		c.timeout = timeout
 	}
 }
 
+// GetListenAddress returns the address the application will listen on.
 func (c AppConfig) GetListenAddress() string {
 	return fmt.Sprintf("%s:%s", c.host, c.port)
 }
 
+// NewApp creates a new App instance.
 func NewApp(opts ...AppOption) App {
 	handler := http.NewServeMux()
 
@@ -185,6 +198,7 @@ func NewApp(opts ...AppOption) App {
 	}
 }
 
+// App is the main application struct.
 // TODO: Add MaxConnection handling (Middleware??)
 // TODO: Add RateLimit handling (Middleware??)
 type App struct {
@@ -201,6 +215,7 @@ type App struct {
 	timeoutConfig TimeoutConfig
 }
 
+// SetDefaultRoute sets the default route handler for the application.
 func (a *App) SetDefaultRoute(handler Handler) {
 	a.defRouteHandler = handler
 }
@@ -215,10 +230,12 @@ func (a *App) SetTimeoutConfig(config TimeoutConfig) {
 	a.timeoutConfig = config
 }
 
+// SetLogger sets the logger for the application.
 func (a *App) SetLogger(logger logger.Logger) {
 	a.Logger = logger
 }
 
+// NewRouter creates a new router with a given base path.
 func (a *App) NewRouter(path string) *Router {
 	// Creates and adds a new Router, with a BasePath
 	newRouter := newRouter(path)

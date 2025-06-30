@@ -5,14 +5,17 @@ import (
 	"net/http"
 )
 
+// Response is a generic response type.
 type Response any
 
+// ErrorResponse is the response for errors.
 type ErrorResponse struct {
 	Error   string `json:"error" xml:"error" description:"Error message"`
 	Code    int    `json:"code" xml:"code" description:"Error code"`
 	Details string `json:"details,omitempty" xml:"details,omitempty" description:"Additional error details"`
 }
 
+// ApiResponse is the standard API response.
 type ApiResponse struct {
 	Headers           map[string]string
 	StatusCode        int    `json:"statusCode" xml:"statusCode"`
@@ -21,18 +24,21 @@ type ApiResponse struct {
 	Data              []byte `json:"data,omitempty" xml:"data,omitempty"`
 }
 
+// NewApiResponse creates a new ApiResponse.
 func NewApiResponse() ApiResponse {
 	return ApiResponse{
 		StatusCode: http.StatusOK,
 	}
 }
 
+// AddHeader adds a header to the response.
 func (r *ApiResponse) AddHeader(k, v string) {
 	r.Headers = map[string]string{
 		k: v,
 	}
 }
 
+// SendingReturn sends the response to the client.
 func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
 	defer func() {
 		log.Debug("Closing Connection")
@@ -76,10 +82,12 @@ func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
   }
 }
 
+// SetStatus sets the status code of the response.
 func (r *ApiResponse) SetStatus(code int) {
 	r.StatusCode = code
 }
 
+// SetMessage sets the message of the response.
 func (r *ApiResponse) SetMessage(msg string) {
 	r.Message = msg
 	if r.StatusCode == 0 {
@@ -88,6 +96,7 @@ func (r *ApiResponse) SetMessage(msg string) {
 	}
 }
 
+// SetData sets the data of the response.
 func (r *ApiResponse) SetData(data []byte) {
 	r.Data = data
 }

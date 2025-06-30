@@ -21,6 +21,7 @@ func newRouter(path string) *Router {
 	}
 }
 
+// Router is a router for the application.
 type Router struct {
 	groups []*Router
 	routes []*Route
@@ -29,10 +30,12 @@ type Router struct {
 	middlewares []Middleware
 }
 
+// Use adds a middleware to the router.
 func (r *Router) Use(m Middleware) {
   r.middlewares = append(r.middlewares, m)
 }
 
+// GetBasePath returns the base path of the router.
 func (r Router) GetBasePath() string {
 	if len(r.basePath) > 1 {
 		if string(r.basePath[len(r.basePath)-1]) != "/" {
@@ -44,33 +47,41 @@ func (r Router) GetBasePath() string {
 	return r.basePath
 }
 
+// GET adds a GET endpoint to the router.
 func (r *Router) GET(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_GET, path, handler, opt...)
 }
 
+// POST adds a POST endpoint to the router.
 func (r *Router) POST(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_POST, path, handler, opt...)
 }
 
+// PUT adds a PUT endpoint to the router.
 func (r *Router) PUT(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_PUT, path, handler, opt...)
 }
 
+// DELETE adds a DELETE endpoint to the router.
 func (r *Router) DELETE(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_DELETE, path, handler, opt...)
 }
 
+// OPTIONS adds an OPTIONS endpoint to the router.
 func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
 }
 
+// StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
 	preCache bool
 	contentType string
 }
 
+// StaticServFileOption is a function that configures a StaticSevFileConfig.
 type StaticServFileOption func(*StaticSevFileConfig)
 
+// NewStaticServeFileConfig creates a new StaticSevFileConfig.
 func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
 	c := &StaticSevFileConfig{
 		preCache:    false,
@@ -84,6 +95,7 @@ func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig
 	return c
 }
 
+// WithPreCache caches the file content in memory.
 func WithPreCache() StaticServFileOption {
 	// Read the file content once when the handler is created.
 	// This is efficient for files that don't change frequently.
@@ -92,12 +104,14 @@ func WithPreCache() StaticServFileOption {
   }
 }
 
+// WithContentType sets the content type of the file.
 func WithContentType(contentType string) StaticServFileOption {
   return func(c *StaticSevFileConfig) {
     c.contentType = contentType
   }
 }
 
+// ServeStaticFile serves a static file.
 func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) error {
 	config := NewStaticServeFileConfig(opt...)
 

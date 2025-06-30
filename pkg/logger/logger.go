@@ -8,16 +8,23 @@ import (
 	"time"
 )
 
-// LogLevel represents the severity level of a log entry
+// LogLevel represents the severity level of a log entry.
 type LogLevel int
 
 const (
+	// PanicLevel level, highest level of severity.
 	PanicLevel LogLevel = iota
+	// FatalLevel level, logs and then calls os.Exit(1).
 	FatalLevel
+	// ErrorLevel level, used for errors that should definitely be noted.
 	ErrorLevel
+	// WarnLevel level, used for non-critical entries that deserve attention.
 	WarnLevel
+	// InfoLevel level, general operational entries about what's going on.
 	InfoLevel
+	// DebugLevel level, very verbose logging.
 	DebugLevel
+	// TraceLevel level, denotes finer-grained informational events than the Debug.
 	TraceLevel
 )
 
@@ -31,6 +38,7 @@ var levelNames = []string{
 	"TRACE",
 }
 
+// String returns the string representation of the LogLevel.
 func (l LogLevel) String() string {
 	if int(l) < len(levelNames) {
 		return levelNames[l]
@@ -38,7 +46,7 @@ func (l LogLevel) String() string {
 	return "UNKNOWN"
 }
 
-// Logger interface defines the logging contract
+// Logger defines the interface for logging.
 // This interface is compatible with logrus and other popular Go loggers
 type Logger interface {
 	// Standard logging methods
