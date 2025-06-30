@@ -264,7 +264,7 @@ func TestApp_ServeStaticFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create dummy file: %v", err)
 	}
-	defer RemoveDummyFile(dummyFilePath)
+	defer func() { _ = RemoveDummyFile(dummyFilePath) }()
 
 	app.ServeStaticFile("/static/dummy.txt", dummyFilePath, WithContentType("text/plain"), WithPreCache())
 	if err != nil {
@@ -328,7 +328,7 @@ func TestApp_ServeStaticDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create dummy directory: %v", err)
 	}
-	defer RemoveDummyDir(dummyDirPath)
+	defer func() { _ = RemoveDummyDir(dummyDirPath) }()
 
 	err = WriteDummyFile(dummyFilePath, dummyContent)
 	if err != nil {
@@ -351,7 +351,7 @@ func TestApp_ServeStaticDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -371,4 +371,3 @@ func TestApp_ServeStaticDir(t *testing.T) {
 
 // Helper functions for static file/dir tests
 // Using functions from test_utils.go
-

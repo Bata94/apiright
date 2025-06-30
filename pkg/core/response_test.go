@@ -124,7 +124,7 @@ func TestApiResponse_SendingReturn(t *testing.T) {
 
 	// Test case 3: Error in handler
 	t.Run("ErrorInHandler", func(t *testing.T) {
-						rec = httptest.NewRecorder()
+		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := NewCtx(rec, req)
 		ctx.Response.SetStatus(http.StatusOK) // Ensure default status

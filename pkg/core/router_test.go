@@ -102,14 +102,14 @@ func TestRouter_RoutingMethods(t *testing.T) {
 	router.OPTIONS("/options", mockHandler)
 
 	tests := []struct {
-		method RequestMethod
-		path   string
+		method            RequestMethod
+		path              string
 		expectedEndpoints int
 	}{
-		{METHOD_GET, "/get", 2}, // GET + OPTIONS
-		{METHOD_POST, "/post", 2}, // POST + OPTIONS
-		{METHOD_PUT, "/put", 2}, // PUT + OPTIONS
-		{METHOD_DELETE, "/delete", 2}, // DELETE + OPTIONS
+		{METHOD_GET, "/get", 2},         // GET + OPTIONS
+		{METHOD_POST, "/post", 2},       // POST + OPTIONS
+		{METHOD_PUT, "/put", 2},         // PUT + OPTIONS
+		{METHOD_DELETE, "/delete", 2},   // DELETE + OPTIONS
 		{METHOD_OPTIONS, "/options", 1}, // OPTIONS only, as addEndpoint doesn't add another OPTIONS for /
 	}
 
@@ -141,7 +141,7 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create dummy file: %v", err)
 	}
-	defer RemoveDummyFile(dummyFilePath)
+	defer func() { _ = RemoveDummyFile(dummyFilePath) }()
 
 	err = router.ServeStaticFile("/static/router_file.txt", dummyFilePath, WithContentType("text/plain"), WithPreCache())
 	if err != nil {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	)
+)
 
 // TestCORSMiddleware tests the CORSMiddleware
 func TestCORSMiddleware(t *testing.T) {
@@ -15,17 +15,17 @@ func TestCORSMiddleware(t *testing.T) {
 
 	// Test cases
 	testCases := []struct {
-		name           string
-		config         CORSConfig
-		requestHeaders map[string]string
-		expectedStatus int
+		name            string
+		config          CORSConfig
+		requestHeaders  map[string]string
+		expectedStatus  int
 		expectedHeaders map[string]string
 	}{
 		{
-			name:   "No Origin Header",
-			config: DefaultCORSConfig(),
-			requestHeaders: map[string]string{},
-			expectedStatus: http.StatusOK,
+			name:            "No Origin Header",
+			config:          DefaultCORSConfig(),
+			requestHeaders:  map[string]string{},
+			expectedStatus:  http.StatusOK,
 			expectedHeaders: map[string]string{},
 		},
 		{
@@ -47,14 +47,14 @@ func TestCORSMiddleware(t *testing.T) {
 			requestHeaders: map[string]string{
 				"Origin": "http://disallowed.com",
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus:  http.StatusOK,
 			expectedHeaders: map[string]string{},
 		},
 		{
 			name:   "Preflight Request",
 			config: DefaultCORSConfig(),
 			requestHeaders: map[string]string{
-				"Origin": "http://localhost:3000",
+				"Origin":                        "http://localhost:3000",
 				"Access-Control-Request-Method": "GET",
 			},
 			expectedStatus: http.StatusNoContent,
@@ -71,14 +71,14 @@ func TestCORSMiddleware(t *testing.T) {
 				AllowCredentials: true,
 			},
 			requestHeaders: map[string]string{
-				"Origin": "http://localhost:3000",
+				"Origin":                        "http://localhost:3000",
 				"Access-Control-Request-Method": "POST",
 			},
 			expectedStatus: http.StatusNoContent,
 			expectedHeaders: map[string]string{
 				"Access-Control-Allow-Origin":      "http://localhost:3000",
 				"Access-Control-Allow-Credentials": "true",
-				"Vary": "Origin",
+				"Vary":                             "Origin",
 			},
 		},
 	}
@@ -107,14 +107,14 @@ func TestCORSMiddleware(t *testing.T) {
 			}
 
 			if c.Response.StatusCode != tc.expectedStatus {
-			t.Errorf("expected status %d, got %d", tc.expectedStatus, c.Response.StatusCode)
-		}
-
-		for key, value := range tc.expectedHeaders {
-			if headerValue, ok := c.Response.Headers[key]; !ok || headerValue != value {
-				t.Errorf("expected header %s: %s, got: %s", key, value, headerValue)
+				t.Errorf("expected status %d, got %d", tc.expectedStatus, c.Response.StatusCode)
 			}
-		}
+
+			for key, value := range tc.expectedHeaders {
+				if headerValue, ok := c.Response.Headers[key]; !ok || headerValue != value {
+					t.Errorf("expected header %s: %s, got: %s", key, value, headerValue)
+				}
+			}
 		})
 	}
 }
