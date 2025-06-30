@@ -46,6 +46,9 @@ check:
 fmt:
   go fmt ./...
 
+simplify-fmt:
+  gofmt -w -s .
+
 lint:
   golangci-lint run ./...
 
