@@ -79,7 +79,7 @@ func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 // Ctx is the context for a request.
 type Ctx struct {
 	// TODO: Move to an Interface, prob to use HTML Responses as well
-	Response ApiResponse
+	Response *ApiResponse
 	Request  *http.Request
 
 	conClosed  chan (bool)

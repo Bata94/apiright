@@ -376,7 +376,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 	ClosingFunc:
 		log.Debug("To Sending Return")
-		c.Response.SendingReturn(w, c, err)
+		c.SendingReturn(w, err)
 	})
 }
 

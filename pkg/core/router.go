@@ -213,6 +213,15 @@ func (r *Router) addEndpoint(m RequestMethod, p string, h Handler, opt ...RouteO
 		routeIndex = len(r.routes) - 1
 	}
 
+	// Prevent adding duplicate OPTIONS endpoint if it already exists
+	if m == METHOD_OPTIONS {
+		for _, ep := range r.routes[routeIndex].endpoints {
+			if ep.method == METHOD_OPTIONS {
+				return
+			}
+		}
+	}
+
 	r.routes[routeIndex].endpoints = append(r.routes[routeIndex].endpoints, Endpoint{
 		method:            m,
 		handleFunc:        h,

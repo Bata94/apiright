@@ -25,21 +25,22 @@ type ApiResponse struct {
 }
 
 // NewApiResponse creates a new ApiResponse.
-func NewApiResponse() ApiResponse {
-	return ApiResponse{
+func NewApiResponse() *ApiResponse {
+	return &ApiResponse{
 		StatusCode: http.StatusOK,
 	}
 }
 
 // AddHeader adds a header to the response.
 func (r *ApiResponse) AddHeader(k, v string) {
-	r.Headers = map[string]string{
-		k: v,
+	if r.Headers == nil {
+		r.Headers = make(map[string]string)
 	}
+	r.Headers[k] = v
 }
 
 // SendingReturn sends the response to the client.
-func (r *ApiResponse) SendingReturn(w http.ResponseWriter, c *Ctx, err error) {
+func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 	defer func() {
 		log.Debug("Closing Connection")
 		c.Close()
