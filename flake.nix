@@ -25,6 +25,7 @@
           gotools
           gopls
           delve
+          vegeta
 
           sqlc
           goose

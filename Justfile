@@ -54,3 +54,7 @@ lint:
 
 pre-release: clean mod-tidy fmt check lint test
   @echo "Ran check, fmt and lint"
+
+vegeta method url max-workers duration:
+  echo "{{method}} {{url}}" | vegeta attack -duration {{duration}} -rate 0 -max-workers {{max-workers}} | vegeta encode > results.json
+  vegeta report results.json

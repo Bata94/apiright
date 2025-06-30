@@ -5,3 +5,4 @@ docs/
 example/docs
 *.exe
 .env
+results.json
