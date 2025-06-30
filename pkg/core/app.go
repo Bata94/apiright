@@ -289,40 +289,33 @@ func (a App) ServeStaticDir(urlPath, dirPath string) {
 // TODO: Add XML and YAML support, based on Request Header
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
-	a.Logger.Debugf("Registering route: %s", handlerPath)
 
 	h := endPoint.handleFunc
 	// Add middlewares
 	if len(router.middlewares) > 0 {
-		log.Debug("Adding middlewares, from Router...")
 		for _, m := range router.middlewares {
 			h = m(h)
 		}
 	}
 
 	if len(endPoint.middlewares) > 0 {
-		log.Debug("Adding middlewares, from Route...")
 		for _, m := range endPoint.middlewares {
 			h = m(h)
 		}
 	}
 
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("Handling request: ", r.URL.Path)
 		var err error
 
 		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
-			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
 			h = a.defRouteHandler
 		}
 
-		log.Debug("Setting CTX")
 		c := NewCtx(w, r)
 		r = r.WithContext(c.Request.Context())
 
 		// TODO: Return all wrong types in respose, not only the first one
 		if endPoint.routeOptionConfig.ObjIn != nil {
-			log.Debug("Setting up ObjIn")
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
@@ -351,14 +344,12 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			}
 		}
 
-		log.Debug("Sending to handleFunc")
 		err = h(c)
 		if err != nil {
 			goto ClosingFunc
 		}
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
-			log.Debug("Receiving ObjOut")
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
 				c.Response.SetStatus(http.StatusInternalServerError)
@@ -375,7 +366,6 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 
 	ClosingFunc:
-		log.Debug("To Sending Return")
 		c.SendingReturn(w, err)
 	})
 }

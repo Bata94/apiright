@@ -42,7 +42,6 @@ func (r *ApiResponse) AddHeader(k, v string) {
 // SendingReturn sends the response to the client.
 func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 	defer func() {
-		log.Debug("Closing Connection")
 		c.Close()
 	}()
 
@@ -56,7 +55,6 @@ func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 		}
 	}
 
-	log.Debug("Adding/Setting Return Headers")
 	for k, v := range c.Response.Headers {
 		if _, ok := w.Header()[k]; !ok {
 			w.Header().Add(k, v)
@@ -65,15 +63,11 @@ func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 		}
 	}
 
-	log.Debug("WriteHeaders")
 	w.WriteHeader(c.Response.StatusCode)
 
-	log.Debug("Writing Body")
 	if c.Response.Data == nil {
-		log.Debug("Write MSG")
 		_, err = w.Write([]byte(c.Response.Message))
 	} else {
-		log.Debug("Write Data")
 		_, err = w.Write(c.Response.Data)
 	}
 
@@ -91,10 +85,6 @@ func (r *ApiResponse) SetStatus(code int) {
 // SetMessage sets the message of the response.
 func (r *ApiResponse) SetMessage(msg string) {
 	r.Message = msg
-	if r.StatusCode == 0 {
-		log.Debug("StatusCode not set before Message, setting to 200")
-		r.StatusCode = 200
-	}
 }
 
 // SetData sets the data of the response.
