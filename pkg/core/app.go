@@ -320,7 +320,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		c := NewCtx(w, r)
 		r = r.WithContext(c.Request.Context())
 
-		// BUG: Struct In Validation doesnt error out and just runs for ever without return, if struct is not valid...
+		// TODO: Return all wrong types in respose, not only the first one
 		if endPoint.routeOptionConfig.ObjIn != nil {
 			log.Debug("Setting up ObjIn")
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
