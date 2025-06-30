@@ -160,6 +160,21 @@ func DefaultCORSConfig() CORSConfig {
 	}
 }
 
+// TODO: ExposeAll CORSConfig
+
+// ExposeAllCORSConfig returns a CORSConfig that allows all origins, headers, and methods.
+// Use with caution! But might be nice for dev/testing.
+func ExposeAllCORSConfig() CORSConfig {
+	return CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"*"},
+		ExposeHeaders:    []string{},
+		AllowCredentials: false,
+		MaxAge:           86400,
+	}
+}
+
 // CORSMiddleware returns a middleware that handles CORS
 func CORSMiddleware(config CORSConfig) Middleware {
 	// Convert methods to uppercase and headers to canonical form for consistency
@@ -212,10 +227,17 @@ func CORSMiddleware(config CORSConfig) Middleware {
 			// Handle preflight requests
 			if c.Request.Method == http.MethodOptions {
 				// Set allowed methods
-				c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
+				if len(config.AllowMethods) == 1 && config.AllowMethods[0] == "*" {
+					c.Response.AddHeader("Access-Control-Allow-Methods", c.Request.Header.Get("Access-Control-Request-Method"))
+				} else {
+					c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
+				}
 
 				// Set allowed headers
-				if len(config.AllowHeaders) > 0 {
+				if len(config.AllowHeaders) == 1 && config.AllowHeaders[0] == "*" {
+					c.Response.AddHeader("Access-Control-Allow-Headers", c.Request.Header.Get("Access-Control-Request-Headers"))
+					c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
+				} else if len(config.AllowHeaders) > 0 {
 					c.Response.AddHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
 				} else {
 					// If no specific headers are defined, allow the requested ones

@@ -19,14 +19,9 @@ func main() {
 	app := ar.NewApp(ar.AppTimeout(time.Duration(10) * time.Second))
 
 	// Create CORS config with permissive settings for quick integration
-	corsConfig := ar.CORSConfig{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           86400,
-	}
+	// corsConfig := ar.DefaultCORSConfig()
+	corsConfig := ar.ExposeAllCORSConfig()
+
 	app.Use(ar.PanicMiddleware())
 	app.Use(ar.LogMiddleware(app.Logger))
 	app.Use(ar.TimeoutMiddleware(ar.TimeoutConfigFromApp(app)))
