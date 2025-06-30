@@ -59,8 +59,13 @@ func main() {
 
 	app.GET("/timeout", func(c *ar.Ctx) error {
 		fmt.Println("Waiting 30 seconds")
-		time.Sleep(time.Duration(30) * time.Second)
-		fmt.Println("Done waiting")
+		select {
+		case <-time.After(30 * time.Second):
+			fmt.Println("Done waiting")
+		case <-c.Context().Done():
+			fmt.Println("Context cancelled, stopping wait.")
+			return c.Context().Err()
+		}
 
 		c.Response.SetStatus(200)
 		c.Response.SetMessage("Test Timeout")

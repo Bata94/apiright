@@ -36,6 +36,7 @@ endpoints=(
     "/group/hello"
     "/docs/"
     "/docs/spec.json"
+    "/static/spec.json"
     "/timeout"
 )
 
