@@ -201,6 +201,9 @@ func NewApp(opts ...AppOption) App {
 // App is the main application struct.
 // TODO: Add MaxConnection handling (Middleware??)
 // TODO: Add RateLimit handling (Middleware??)
+// TODO: Add Compress Middleware
+// TODO: Add Response Caching Middleware
+// TODO: Add Next/Skip function to Middlewares, to skip the middleware for i.e. endpoints or states
 type App struct {
 	config  *AppConfig
 	handler *http.ServeMux
