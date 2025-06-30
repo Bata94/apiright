@@ -291,16 +291,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 	a.Logger.Debugf("Registering route: %s", handlerPath)
 
-	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
-		log.Debug("Handling request: ", r.URL.Path)
 		h := endPoint.handleFunc
-		var err error
-
-		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
-			a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
-			h = a.defRouteHandler
-		}
-
 		// Add middlewares
 		if len(router.middlewares) > 0 {
 			log.Debug("Adding middlewares, from Router...")
@@ -315,6 +306,15 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				h = m(h)
 			}
 		}
+
+		a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("Handling request: ", r.URL.Path)
+			var err error
+
+			if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
+				a.Logger.Debugf("Using default route handler for path: %s", r.URL.Path)
+				h = a.defRouteHandler
+			}
 
 		log.Debug("Setting CTX")
 		c := NewCtx(w, r)
