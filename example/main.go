@@ -16,7 +16,10 @@ type PostStruct struct {
 func main() {
 	fmt.Println("Starting...")
 
-	app := ar.NewApp(ar.AppTimeout(time.Duration(10) * time.Second))
+	app := ar.NewApp(
+		ar.AppAddr("0.0.0.0", "5500"),
+		ar.AppTimeout(time.Duration(10) * time.Second),
+	)
 
 	// Create CORS config with permissive settings for quick integration
 	// corsConfig := ar.DefaultCORSConfig()

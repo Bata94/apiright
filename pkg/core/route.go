@@ -1,9 +1,14 @@
 package core
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"reflect"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Route represents a route in the application.
@@ -65,6 +70,34 @@ type Endpoint struct {
 // Handler is a function that handles a request.
 type Handler func(*Ctx) error
 
+type MIMEType int
+
+const (
+  MIMETYPE_JSON MIMEType = iota
+  MIMETYPE_XML
+	MIMETYPE_YAML
+	MIMETYPE_FORM_URL
+	MIMETYPE_MULTIPART_FORM_DATA
+	MIMETYPE_OCTET_STREAM
+	MIMETYPE_TEXT
+)
+
+var (
+	mimeTypeStrings = []string{
+		"application/json",
+		"application/xml",
+		"application/yaml",
+		"application/x-www-form-urlencoded",
+		"multipart/form-data",
+		"application/octet-stream",
+		"text/plain",
+	}
+)
+
+func (m MIMEType) toString() string {
+  return mimeTypeStrings[m]
+}
+
 // NewCtx creates a new Ctx instance.
 func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
 	return &Ctx{
@@ -91,6 +124,47 @@ type Ctx struct {
 
 	ObjOut     any
 	ObjOutType reflect.Type
+}
+
+func (c *Ctx) objInByte() ([]byte, error) {
+	b, err := io.ReadAll(c.Request.Body)
+	defer func() { _ = c.Request.Body.Close()}()
+
+	return b, err
+}
+
+func (c *Ctx) validateObjInType() bool {
+	return reflect.TypeOf(c.ObjIn) == c.ObjInType
+}
+
+func (c *Ctx) objInJson() error {
+	var (
+		err error
+		objInByte []byte
+	)
+
+	if objInByte, err = c.objInByte(); err != nil { return err }
+
+	if err = json.Unmarshal(objInByte, &c.ObjIn); err != nil { return err }
+
+	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
+
+	return nil
+}
+
+func (c *Ctx) objInYaml() error {
+	var (
+		err error
+		objInByte []byte
+	)
+
+	if objInByte, err = c.objInByte(); err != nil { return err }
+
+	if err = yaml.Unmarshal(objInByte, c.ObjIn); err != nil { return err }
+
+	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
+
+	return nil
 }
 
 // Close closes the connection.

@@ -3,10 +3,10 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/bata94/apiright/pkg/logger"
@@ -288,19 +288,17 @@ func (a App) ServeStaticDir(urlPath, dirPath string) {
 	a.router.ServeStaticDir(urlPath, dirPath, a)
 }
 
-// TODO: Refactor
+// TODO: Refactor!!!
 // TODO: Add XML and YAML support, based on Request Header
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 
 	h := endPoint.handleFunc
-	// Add middlewares
 	if len(router.middlewares) > 0 {
 		for _, m := range router.middlewares {
 			h = m(h)
 		}
 	}
-
 	if len(endPoint.middlewares) > 0 {
 		for _, m := range endPoint.middlewares {
 			h = m(h)
@@ -316,52 +314,40 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		c := NewCtx(w, r)
 		r = r.WithContext(c.Request.Context())
-
 		// TODO: start Middlewares here! Or add the ObjIn part as a Middleware
 
 		// TODO: Return all wrong types in respose, not only the first one
 		// TODO: Respect the "Content-Type" Header to accept XML, YAML etc. as well
 		if endPoint.routeOptionConfig.ObjIn != nil {
-			switch r.Header.Get("Content-Type") {
-				case "application/json":
-					log.Debug("Json incoming")
-				default:
-					c.Response.SetStatus(http.StatusUnsupportedMediaType)
-					c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
-					goto ClosingFunc
-			}
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
-			objInByte, err := io.ReadAll(r.Body)
-			defer func() {
-				_ = r.Body.Close()
-			}()
+			// TODO: Add a MIME Sniffer as well
+			contentTypeHeaders := strings.Split(r.Header.Get("Content-Type"), ",")
+			var (
+				objInFunc func() error
+			)
 
-			if err != nil {
-				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Body could not be read, err: " + err.Error())
-				goto ClosingFunc
+			// TODO: Add one more layer of abstraction
+			for _, contentHeader := range contentTypeHeaders {
+				switch contentHeader {
+					case MIMETYPE_JSON.toString():
+						objInFunc = c.objInJson
+						break
+					case MIMETYPE_YAML.toString():
+						objInFunc = c.objInYaml
+						break
+					default:
+						c.Response.SetStatus(http.StatusUnsupportedMediaType)
+						c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
+						goto ClosingFunc
+				}
 			}
 
-			err = json.Unmarshal(objInByte, &c.ObjIn)
-			if err != nil {
-				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Body could not be parsed to Object, err: " + err.Error())
-				goto ClosingFunc
-			}
-
-			if reflect.TypeOf(c.ObjIn) != c.ObjInType {
-				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Parsed Object != wanted Object")
-				goto ClosingFunc
-			}
+			if err = objInFunc(); err != nil { goto ClosingFunc }
 		}
 
-		err = h(c)
-		if err != nil {
-			goto ClosingFunc
-		}
+		if err = h(c); err != nil { goto ClosingFunc }
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
@@ -428,7 +414,9 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		newEndpointBuilder.Deprecated()
 	}
 	if endPoint.routeOptionConfig.ObjIn != nil {
-		newEndpointBuilder.RequestType(objInType)
+		// TODO: Add wanted MIMETypes here
+		// newEndpointBuilder.RequestType(objInType)
+		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString()}, objInType)
 		// TODO: Implement
 		// RequestExample([]UpdateUserRequest{
 		// 	{
