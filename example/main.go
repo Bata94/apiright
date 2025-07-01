@@ -10,7 +10,7 @@ import (
 )
 
 type PostStruct struct {
-	Name string `json:"name"`
+	Name string `json:"name" xml:"name" yml:"name"`
 }
 
 func main() {
@@ -59,13 +59,11 @@ func main() {
 
 	app.GET("/timeout", func(c *ar.Ctx) error {
 		fmt.Println("Waiting 30 seconds")
-		select {
-		case <-time.After(30 * time.Second):
-			fmt.Println("Done waiting")
-		case <-c.Context().Done():
-			fmt.Println("Context cancelled, stopping wait.")
-			return c.Context().Err()
-		}
+
+		// This and time.Sleep(...) block and don't get canceled by the timeout Middleware
+		// Need to test with "real" http calls or DB calls
+		<-time.After(30 * time.Second)
+		fmt.Println("Done waiting")
 
 		c.Response.SetStatus(200)
 		c.Response.SetMessage("Test Timeout")

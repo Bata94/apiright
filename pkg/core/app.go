@@ -317,8 +317,19 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		c := NewCtx(w, r)
 		r = r.WithContext(c.Request.Context())
 
+		// TODO: start Middlewares here! Or add the ObjIn part as a Middleware
+
 		// TODO: Return all wrong types in respose, not only the first one
+		// TODO: Respect the "Content-Type" Header to accept XML, YAML etc. as well
 		if endPoint.routeOptionConfig.ObjIn != nil {
+			switch r.Header.Get("Content-Type") {
+				case "application/json":
+					log.Debug("Json incoming")
+				default:
+					c.Response.SetStatus(http.StatusUnsupportedMediaType)
+					c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
+					goto ClosingFunc
+			}
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
@@ -356,8 +367,14 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
 				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Error marshaling JSON, ObjOut != wanted ObjOut Type")
+				c.Response.SetMessage("Error computing Object Type... ObjOut != wanted ObjOut Type")
 				goto ClosingFunc
+			}
+
+			log.Debug(c.Request.Header.Get("accept"))
+			switch c.Request.Header.Get("accept") {
+				case "application/json":
+					log.Debug("Json encode...")
 			}
 
 			c.Response.Data, err = json.Marshal(c.ObjOut)
