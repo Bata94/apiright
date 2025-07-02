@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -322,17 +321,21 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
-			// TODO: Add a MIME Sniffer as well
+			// TODO: Add a MIME Sniffer, Content-Type is only a single string... mixed it with Accept in my head...
 			contentTypeHeaders := strings.Split(r.Header.Get("Content-Type"), ",")
 			var (
 				objInFunc func() error
 			)
 
 			// TODO: Add one more layer of abstraction
+			// TODO: An ObjectInHandling Interface should be used
 			for _, contentHeader := range contentTypeHeaders {
 				switch contentHeader {
 					case MIMETYPE_JSON.toString():
 						objInFunc = c.objInJson
+						break
+					case MIMETYPE_XML.toString():
+						objInFunc = c.objInXml
 						break
 					case MIMETYPE_YAML.toString():
 						objInFunc = c.objInYaml
@@ -357,18 +360,34 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				goto ClosingFunc
 			}
 
+			var objOutFunc func() error
 			log.Debug(c.Request.Header.Get("accept"))
-			switch c.Request.Header.Get("accept") {
-				case "application/json":
-					log.Debug("Json encode...")
+			acceptHeaders := strings.Split(c.Request.Header.Get("accept"), ",")
+
+			for _, acceptHeader := range acceptHeaders {
+				acceptHeader = strings.TrimSpace(acceptHeader)
+				switch acceptHeader {
+					case MIMETYPE_JSON.toString():
+						log.Debug("JSON encode...")
+						objOutFunc = c.objOutJson
+					case MIMETYPE_XML.toString():
+						log.Debug("XML encode...")
+						objOutFunc = c.objOutXML
+					case MIMETYPE_YAML.toString():
+						log.Debug("YAML encode...")
+						objOutFunc = c.objOutYaml
+				}
+				if objOutFunc != nil { break }
 			}
 
-			c.Response.Data, err = json.Marshal(c.ObjOut)
-			if err != nil {
-				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Error marshaling JSON: " + err.Error())
+			if objOutFunc == nil {
+				log.Error("406 - Requested MIMETypes aren't supported: ", acceptHeaders)
+				c.Response.SetStatus(http.StatusNotAcceptable)
+				c.Response.SetMessage("The requested MIME Type isn't supported... yet... If u really need it, reach out.")
 				goto ClosingFunc
 			}
+
+			if err = objOutFunc(); err != nil { goto ClosingFunc }
 		}
 
 	ClosingFunc:
@@ -398,14 +417,16 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		desc = endPoint.routeOptionConfig.openApiConfig.description
 	}
 
+	allAvailableMIME := []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}
+
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary(summary).
 		Description(desc).
 		// TODO: Implement
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
-		Response(400, "Invalid request data", "application/json", errResType).
-		Response(422, "Validation errors in request data", "application/json", errResType).
-		Response(500, "Internal server error", "application/json", errResType)
+		Response(400, "Invalid request data", allAvailableMIME, errResType).
+		Response(422, "Validation errors in request data", allAvailableMIME, errResType).
+		Response(500, "Internal server error", allAvailableMIME, errResType)
 
 	if len(endPoint.routeOptionConfig.openApiConfig.tags) != 0 {
 		newEndpointBuilder.Tags(endPoint.routeOptionConfig.openApiConfig.tags...)
@@ -416,7 +437,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	if endPoint.routeOptionConfig.ObjIn != nil {
 		// TODO: Add wanted MIMETypes here
 		// newEndpointBuilder.RequestType(objInType)
-		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString()}, objInType)
+		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}, objInType)
 		// TODO: Implement
 		// RequestExample([]UpdateUserRequest{
 		// 	{
@@ -429,10 +450,10 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		// }).
 	}
 	if endPoint.routeOptionConfig.ObjOut != nil {
-		newEndpointBuilder.Response(200, "Success", "application/json", objOutType)
+		newEndpointBuilder.Response(200, "Success", allAvailableMIME, objOutType)
 	} else {
 		// TODO: This reflect statement must be easier
-		newEndpointBuilder.Response(200, "Success", "text/plain", reflect.TypeOf("i"))
+		newEndpointBuilder.Response(200, "Success", []string{MIMETYPE_TEXT.toString()}, reflect.TypeOf("i"))
 	}
 
 	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {

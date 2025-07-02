@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/xml"
 	"encoding/json"
 	"errors"
 	"io"
@@ -152,6 +153,21 @@ func (c *Ctx) objInJson() error {
 	return nil
 }
 
+func (c *Ctx) objInXml() error {
+	var (
+		err error
+		objInByte []byte
+	)
+
+	if objInByte, err = c.objInByte(); err != nil { return err }
+
+	if err = xml.Unmarshal(objInByte, &c.ObjIn); err != nil { return err }
+
+	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
+
+	return nil
+}
+
 func (c *Ctx) objInYaml() error {
 	var (
 		err error
@@ -165,6 +181,24 @@ func (c *Ctx) objInYaml() error {
 	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
 
 	return nil
+}
+
+func (c *Ctx) objOutJson() error {
+	var err error
+	c.Response.Data, err = json.Marshal(c.ObjOut)
+	return err
+}
+
+func (c *Ctx) objOutXML() error {
+	var err error
+	c.Response.Data, err = xml.Marshal(c.ObjOut)
+	return err
+}
+
+func (c *Ctx) objOutYaml() error {
+	var err error
+	c.Response.Data, err = yaml.Marshal(c.ObjOut)
+	return err
 }
 
 // Close closes the connection.
