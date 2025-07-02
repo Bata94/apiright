@@ -87,6 +87,11 @@ func (r *ApiResponse) SetMessage(msg string) {
 	r.Message = msg
 }
 
+// SetMessage sets the message of the response.
+func (r *ApiResponse) SetMessagef(msg string, a ...any) {
+	r.Message = fmt.Sprintf(msg, a...)
+}
+
 // SetData sets the data of the response.
 func (r *ApiResponse) SetData(data []byte) {
 	r.Data = data

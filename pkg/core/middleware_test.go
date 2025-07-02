@@ -96,7 +96,9 @@ func TestCORSMiddleware(t *testing.T) {
 			}
 
 			res := httptest.NewRecorder()
-			c := NewCtx(res, req)
+			route := Route{}
+			ep := Endpoint{}
+			c := NewCtx(res, req, route, ep)
 
 			corsMiddleware := CORSMiddleware(tc.config)
 			handler := corsMiddleware(mockHandler)

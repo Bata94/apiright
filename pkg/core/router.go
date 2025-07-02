@@ -72,6 +72,33 @@ func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
 }
 
+// TODO: Add ReadMulti
+// TODO: Add BulkUpdate, BulkDelete, BulkCreate
+// TODO: Add individual endpoint options
+type CrudInterface interface {
+	CreateFunc(any) (any, error)
+	ReadAllFunc() ([]any, error)
+	ReadOneFunc(any) (any, error)
+	UpdateFunc(any, any) (any, error)
+	DeleteFunc(any) (any, error)
+}
+
+// Add full CreateReadUpdateDelete Endpoints, for the basePath and given CrudInterface.
+// Only adding Endpoints, for defined functions in CrudInterface.
+// RouteOptions will be applied to all, for individual Options will be added later.
+// POST   {basePath}/{id} -> Create
+// GET    {basePath}/     -> ReadAll
+// GET    {basePath}/{id}	-> ReadOne
+// PUT    {basePath}/{id}	-> Update
+// DELETE {basePath}/{id} -> Delete
+// func (r *Router) CRUD(basePath string, ci CrudInterface, opt ...RouteOption) {
+// 	pathWithID := fmt.Sprintf("%s/{id}", basePath)
+//
+// 	if ci.CreateFunc != nil {
+// 		r.addEndpoint(METHOD_POST, pathWithID, ci.CreateFunc, opt...)
+// 	}
+// }
+
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
 	preCache    bool

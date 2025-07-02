@@ -311,7 +311,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			h = a.defRouteHandler
 		}
 
-		c := NewCtx(w, r)
+		c := NewCtx(w, r, route, endPoint)
 		r = r.WithContext(c.Request.Context())
 		// TODO: start Middlewares here! Or add the ObjIn part as a Middleware
 
@@ -324,30 +324,32 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			var objInFunc func() error
 
 			switch contentTypeHeader {
-				case MIMETYPE_JSON.toString():
-					objInFunc = c.objInJson
-					break
-				case MIMETYPE_XML.toString():
-					objInFunc = c.objInXml
-					break
-				case MIMETYPE_YAML.toString():
-					objInFunc = c.objInYaml
-					break
-				default:
-					// TODO: Add a MIME Sniffer
-					c.Response.SetStatus(http.StatusUnsupportedMediaType)
-					c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
-					goto ClosingFunc
+			case MIMETYPE_JSON.toString():
+				objInFunc = c.objInJson
+			case MIMETYPE_XML.toString():
+				objInFunc = c.objInXml
+			case MIMETYPE_YAML.toString():
+				objInFunc = c.objInYaml
+			default:
+				// TODO: Add a MIME Sniffer
+				// http.DetectContentType(c.Request.B)
+				c.Response.SetStatus(http.StatusUnsupportedMediaType)
+				c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
+				goto ClosingFunc
 			}
 
-			if err = objInFunc(); err != nil { goto ClosingFunc }
+			if err = objInFunc(); err != nil {
+				goto ClosingFunc
+			}
 			if !c.validateObjInType() {
 				err = errors.New("input: parsed Object != wanted Object")
 				goto ClosingFunc
 			}
 		}
 
-		if err = h(c); err != nil { goto ClosingFunc }
+		if err = h(c); err != nil {
+			goto ClosingFunc
+		}
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
@@ -363,17 +365,19 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			for _, acceptHeader := range acceptHeaders {
 				acceptHeader = strings.TrimSpace(acceptHeader)
 				switch acceptHeader {
-					case MIMETYPE_JSON.toString():
-						log.Debug("JSON encode...")
-						objOutFunc = c.objOutJson
-					case MIMETYPE_XML.toString():
-						log.Debug("XML encode...")
-						objOutFunc = c.objOutXML
-					case MIMETYPE_YAML.toString():
-						log.Debug("YAML encode...")
-						objOutFunc = c.objOutYaml
+				case MIMETYPE_JSON.toString():
+					log.Debug("JSON encode...")
+					objOutFunc = c.objOutJson
+				case MIMETYPE_XML.toString():
+					log.Debug("XML encode...")
+					objOutFunc = c.objOutXML
+				case MIMETYPE_YAML.toString():
+					log.Debug("YAML encode...")
+					objOutFunc = c.objOutYaml
 				}
-				if objOutFunc != nil { break }
+				if objOutFunc != nil {
+					break
+				}
 			}
 
 			if objOutFunc == nil {
@@ -383,7 +387,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				goto ClosingFunc
 			}
 
-			if err = objOutFunc(); err != nil { goto ClosingFunc }
+			if err = objOutFunc(); err != nil {
+				goto ClosingFunc
+			}
 		}
 
 	ClosingFunc:

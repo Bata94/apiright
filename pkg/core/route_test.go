@@ -36,7 +36,9 @@ func TestRequestMethod_toPathString(t *testing.T) {
 func TestNewCtx(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	ctx := NewCtx(rec, req)
+	route := Route{}
+	ep := Endpoint{}
+	ctx := NewCtx(rec, req, route, ep)
 
 	if ctx.Request != req {
 		t.Errorf("Expected request to be %v, got %v", req, ctx.Request)
@@ -55,7 +57,9 @@ func TestNewCtx(t *testing.T) {
 func TestCtx_Close(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	ctx := NewCtx(rec, req)
+	route := Route{}
+	ep := Endpoint{}
+	ctx := NewCtx(rec, req, route, ep)
 
 	ctx.Close()
 
@@ -73,7 +77,9 @@ func TestCtx_Close(t *testing.T) {
 func TestCtx_IsClosed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	ctx := NewCtx(rec, req)
+	route := Route{}
+	ep := Endpoint{}
+	ctx := NewCtx(rec, req, route, ep)
 
 	go func() {
 		time.Sleep(10 * time.Millisecond)

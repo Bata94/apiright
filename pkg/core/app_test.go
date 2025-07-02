@@ -293,7 +293,7 @@ func TestApp_ServeStaticFile(t *testing.T) {
 		if route.path == "/static/dummy.txt" {
 			for _, endpoint := range route.endpoints {
 				if endpoint.method == METHOD_GET {
-					ctx := NewCtx(rec, req)
+					ctx := NewCtx(rec, req, *route, endpoint)
 					err := endpoint.handleFunc(ctx)
 					if err != nil {
 						t.Fatalf("Handler returned an error: %v", err)

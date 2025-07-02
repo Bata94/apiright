@@ -24,7 +24,7 @@ perform_curl_test() {
 }
 
 # Define an array of endpoints
-endpoints=(
+endpoints_get=(
     "/"
     "/index"
     "/err"
@@ -37,11 +37,12 @@ endpoints=(
     "/docs/"
     "/docs/spec.json"
     "/static/spec.json"
+    "/params/123?test=123&name=abc"
     "/timeout"
 )
 
 # Loop through each endpoint and call the function
-for endpoint in "${endpoints[@]}"; do
+for endpoint in "${endpoints_get[@]}"; do
     perform_curl_test "${endpoint}"
 done
 
