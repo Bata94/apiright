@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/xml"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"reflect"
@@ -122,16 +121,22 @@ type Ctx struct {
 
 	ObjIn     any
 	ObjInType reflect.Type
+	objInByte []byte
 
 	ObjOut     any
 	ObjOutType reflect.Type
 }
 
-func (c *Ctx) objInByte() ([]byte, error) {
+func (c *Ctx) getObjInByte() []byte {
+	if len(c.objInByte) != 0 { return c.objInByte}
+
+	log.Debug("ObjInByte not set, reading from request body")
 	b, err := io.ReadAll(c.Request.Body)
 	defer func() { _ = c.Request.Body.Close()}()
 
-	return b, err
+	if err != nil { log.Fatal(err) }
+
+	return b
 }
 
 func (c *Ctx) validateObjInType() bool {
@@ -139,66 +144,37 @@ func (c *Ctx) validateObjInType() bool {
 }
 
 func (c *Ctx) objInJson() error {
-	var (
-		err error
-		objInByte []byte
-	)
-
-	if objInByte, err = c.objInByte(); err != nil { return err }
-
-	if err = json.Unmarshal(objInByte, &c.ObjIn); err != nil { return err }
-
-	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
-
-	return nil
+	return json.Unmarshal(c.getObjInByte(), &c.ObjIn)
 }
 
 func (c *Ctx) objInXml() error {
-	var (
-		err error
-		objInByte []byte
-	)
-
-	if objInByte, err = c.objInByte(); err != nil { return err }
-
-	if err = xml.Unmarshal(objInByte, &c.ObjIn); err != nil { return err }
-
-	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
-
-	return nil
+	return xml.Unmarshal(c.getObjInByte(), &c.ObjIn)
 }
 
 func (c *Ctx) objInYaml() error {
-	var (
-		err error
-		objInByte []byte
-	)
+	return yaml.Unmarshal(c.getObjInByte(), c.ObjIn)
+}
 
-	if objInByte, err = c.objInByte(); err != nil { return err }
-
-	if err = yaml.Unmarshal(objInByte, c.ObjIn); err != nil { return err }
-
-	if !c.validateObjInType() { return errors.New("input: parsed Object != wanted Object")}
-
+func (c *Ctx) setObjOutData(b []byte, err error) error {
+	if err != nil { return err }
+	c.Response.Data = b
 	return nil
 }
 
+func (c *Ctx) validateObjOutType() bool {
+  return reflect.TypeOf(c.ObjOut) == c.ObjOutType
+}
+
 func (c *Ctx) objOutJson() error {
-	var err error
-	c.Response.Data, err = json.Marshal(c.ObjOut)
-	return err
+	return c.setObjOutData(json.Marshal(c.ObjOut))
 }
 
 func (c *Ctx) objOutXML() error {
-	var err error
-	c.Response.Data, err = xml.Marshal(c.ObjOut)
-	return err
+	return c.setObjOutData(xml.Marshal(c.ObjOut))
 }
 
 func (c *Ctx) objOutYaml() error {
-	var err error
-	c.Response.Data, err = yaml.Marshal(c.ObjOut)
-	return err
+	return c.setObjOutData(yaml.Marshal(c.ObjOut))
 }
 
 // Close closes the connection.

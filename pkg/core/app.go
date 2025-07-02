@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -287,8 +288,7 @@ func (a App) ServeStaticDir(urlPath, dirPath string) {
 	a.router.ServeStaticDir(urlPath, dirPath, a)
 }
 
-// TODO: Refactor!!!
-// TODO: Add XML and YAML support, based on Request Header
+// TODO: Abstract ObjIn and Out Marshalling more, so that the marshalling interfaces can be set in App/Router config and exchanged by user if default isn't right
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 
@@ -316,47 +316,43 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		// TODO: start Middlewares here! Or add the ObjIn part as a Middleware
 
 		// TODO: Return all wrong types in respose, not only the first one
-		// TODO: Respect the "Content-Type" Header to accept XML, YAML etc. as well
 		if endPoint.routeOptionConfig.ObjIn != nil {
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
-			// TODO: Add a MIME Sniffer, Content-Type is only a single string... mixed it with Accept in my head...
-			contentTypeHeaders := strings.Split(r.Header.Get("Content-Type"), ",")
-			var (
-				objInFunc func() error
-			)
+			contentTypeHeader := strings.TrimSpace(r.Header.Get("Content-Type"))
+			var objInFunc func() error
 
-			// TODO: Add one more layer of abstraction
-			// TODO: An ObjectInHandling Interface should be used
-			for _, contentHeader := range contentTypeHeaders {
-				switch contentHeader {
-					case MIMETYPE_JSON.toString():
-						objInFunc = c.objInJson
-						break
-					case MIMETYPE_XML.toString():
-						objInFunc = c.objInXml
-						break
-					case MIMETYPE_YAML.toString():
-						objInFunc = c.objInYaml
-						break
-					default:
-						c.Response.SetStatus(http.StatusUnsupportedMediaType)
-						c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
-						goto ClosingFunc
-				}
+			switch contentTypeHeader {
+				case MIMETYPE_JSON.toString():
+					objInFunc = c.objInJson
+					break
+				case MIMETYPE_XML.toString():
+					objInFunc = c.objInXml
+					break
+				case MIMETYPE_YAML.toString():
+					objInFunc = c.objInYaml
+					break
+				default:
+					// TODO: Add a MIME Sniffer
+					c.Response.SetStatus(http.StatusUnsupportedMediaType)
+					c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
+					goto ClosingFunc
 			}
 
 			if err = objInFunc(); err != nil { goto ClosingFunc }
+			if !c.validateObjInType() {
+				err = errors.New("input: parsed Object != wanted Object")
+				goto ClosingFunc
+			}
 		}
 
 		if err = h(c); err != nil { goto ClosingFunc }
 
 		if endPoint.routeOptionConfig.ObjOut != nil {
 			c.ObjOutType = reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
-			if reflect.TypeOf(c.ObjOut) != c.ObjOutType {
-				c.Response.SetStatus(http.StatusInternalServerError)
-				c.Response.SetMessage("Error computing Object Type... ObjOut != wanted ObjOut Type")
+			if !c.validateObjOutType() {
+				err = errors.New("output: parsed Object != wanted Object")
 				goto ClosingFunc
 			}
 
