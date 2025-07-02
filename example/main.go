@@ -10,7 +10,9 @@ import (
 )
 
 type PostStruct struct {
-	Name string `json:"name" xml:"name" yml:"name"`
+	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
+	Email string `json:"email" xml:"email" yml:"email" example:"jdoe@me.com"`
+	Age   int    `json:"age" xml:"age" yml:"age" example:"30"`
 }
 
 func main() {
@@ -18,7 +20,7 @@ func main() {
 
 	app := ar.NewApp(
 		ar.AppAddr("0.0.0.0", "5500"),
-		ar.AppTimeout(time.Duration(10) * time.Second),
+		ar.AppTimeout(time.Duration(10)*time.Second),
 	)
 
 	// Create CORS config with permissive settings for quick integration
@@ -52,6 +54,13 @@ func main() {
 
 		c.Response.SetData(content)
 
+		return nil
+	})
+
+	app.GET("/params/{id}", func(c *ar.Ctx) error {
+		fmt.Println(c.PathParams)
+		fmt.Println(c.QueryParams)
+		c.Response.SetMessage("Params: " + c.PathParams["id"])
 		return nil
 	})
 

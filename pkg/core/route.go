@@ -1,11 +1,12 @@
 package core
 
 import (
-	"encoding/xml"
 	"encoding/json"
+	"encoding/xml"
 	"io"
 	"net/http"
 	"reflect"
+	"regexp"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -73,8 +74,8 @@ type Handler func(*Ctx) error
 type MIMEType int
 
 const (
-  MIMETYPE_JSON MIMEType = iota
-  MIMETYPE_XML
+	MIMETYPE_JSON MIMEType = iota
+	MIMETYPE_XML
 	MIMETYPE_YAML
 	MIMETYPE_FORM_URL
 	MIMETYPE_MULTIPART_FORM_DATA
@@ -95,18 +96,36 @@ var (
 )
 
 func (m MIMEType) toString() string {
-  return mimeTypeStrings[m]
+	return mimeTypeStrings[m]
 }
 
 // NewCtx creates a new Ctx instance.
-func NewCtx(w http.ResponseWriter, r *http.Request) *Ctx {
-	return &Ctx{
+func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *Ctx {
+	c := &Ctx{
 		Request:  r,
 		Response: NewApiResponse(),
+
+		PathParams:  make(map[string]string),
+		QueryParams: make(map[string]string),
 
 		conClosed:  make(chan bool, 1),
 		conStarted: time.Now(),
 	}
+
+	rePathParams := regexp.MustCompile(`{([^}]+)}`)
+	matchesPathParams := rePathParams.FindAllStringSubmatch(route.path, -1)
+	for _, m := range matchesPathParams {
+		if len(m) > 1 {
+			c.PathParams[m[1]] = r.PathValue(m[1])
+		}
+	}
+
+	queryValues := r.URL.Query()
+	for k, v := range queryValues {
+		c.QueryParams[k] = v[0]
+	}
+
+	return c
 }
 
 // Ctx is the context for a request.
@@ -114,6 +133,9 @@ type Ctx struct {
 	// TODO: Move to an Interface, prob to use HTML Responses as well
 	Response *ApiResponse
 	Request  *http.Request
+
+	PathParams  map[string]string
+	QueryParams map[string]string
 
 	conClosed  chan (bool)
 	conStarted time.Time
@@ -128,13 +150,17 @@ type Ctx struct {
 }
 
 func (c *Ctx) getObjInByte() []byte {
-	if len(c.objInByte) != 0 { return c.objInByte}
+	if len(c.objInByte) != 0 {
+		return c.objInByte
+	}
 
 	log.Debug("ObjInByte not set, reading from request body")
 	b, err := io.ReadAll(c.Request.Body)
-	defer func() { _ = c.Request.Body.Close()}()
+	defer func() { _ = c.Request.Body.Close() }()
 
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return b
 }
@@ -156,13 +182,15 @@ func (c *Ctx) objInYaml() error {
 }
 
 func (c *Ctx) setObjOutData(b []byte, err error) error {
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	c.Response.Data = b
 	return nil
 }
 
 func (c *Ctx) validateObjOutType() bool {
-  return reflect.TypeOf(c.ObjOut) == c.ObjOutType
+	return reflect.TypeOf(c.ObjOut) == c.ObjOutType
 }
 
 func (c *Ctx) objOutJson() error {

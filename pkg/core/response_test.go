@@ -84,7 +84,7 @@ func TestApiResponse_SendingReturn(t *testing.T) {
 	t.Run("SuccessWithMessage", func(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
-		ctx := NewCtx(rec, req)
+		ctx := NewCtx(rec, req, Route{}, Endpoint{})
 		ctx.Response.SetStatus(http.StatusCreated)
 		ctx.Response.SetMessage("Resource created")
 		ctx.Response.AddHeader("X-Test-Header", "test-value")
@@ -106,7 +106,7 @@ func TestApiResponse_SendingReturn(t *testing.T) {
 	t.Run("SuccessWithData", func(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
-		ctx := NewCtx(rec, req)
+		ctx := NewCtx(rec, req, Route{}, Endpoint{})
 		ctx.Response.SetStatus(http.StatusOK)
 		data := map[string]string{"status": "ok"}
 		jsonData, _ := json.Marshal(data)
@@ -126,7 +126,7 @@ func TestApiResponse_SendingReturn(t *testing.T) {
 	t.Run("ErrorInHandler", func(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
-		ctx := NewCtx(rec, req)
+		ctx := NewCtx(rec, req, Route{}, Endpoint{})
 		ctx.Response.SetStatus(http.StatusOK) // Ensure default status
 		// Simulate an error from the handler
 		err := http.ErrBodyReadAfterClose
@@ -145,7 +145,7 @@ func TestApiResponse_SendingReturn(t *testing.T) {
 	t.Run("ErrorInHandlerWithPresetStatus", func(t *testing.T) {
 		rec = httptest.NewRecorder()
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
-		ctx := NewCtx(rec, req)
+		ctx := NewCtx(rec, req, Route{}, Endpoint{})
 		ctx.Response.SetStatus(http.StatusBadRequest) // Pre-set status
 		// Simulate an error from the handler
 		err := http.ErrBodyReadAfterClose

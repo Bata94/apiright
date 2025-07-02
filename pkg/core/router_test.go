@@ -178,7 +178,7 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 		}
 
 		if getEndpoint != nil {
-			ctx := NewCtx(rec, req)
+			ctx := NewCtx(rec, req, *staticRoute, *getEndpoint)
 			err := getEndpoint.handleFunc(ctx)
 			if err != nil {
 				t.Fatalf("Handler returned an error: %v", err)
