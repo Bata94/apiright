@@ -277,6 +277,10 @@ func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	a.router.OPTIONS(path, handler, opt...)
 }
 
+func (a App) CRUD(basePath string, ci CrudInterface, opt ...RouteOption) {
+	a.router.CRUD(basePath, ci, opt...)
+}
+
 func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
 	err := a.router.ServeStaticFile(urlPath, filePath, opt...)
 	if err != nil {

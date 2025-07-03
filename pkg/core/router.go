@@ -72,32 +72,135 @@ func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
 }
 
+// TODO: Probably should return pointer to catch nil/not found easily
 // TODO: Add ReadMulti
 // TODO: Add BulkUpdate, BulkDelete, BulkCreate
 // TODO: Add individual endpoint options
 type CrudInterface interface {
 	CreateFunc(any) (any, error)
+	CreateObjIn() any
+	CreateObjOut() any
+
 	ReadAllFunc() ([]any, error)
+	ReadAllObjOut() any
+
 	ReadOneFunc(any) (any, error)
+	ReadOneObjOut() any
+
 	UpdateFunc(any, any) (any, error)
+	UpdateObjIn() any
+	UpdateObjOut() any
+
 	DeleteFunc(any) (any, error)
+	DeleteObjIn() any
+	DeleteObjOut() any
 }
 
 // Add full CreateReadUpdateDelete Endpoints, for the basePath and given CrudInterface.
-// Only adding Endpoints, for defined functions in CrudInterface.
+// Gives an Option for simple Prototyping/Version0 of your API. For complex APIs you shouldn't use this!
 // RouteOptions will be applied to all, for individual Options will be added later.
 // POST   {basePath}/{id} -> Create
 // GET    {basePath}/     -> ReadAll
 // GET    {basePath}/{id}	-> ReadOne
 // PUT    {basePath}/{id}	-> Update
 // DELETE {basePath}/{id} -> Delete
-// func (r *Router) CRUD(basePath string, ci CrudInterface, opt ...RouteOption) {
-// 	pathWithID := fmt.Sprintf("%s/{id}", basePath)
-//
-// 	if ci.CreateFunc != nil {
-// 		r.addEndpoint(METHOD_POST, pathWithID, ci.CreateFunc, opt...)
-// 	}
-// }
+func (r *Router) CRUD(basePath string, ci CrudInterface, opt ...RouteOption) {
+	var err error
+	pathWithID := fmt.Sprintf("%s/{id}", basePath)
+
+	r.addEndpoint(
+		METHOD_POST,
+		pathWithID,
+		func(c *Ctx) error {
+			c.ObjOut, err = ci.CreateFunc(c.ObjIn)
+
+			if err != nil {
+				return err
+			}
+
+			c.Response.SetStatus(200)
+			return nil
+		},
+		append([]RouteOption{
+			WithObjIn(ci.CreateObjIn()),
+			WithObjOut(ci.CreateObjOut()),
+		}, opt...)...,
+	)
+
+	r.addEndpoint(
+		METHOD_GET,
+		basePath,
+		func(c *Ctx) error {
+			c.ObjOut, err = ci.ReadAllFunc()
+
+			if err != nil {
+				return err
+			}
+
+			c.Response.SetStatus(200)
+			return nil
+		},
+		append([]RouteOption{
+			WithObjOut(ci.CreateObjOut()),
+		}, opt...)...,
+	)
+
+	r.addEndpoint(
+		METHOD_GET,
+		pathWithID,
+		func(c *Ctx) error {
+			c.ObjOut, err = ci.ReadOneFunc(c.PathParams["id"])
+
+			if err != nil {
+				return err
+			}
+
+			c.Response.SetStatus(200)
+			return nil
+		},
+		append([]RouteOption{
+			WithObjOut(ci.ReadOneObjOut()),
+		}, opt...)...,
+	)
+
+	r.addEndpoint(
+		METHOD_PUT,
+		pathWithID,
+		func(c *Ctx) error {
+			c.ObjOut, err = ci.UpdateFunc(c.PathParams["id"], c.ObjIn)
+
+			if err != nil {
+				return err
+			}
+
+			c.Response.SetStatus(200)
+			return nil
+		},
+		append([]RouteOption{
+			WithObjIn(ci.UpdateObjIn()),
+			WithObjOut(ci.UpdateObjOut()),
+		}, opt...)...,
+	)
+
+	r.addEndpoint(
+		METHOD_POST,
+		pathWithID,
+		func(c *Ctx) error {
+			c.ObjOut, err = ci.DeleteFunc(c.PathParams["id"])
+
+			if err != nil {
+				return err
+			}
+
+			c.Response.SetStatus(200)
+			return nil
+		},
+		append([]RouteOption{
+			WithObjIn(ci.DeleteObjIn()),
+			WithObjOut(ci.DeleteObjOut()),
+		}, opt...)...,
+	)
+}
 
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {

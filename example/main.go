@@ -7,12 +7,111 @@ import (
 	"time"
 
 	ar "github.com/bata94/apiright/pkg/core"
+	"slices"
+)
+
+var (
+	posts []PostStruct = []PostStruct{}
+	currPostIndex = 0
 )
 
 type PostStruct struct {
+	Id    int    `json:"id" xml:"id" yml:"id" example:"1"`
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
 	Email string `json:"email" xml:"email" yml:"email" example:"jdoe@me.com"`
 	Age   int    `json:"age" xml:"age" yml:"age" example:"30"`
+}
+
+type PostStructBase struct {
+	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
+	Email string `json:"email" xml:"email" yml:"email" example:"jdoe@me.com"`
+	Age   int    `json:"age" xml:"age" yml:"age" example:"30"`
+}
+
+type PostCrud struct {}
+
+func (p PostCrud) CreateFunc(postBase PostStructBase) (PostStruct, error) {
+	post := PostStruct{
+		Id:    currPostIndex,
+		Name:  postBase.Name,
+		Email: postBase.Email,
+		Age:   postBase.Age,
+	}
+	currPostIndex++
+	posts = append(posts, post)
+	return post, nil
+}
+func (p PostCrud) CreateObjIn() PostStructBase {
+  return PostStructBase{}
+}
+func (p PostCrud) CreateObjOut() PostStruct {
+  return PostStruct{}
+}
+
+func (p PostCrud) ReadAllFunc() ([]PostStruct, error) {
+  return posts, nil
+}
+func (p PostCrud) ReadAllObjOut() []PostStruct {
+  return []PostStruct{}
+}
+
+func (p PostCrud) ReadOneFunc(id int) (PostStruct, error) {
+	index := -1
+	for i, post := range posts {
+		if id == post.Id {
+			index = i
+			break
+		}
+	}
+
+	if index == -1 {
+		return PostStruct{}, errors.New("not found")
+	}
+
+  return posts[index], nil
+}
+func (p PostCrud) ReadOneObjOut() PostStruct {
+  return PostStruct{}
+}
+
+func (p PostCrud) UpdateFunc(id int, post PostStruct) (PostStruct, error) {
+  index := -1
+  for i, p := range posts {
+    if id == p.Id {
+      index = i
+      break
+    }
+  }
+
+	if index == -1 {
+    return PostStruct{}, errors.New("not found")
+  }
+
+	posts[index] = post
+  return post, nil
+}
+func (p PostCrud) UpdateObjIn() PostStructBase {
+  return PostStructBase{}
+}
+func (p PostCrud) UpdateObjOut() PostStruct {
+  return PostStruct{}
+}
+
+func (p PostCrud) DeleteFunc(id int) (PostStruct, error) {
+  index := -1
+  for i, p := range posts {
+    if id == p.Id {
+      index = i
+      break
+    }
+  }
+
+	if index == -1 {
+    return PostStruct{}, errors.New("not found")
+  }
+
+	posts = slices.Delete(posts, index, index+1)
+  return PostStruct{}, nil
 }
 
 func main() {
@@ -101,6 +200,11 @@ func main() {
 		ar.WithObjOut(&PostStruct{}),
 		ar.WithOpenApiInfos("Post Test", "A simple Route to test Posting with ObjectIn and ObjectOut Structs"),
 		ar.WithOpenApiTags("Test", "post"),
+	)
+
+	app.CRUD(
+		"/crud/post",
+		PostCrud{},
 	)
 
 	group := app.NewRouter("/group")
