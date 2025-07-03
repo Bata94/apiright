@@ -19,12 +19,25 @@ Therefore I will try to add the best features I have seen in other Frameworks in
 Apiright won't be the fastest Go Webframework out there (but it will still be way fast enough for most use cases), the main goal is Development experience and Development speed.
 
 ## Features:
-    - [X] "ExpressJS" like Router, with a global Error Handler and panic recovery
+    - [X] "ExpressJS" like Router
+    - [X] SubRouter support for grouping
+    - [X] Path- and QueryParams Support
     - [X] Catch-all/default Route
+    - [X] Global ErrorHandling
+    - [~] App Logger, compatible/exchangeable with a slog Logger (Default logger supporting colored and formatted logging)
+    - [ ] Custom global ErrorHandling
     - [ ] Multi domain support
     - [X] Routergroups
-    - [X] Middlewares
-    - [~] "Fastapi" like, streamlined simple CRUD Operations
+    - [X] Middleware support
+    - [X] Buildin Middleware (Logging, CORS, CSRF, PanicRecovery, Timeout)
+    - [X] Addable custom Middlewares
+    - [ ] More Buildin Middlewares (RateLimit, Cache, Compress, SecureCookies, Session)
+    - [ ] Builtin Auth Middlewares (Basic-Auth, JWT-Auth, OAuth, ApiKey-Auth)
+    - [ ] Function defined skip condition for Middlewares
+    - [X] "Fastapi" like, streamlined simple CRUD Operations, meaning auto conversion to defined struct for RequestInput and ResponseOutput
+    - [ ] Simple CRUD Endpoint support for fast v0 or prototyping
+    - [X] Automatic MIMEType parsing based on Headers (JSON, YAML and XML)
+    - [ ] More MIMETypes settable and exchangeable parsers for build in MIMETypes
     - [X] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support
