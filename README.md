@@ -29,6 +29,8 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support
     - [X] Static File serving
+    - [ ] Filebased Routing
+    - [ ] HtmGo Support (?!)
     - [ ] Metrics
     - [ ] Simple ReverseProxy (not recommended for production, but for hobby projects maybe nice to have)
     - [ ] Embedded "cron-jobs", like included Microservices (run once, run every hour etc.)
