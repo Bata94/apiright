@@ -9,7 +9,7 @@ import (
 )
 
 var defCatchallHandler = func(c *Ctx) error {
-	log.Info("Default CatchAll Handler")
+	log.Info("Default CatchAll Handler, URL: ", c.Request.URL.String())
 	c.Response.SetStatus(404)
 	c.Response.Message = "Not found!"
 	return nil

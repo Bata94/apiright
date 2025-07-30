@@ -307,7 +307,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
-		if route.basePath == "/" && r.URL.Path != router.GetBasePath() {
+		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			h = a.defRouteHandler
 		}
 

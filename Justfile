@@ -9,9 +9,19 @@ mod-tidy:
 	@echo "go mod tidy ..."
 	go mod tidy
 
-# Develop with Example Application
-dev:
+dev-templ:
+  templ generate --watch --proxy="http://localhost:5500" --open-browser=false
+
+dev-tailwind:
+  tailwindcss -i ./example/static/input.css -o ./example/assets/styles.css --minify --watch
+
+dev-air:
   ENV=dev air
+
+# Develop with Example Application
+[parallel]
+dev: dev-templ dev-tailwind dev-air
+  echo "Done..."
 
 # Build the application
 build-example:

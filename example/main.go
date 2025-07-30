@@ -35,8 +35,11 @@ func main() {
 
 	app.ServeStaticFile("/index", "./example/index.html", ar.WithPreCache())
 	app.ServeStaticDir("/static", "docs/")
+	app.ServeStaticDir("/assets", "example/assets/")
+	app.ServeStaticFile("/favicon.ico", "example/assets/favicon.ico", ar.WithPreCache())
 
 	app.GET(ar_templ.SimpleRenderer("/", ui.Index()))
+	app.GET(ar_templ.SimpleRenderer("/root", ui.Index()))
 
 	app.GET("/params/{id}", func(c *ar.Ctx) error {
 		fmt.Println(c.PathParams)
