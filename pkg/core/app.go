@@ -307,8 +307,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
+		currentHandler := h
 		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
-			h = a.defRouteHandler
+			currentHandler = a.defRouteHandler
 		}
 
 		c := NewCtx(w, r, route, endPoint)
@@ -347,7 +348,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			}
 		}
 
-		if err = h(c); err != nil {
+		if err = currentHandler(c); err != nil {
 			goto ClosingFunc
 		}
 
