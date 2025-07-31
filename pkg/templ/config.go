@@ -8,6 +8,11 @@ type Config struct {
 	htmx bool
 	htmxFetchUrl string
 	htmxLinkUrl string
+
+	// TODO: Add DaisyUI
+	// TODO: Add TailwindCSS
+	// TODO: Add AlpineJS
+	// TODO: Add TemplUI
 }
 
 func init() {

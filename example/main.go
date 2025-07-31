@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bata94/apiright/example/ui"
+	"github.com/bata94/apiright/example/ui/pages"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
 )
@@ -37,8 +37,8 @@ func main() {
 	app.ServeStaticDir("/static", "docs/")
 	app.ServeStaticDir("/assets", "example/assets/")
 
-	app.GET(ar_templ.SimpleRenderer("/", ui.Index()))
-	app.GET(ar_templ.SimpleRenderer("/root", ui.Index()))
+	app.GET(ar_templ.SimpleRenderer("/", ui_pages.Index()))
+	app.GET(ar_templ.SimpleRenderer("/root", ui_pages.Index()))
 
 	app.Redirect("/redirect", "/test", 302)
 	app.Redirect("/favicon.ico", "/assets/favicon.ico", 301)

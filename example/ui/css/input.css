@@ -8,16 +8,12 @@
 
 @source "./example/assets/ui/*.{templ}";
 
-@plugin "../assets/daisyui.js" {
+@plugin "./daisyui.js" {
   themes: light --default, dark --prefersdark;
-  root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
   logs: true;
 }
 
 /* Optional for custom themes – Docs: https://daisyui.com/docs/themes/#how-to-add-a-new-custom-theme */
-@plugin "../assets/daisyui-theme.js" {
+@plugin "./daisyui-theme.js" {
   /* custom theme here */
 }

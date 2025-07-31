@@ -6,3 +6,5 @@ example/docs
 *.exe
 .env
 results.json
+*_templ.go
+*_gen.css

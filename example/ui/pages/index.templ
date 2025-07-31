@@ -1,7 +1,9 @@
-package ui
+package ui_pages
+
+import "github.com/bata94/apiright/example/ui/layouts"
 
 templ Index() {
-  @BaseLayout() {
+  @ui_layouts.BaseLayout() {
     @templ.Fragment("body") {
       <h1 class="text-3xl font-bold underline">Welcome to ApiRight</h1>
     }

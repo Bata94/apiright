@@ -13,7 +13,7 @@ dev-templ:
   templ generate --watch --proxy="http://localhost:5500" --open-browser=false
 
 dev-tailwind:
-  tailwindcss -i ./example/static/input.css -o ./example/assets/styles.css --minify --watch
+  tailwindcss -i ./example/ui/css/input.css -o ./example/assets/styles_gen.css --minify --watch
 
 dev-air:
   ENV=dev air

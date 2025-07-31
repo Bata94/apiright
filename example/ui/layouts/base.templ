@@ -1,4 +1,6 @@
-package ui
+package ui_layouts
+
+import "github.com/bata94/apiright/example/ui/components"
 
 templ BaseLayout() {
   <!DOCTYPE html>
@@ -8,14 +10,21 @@ templ BaseLayout() {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta http-equiv="X-UA-Compatible" content="ie=edge">
       <title>Apiright Example</title>
-      <link rel="stylesheet" href="/assets/styles.css">
+      <link rel="stylesheet" href="/assets/styles_gen.css">
       <link rel="icon" href="./favicon.ico" type="image/x-icon">
     </head>
     <body class="min-w-screen min-h-screen">
+      <header>
+        @ui_components.Navbar()
+      </header>
+
       <main class="prose mx-4 my-4">
           { children... }
       </main>
-      <!-- <script src="index.js"></script> -->
+
+      <footer>
+        @ui_components.Footer()
+      </footer>
     </body>
   </html>
 }
