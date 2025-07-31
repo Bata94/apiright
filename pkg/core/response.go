@@ -96,3 +96,9 @@ func (r *ApiResponse) SetMessagef(msg string, a ...any) {
 func (r *ApiResponse) SetData(data []byte) {
 	r.Data = data
 }
+
+// Redirect performs a redirect.
+func (r *ApiResponse) Redirect(url string, code int) {
+	r.AddHeader("Location", url)
+	r.SetStatus(code)
+}

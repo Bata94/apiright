@@ -72,6 +72,15 @@ func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)
 }
 
+// Redirect adds a redirect to the router.
+func (r *Router) Redirect(path, targetURL string, code int) {
+	h := func(c *Ctx) error {
+		c.Response.Redirect(targetURL, code)
+		return nil
+	}
+	r.addEndpoint(METHOD_GET, path, h, WithOpenApiDisabled())
+}
+
 // TODO: Add ReadMulti
 // TODO: Add BulkUpdate, BulkDelete, BulkCreate
 // TODO: Add individual endpoint options

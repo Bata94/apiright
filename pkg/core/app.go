@@ -277,6 +277,10 @@ func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	a.router.OPTIONS(path, handler, opt...)
 }
 
+func (a *App) Redirect(path, url string, code int) {
+	a.router.Redirect(path, url, code)
+}
+
 func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
 	err := a.router.ServeStaticFile(urlPath, filePath, opt...)
 	if err != nil {
