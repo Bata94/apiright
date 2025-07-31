@@ -29,7 +29,7 @@ func BaseLayout() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"><title>Apiright Example</title><link rel=\"stylesheet\" href=\"/assets/styles.css\"><link rel=\"icon\" href=\"./favicon.ico\" type=\"image/x-icon\"></head><body class=\"min-w-screen min-h-screen bg-white dark:bg-gray-800\"><main class=\"\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\"><title>Apiright Example</title><link rel=\"stylesheet\" href=\"/assets/styles.css\"><link rel=\"icon\" href=\"./favicon.ico\" type=\"image/x-icon\"></head><body class=\"min-w-screen min-h-screen\"><main class=\"prose mx-4 my-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

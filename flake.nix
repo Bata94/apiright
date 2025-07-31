@@ -32,8 +32,6 @@
             goose
 
             templ
-
-            nodejs_24
             tailwindcss_4
           ];
 
