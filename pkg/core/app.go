@@ -113,7 +113,7 @@ func (c AppConfig) GetListenAddress() string {
 
 // NewApp creates a new App instance.
 func NewApp(opts ...AppOption) App {
-	handler := http.NewServeMux()
+	mainHandler := http.NewServeMux()
 
 	defaultLogger := logger.NewDefaultLogger()
 
@@ -189,7 +189,7 @@ func NewApp(opts ...AppOption) App {
 	// Return App Object
 	return App{
 		config:           &config,
-		handler:          handler,
+		Handler:          mainHandler,
 		Logger:           config.logger,
 		router:           newRouter(""),
 		defRouteHandler:  defCatchallHandler,
@@ -206,7 +206,7 @@ func NewApp(opts ...AppOption) App {
 // TODO: Add Next/Skip function to Middlewares, to skip the middleware for i.e. endpoints or states
 type App struct {
 	config  *AppConfig
-	handler *http.ServeMux
+	Handler *http.ServeMux
 	Logger  logger.Logger
 
 	defRouteHandler Handler
@@ -253,9 +253,7 @@ func (a *App) Use(m Middleware) {
 	a.router.Use(m)
 }
 
-func (a App) getHttpHandler() *http.ServeMux {
-	return a.handler
-}
+
 
 func (a *App) GET(path string, handler Handler, opt ...RouteOption) {
 	a.router.GET(path, handler, opt...)
@@ -308,7 +306,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 	}
 
-	a.getHttpHandler().HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+	a.Handler.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
 		currentHandler := h
@@ -566,5 +564,5 @@ func (a *App) Run() error {
 	a.addRoutesToHandler()
 	a.ServeStaticDir("/docs", "docs")
 
-	return http.ListenAndServe(a.config.GetListenAddress(), a.getHttpHandler())
+	return http.ListenAndServe(a.config.GetListenAddress(), a.Handler)
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -152,15 +153,23 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 	config := NewStaticServeFileConfig(opt...)
 
 	if config.preCache {
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			err = fmt.Errorf("static directory '%s' does not exist. Please create it and add your files", filePath)
+		absFilePath, err := filepath.Abs(filePath)
+		if err != nil {
+			log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
+			return err
+		}
+
+		log.Debugf("Attempting to serve static file from absolute path: %s", absFilePath)
+
+		if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
+			err = fmt.Errorf("static file '%s' does not exist. Please ensure the file exists", absFilePath)
 			log.Error(err)
 			return err
 		}
 
-		content, err := os.ReadFile(filePath)
+		content, err := os.ReadFile(absFilePath)
 		if err != nil {
-			err = fmt.Errorf("static directory '%s' exists, but is not readable. Please verify permissions", filePath)
+			err = fmt.Errorf("static file '%s' exists, but is not readable: %w", absFilePath, err)
 			log.Error(err)
 			return err
 		}
@@ -205,8 +214,8 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
 	}
 
-	a.getHttpHandler().HandleFunc(getPattern, h)
-	a.getHttpHandler().HandleFunc(headPattern, h)
+	a.Handler.HandleFunc(getPattern, h)
+	a.Handler.HandleFunc(headPattern, h)
 }
 
 func (r *Router) routeExists(path string) int {

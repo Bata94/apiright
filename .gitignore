@@ -3,6 +3,7 @@ temp_test/
 bin/
 docs/
 example/docs
+example/ui-router
 *.exe
 .env
 results.json

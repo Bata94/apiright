@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bata94/apiright/example/ui/pages"
 	ar "github.com/bata94/apiright/pkg/core"
-	ar_templ "github.com/bata94/apiright/pkg/templ"
+	"github.com/bata94/apiright/example/ui-router/gen"
 )
+
+//go:generate /Users/bata/Projects/personal/apiright/bin/gen-ui-router -input ./ui/pages -output ./ui-router/gen/routes_gen.go -package gen
 
 type PostStruct struct {
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
@@ -33,12 +34,10 @@ func main() {
 	app.Use(ar.TimeoutMiddleware(ar.TimeoutConfigFromApp(app)))
 	app.Use(ar.CORSMiddleware(corsConfig))
 
-	app.ServeStaticFile("/index", "./example/index.html", ar.WithPreCache())
 	app.ServeStaticDir("/static", "docs/")
 	app.ServeStaticDir("/assets", "example/assets/")
 
-	app.GET(ar_templ.SimpleRenderer("/", ui_pages.Index()))
-	app.GET(ar_templ.SimpleRenderer("/root", ui_pages.Index()))
+	gen.RegisterUIRoutes(app.Handler)
 
 	app.Redirect("/redirect", "/test", 302)
 	app.Redirect("/favicon.ico", "/assets/favicon.ico", 301)

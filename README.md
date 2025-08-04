@@ -20,6 +20,8 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
 
 ## Features:
     - [X] "ExpressJS" like Router
+    - [ ] simple GET Filebased Routing
+    - [ ] more advanced Filebased Routing
     - [X] SubRouter support for grouping
     - [X] Path- and QueryParams Support
     - [X] Catch-all/default Route
@@ -34,6 +36,7 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] More Buildin Middlewares (RateLimit, Cache, Compress, SecureCookies, Session)
     - [ ] Builtin Auth Middlewares (Basic-Auth, JWT-Auth, OAuth, ApiKey-Auth)
     - [ ] Function defined skip condition for Middlewares
+    - [ ] A good Auth library like BetterAuth
     - [X] "Fastapi" like, streamlined simple CRUD Operations, meaning auto conversion to defined struct for RequestInput and ResponseOutput
     - [ ] Simple CRUD Endpoint support for fast v0 or prototyping
     - [X] Automatic MIMEType parsing based on Headers (JSON, YAML and XML)
@@ -42,7 +45,6 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support
     - [X] Static File serving
-    - [ ] Filebased Routing
     - [ ] HtmGo Support (?!)
     - [ ] Metrics
     - [ ] Simple ReverseProxy (not recommended for production, but for hobby projects maybe nice to have)
