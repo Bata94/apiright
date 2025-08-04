@@ -120,3 +120,75 @@ func TestCORSMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestCSRFMiddleware(t *testing.T) {
+	app := NewApp()
+	app.Use(CSRFMiddleware(DefaultCSRFConfig()))
+
+	app.GET("/", func(c *Ctx) error {
+		c.Response.SetMessage("GET request")
+		return nil
+	})
+
+	app.POST("/", func(c *Ctx) error {
+		c.Response.SetMessage("POST request")
+		return nil
+	})
+
+	app.addRoutesToHandler()
+
+	// Test GET request
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	app.getHttpHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	// Check if CSRF cookie is set
+	cookies := rec.Result().Cookies()
+	var csrfCookie *http.Cookie
+	for _, cookie := range cookies {
+		if cookie.Name == DefaultCSRFConfig().CookieName {
+			csrfCookie = cookie
+			break
+		}
+	}
+
+	if csrfCookie == nil {
+		t.Fatal("CSRF cookie not set")
+	}
+
+	// Test POST request with valid CSRF token
+	req = httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Header.Set(DefaultCSRFConfig().HeaderName, csrfCookie.Value)
+	req.AddCookie(csrfCookie)
+	rec = httptest.NewRecorder()
+	app.getHttpHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	// Test POST request with invalid CSRF token
+	req = httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Header.Set(DefaultCSRFConfig().HeaderName, "invalid_token")
+	req.AddCookie(csrfCookie)
+	rec = httptest.NewRecorder()
+	app.getHttpHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)
+	}
+
+	// Test POST request without CSRF token
+	req = httptest.NewRequest(http.MethodPost, "/", nil)
+	req.AddCookie(csrfCookie)
+	rec = httptest.NewRecorder()
+	app.getHttpHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)
+	}
+}
