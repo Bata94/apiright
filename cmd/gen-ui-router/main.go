@@ -75,6 +75,13 @@ func main() {
 	// Ensure relative path uses forward slashes for Go import paths
 	relInputDir = filepath.ToSlash(relInputDir)
 
+	// Ensure Output directory exists
+	outputDir := filepath.Dir(outputFile)
+	err = os.MkdirAll(outputDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating output directory %s: %v", outputDir, err)
+	}
+
 	importAlias := filepath.Base(relInputDir)
 	importAlias = strings.ReplaceAll(importAlias, "-", "_") // Ensure valid Go identifier
 
