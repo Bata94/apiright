@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 
@@ -38,7 +37,6 @@ var (
 	inputDir    string
 	outputFile  string
 	packageName string
-	routeRegex  = regexp.MustCompile(`(?m)^//\s*ui-router:\s*(.*)$`)
 )
 
 func init() {
@@ -184,17 +182,17 @@ func findRoutes(dir string) ([]Route, error) {
 			return nil
 		}
 
-		relPath, err := filepath.Rel(dir, path)
-		if err != nil {
-			return fmt.Errorf("getting relative path for %s: %w", path, err)
-		}
+		// relPath, err := filepath.Rel(dir, path)
+		// if err != nil {
+		// 	return fmt.Errorf("getting relative path for %s: %w", path, err)
+		// }
 
-		goPackageDir := filepath.Dir(relPath)
-		goPackageName := ""
-		if goPackageDir != "." {
-			goPackageName = filepath.Base(goPackageDir)
-			goPackageName = strings.ReplaceAll(goPackageName, "-", "_")
-		}
+		// goPackageDir := filepath.Dir(relPath)
+		// goPackageName := ""
+		// if goPackageDir != "." {
+		// 	goPackageName = filepath.Base(goPackageDir)
+		// 	goPackageName = strings.ReplaceAll(goPackageName, "-", "_")
+		// }
 
 		goFunctionName := strings.ReplaceAll(baseName, "-", " ")
 		goFunctionName = cases.Title(language.English, cases.NoLower).String(goFunctionName)
@@ -216,7 +214,11 @@ func generateRoutesFile(outputFilePath string, data TemplateData) error {
 	if err != nil {
 		return fmt.Errorf("creating output file %s: %w", outputFilePath, err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Panicf("Error closing output file %s: %v", outputFilePath, err)
+		}
+	}()
 
 	return tmpl.Execute(f, data)
 }
