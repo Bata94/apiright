@@ -15,8 +15,9 @@ type Config struct {
 	// TODO: Add TemplUI
 }
 
+// TODO: make sure this is not overwritten in the lifetime of the app
 func init() {
-	config.htmx = true;
+	config.htmx = false;
 	config.htmxFetchUrl = "https://cdn.jsdelivr.net/npm/htmx.org@latest/dist/htmx.min.js";
 	config.htmxLinkUrl = "";
 }
