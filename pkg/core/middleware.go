@@ -1,10 +1,12 @@
 package core
 
 import (
+	"compress/gzip"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -161,6 +163,52 @@ func DefaultCORSConfig() CORSConfig {
 		AllowCredentials: false,
 		MaxAge:           86400, // 24 hours
 	}
+}
+
+// CompressConfig holds the configuration for the compression middleware.
+type CompressConfig struct {
+	// CompressionLevel is the gzip compression level.
+	// -1 (DefaultCompression), 0 (NoCompression), 1 (BestSpeed) to 9 (BestCompression).
+	CompressionLevel int
+}
+
+// DefaultCompressConfig returns a default compression configuration.
+func DefaultCompressConfig() CompressConfig {
+	return CompressConfig{
+		CompressionLevel: -1, // DefaultCompression
+	}
+}
+
+// CompressMiddleware returns a middleware that compresses HTTP responses.
+func CompressMiddleware(config CompressConfig) Middleware {
+	return func(next Handler) Handler {
+		return func(c *Ctx) error {
+			if !strings.Contains(c.Request.Header.Get("Accept-Encoding"), "gzip") {
+				return next(c)
+			}
+
+			c.Response.AddHeader("Content-Encoding", "gzip")
+			gzipWriter, err := gzip.NewWriterLevel(c.Response.Writer, config.CompressionLevel)
+			if err != nil {
+				return err
+			}
+			defer gzipWriter.Close()
+
+			c.Response.Writer = &gzipResponseWriter{ResponseWriter: c.Response.Writer, Writer: gzipWriter}
+
+			return next(c)
+		}
+	}
+}
+
+// gzipResponseWriter is a wrapper around http.ResponseWriter that compresses the response body.
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	io.Writer
+}
+
+func (w *gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
 }
 
 // TODO: Implement a function that returns a CORSConfig allowing all origins, methods, and headers, similar to ExposeAllCORSConfig but for all aspects of CORS.
