@@ -17,7 +17,7 @@ import (
 
 // Route represents a single route with its path and component name.
 type Route struct {
-	Path        string
+	Path          string
 	ComponentName string
 }
 
@@ -126,7 +126,7 @@ func getGoModulePath() (string, error) {
 	}
 	lines := strings.SplitSeq(string(content), "\n")
 	for line := range lines {
-		if after, ok :=strings.CutPrefix(line, "module "); ok  {
+		if after, ok := strings.CutPrefix(line, "module "); ok {
 			return strings.TrimSpace(after), nil
 		}
 	}
@@ -201,7 +201,7 @@ func findRoutes(dir string) ([]Route, error) {
 		goFunctionName = strings.ReplaceAll(goFunctionName, " ", "")
 
 		routes = append(routes, Route{
-			Path:        routePath,
+			Path:          routePath,
 			ComponentName: goFunctionName,
 		})
 		return nil
