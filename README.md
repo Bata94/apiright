@@ -17,10 +17,13 @@ So this Framework will be a wrapper for the stdlib net/http server, with some qu
 Therefore I will try to add the best features I have seen in other Frameworks into it.
 
 Apiright won't be the fastest Go Webframework out there (but it will still be way fast enough for most use cases), the main goal is Development experience and Development speed.
+The goal is an easy to use and optionated "batteries included" Framework. But in a modular way, so you can exchange modules to fit your needs and only use what you need.
 
 ## Features:
+These are the features I have in mind, they are roughly ordered by importance.
+
     - [X] "ExpressJS" like Router
-    - [ ] simple GET Filebased Routing
+    - [X] simple GET Filebased Routing, with full Router support
     - [ ] more advanced Filebased Routing
     - [X] SubRouter support for grouping
     - [X] Path- and QueryParams Support
@@ -30,13 +33,14 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [ ] Custom global ErrorHandling
     - [ ] Multi domain support
     - [X] Routergroups
+    - [X] Static File serving
     - [X] Middleware support
     - [X] Buildin Middleware (Logging, CORS, CSRF, PanicRecovery, Timeout)
     - [X] Addable custom Middlewares
     - [ ] More Buildin Middlewares (RateLimit, Cache, Compress, SecureCookies, Session)
+    - [ ] A good Auth library like "BetterAuth" (light)
     - [ ] Builtin Auth Middlewares (Basic-Auth, JWT-Auth, OAuth, ApiKey-Auth)
     - [ ] Function defined skip condition for Middlewares
-    - [ ] A good Auth library like BetterAuth
     - [X] "Fastapi" like, streamlined simple CRUD Operations, meaning auto conversion to defined struct for RequestInput and ResponseOutput
     - [ ] Simple CRUD Endpoint support for fast v0 or prototyping
     - [X] Automatic MIMEType parsing based on Headers (JSON, YAML and XML)
@@ -44,8 +48,9 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
     - [X] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
     - [ ] Embedded HTMX Support
-    - [X] Static File serving
     - [ ] HtmGo Support (?!)
+    - [ ] CLI setup/blueprint tool
+    - [ ] Dokerfile template
     - [ ] Metrics
     - [ ] Simple ReverseProxy (not recommended for production, but for hobby projects maybe nice to have)
     - [ ] Embedded "cron-jobs", like included Microservices (run once, run every hour etc.)
@@ -57,7 +62,7 @@ Apiright won't be the fastest Go Webframework out there (but it will still be wa
 
 ## Limitation
 
-As long I haven't tagged or released a Version 1.X.X, you shouldn't use this in production!
+As long I haven't tagged or released a Version 1.X.X, you shouldn't use this in production! Breaking changes will happen on a regular basis.
 
 ## Usage
 
