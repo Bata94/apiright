@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/bata94/apiright/example/ui-router/gen"
+	pages "github.com/bata94/apiright/example/ui/pages"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
-	pages "github.com/bata94/apiright/example/ui/pages"
 )
 
 //go:generate /Users/bata/Projects/personal/apiright/bin/gen-ui-router -input ./ui/pages -output ./ui-router/gen/routes_gen.go -package gen

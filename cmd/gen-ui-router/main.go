@@ -10,6 +10,9 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Route represents a single route with its path and component name.
@@ -193,8 +196,9 @@ func findRoutes(dir string) ([]Route, error) {
 			goPackageName = strings.ReplaceAll(goPackageName, "-", "_")
 		}
 
-		goFunctionName := strings.ReplaceAll(baseName, "-", "_")
-		goFunctionName = strings.Title(goFunctionName)
+		goFunctionName := strings.ReplaceAll(baseName, "-", " ")
+		goFunctionName = cases.Title(language.English, cases.NoLower).String(goFunctionName)
+		goFunctionName = strings.ReplaceAll(goFunctionName, " ", "")
 
 		routes = append(routes, Route{
 			Path:        routePath,

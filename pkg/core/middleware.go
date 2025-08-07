@@ -331,7 +331,9 @@ func CSRFMiddleware(config CSRFConfig) Middleware {
 					HttpOnly: config.CookieHTTPOnly,
 				}
 				c.Response.AddHeader("Set-Cookie", cookie.String())
-			} else if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
+				// TODO: Double check this logic
+				// } else if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
+			} else {
 				// Verify CSRF token
 				csrfTokenFromHeader := c.Request.Header.Get(config.HeaderName)
 				csrfTokenFromCookie, err := c.Request.Cookie(config.CookieName)

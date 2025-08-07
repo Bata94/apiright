@@ -189,7 +189,7 @@ func NewApp(opts ...AppOption) App {
 	// Return App Object
 	return App{
 		config:           &config,
-		Handler:          mainHandler,
+		handler:          mainHandler,
 		Logger:           config.logger,
 		router:           newRouter(""),
 		defRouteHandler:  defCatchallHandler,
@@ -206,7 +206,7 @@ func NewApp(opts ...AppOption) App {
 // TODO: Add Next/Skip function to Middlewares, to skip the middleware for i.e. endpoints or states
 type App struct {
 	config  *AppConfig
-	Handler *http.ServeMux
+	handler *http.ServeMux
 	Logger  logger.Logger
 
 	defRouteHandler Handler
@@ -252,8 +252,6 @@ func (a *App) NewRouter(path string) *Router {
 func (a *App) Use(m Middleware) {
 	a.router.Use(m)
 }
-
-
 
 func (a *App) GET(path string, handler Handler, opt ...RouteOption) {
 	a.router.GET(path, handler, opt...)
@@ -306,7 +304,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 	}
 
-	a.Handler.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
+	a.handler.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
 		currentHandler := h
@@ -400,7 +398,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	})
 }
 
-func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, router Router) {
+func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, _ Router) {
 	if endPoint.method == METHOD_OPTIONS || !endPoint.routeOptionConfig.openApiEnabled {
 		return
 	}
@@ -564,5 +562,5 @@ func (a *App) Run() error {
 	a.addRoutesToHandler()
 	a.ServeStaticDir("/docs", "docs")
 
-	return http.ListenAndServe(a.config.GetListenAddress(), a.Handler)
+	return http.ListenAndServe(a.config.GetListenAddress(), a.handler)
 }

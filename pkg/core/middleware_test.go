@@ -140,7 +140,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	// Test GET request
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	app.getHttpHandler().ServeHTTP(rec, req)
+	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
@@ -165,7 +165,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	req.Header.Set(DefaultCSRFConfig().HeaderName, csrfCookie.Value)
 	req.AddCookie(csrfCookie)
 	rec = httptest.NewRecorder()
-	app.getHttpHandler().ServeHTTP(rec, req)
+	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
@@ -176,7 +176,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	req.Header.Set(DefaultCSRFConfig().HeaderName, "invalid_token")
 	req.AddCookie(csrfCookie)
 	rec = httptest.NewRecorder()
-	app.getHttpHandler().ServeHTTP(rec, req)
+	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)
@@ -186,7 +186,7 @@ func TestCSRFMiddleware(t *testing.T) {
 	req = httptest.NewRequest(http.MethodPost, "/", nil)
 	req.AddCookie(csrfCookie)
 	rec = httptest.NewRecorder()
-	app.getHttpHandler().ServeHTTP(rec, req)
+	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)

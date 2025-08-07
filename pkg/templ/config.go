@@ -5,9 +5,9 @@ var (
 )
 
 type Config struct {
-	htmx bool
+	htmx         bool
 	htmxFetchUrl string
-	htmxLinkUrl string
+	htmxLinkUrl  string
 
 	// TODO: Add DaisyUI
 	// TODO: Add TailwindCSS
@@ -17,7 +17,7 @@ type Config struct {
 
 // TODO: make sure this is not overwritten in the lifetime of the app
 func init() {
-	config.htmx = false;
-	config.htmxFetchUrl = "https://cdn.jsdelivr.net/npm/htmx.org@latest/dist/htmx.min.js";
-	config.htmxLinkUrl = "";
+	config.htmx = false
+	config.htmxFetchUrl = "https://cdn.jsdelivr.net/npm/htmx.org@latest/dist/htmx.min.js"
+	config.htmxLinkUrl = ""
 }

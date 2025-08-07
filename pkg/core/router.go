@@ -214,8 +214,8 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
 		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
 	}
 
-	a.Handler.HandleFunc(getPattern, h)
-	a.Handler.HandleFunc(headPattern, h)
+	a.handler.HandleFunc(getPattern, h)
+	a.handler.HandleFunc(headPattern, h)
 }
 
 func (r *Router) routeExists(path string) int {
