@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	ar "github.com/bata94/apiright/pkg/core"
 	"github.com/bata94/apiright/example/ui-router/gen"
+	ar "github.com/bata94/apiright/pkg/core"
+	ar_templ "github.com/bata94/apiright/pkg/templ"
+	pages "github.com/bata94/apiright/example/ui/pages"
 )
 
 //go:generate /Users/bata/Projects/personal/apiright/bin/gen-ui-router -input ./ui/pages -output ./ui-router/gen/routes_gen.go -package gen
@@ -37,7 +39,10 @@ func main() {
 	app.ServeStaticDir("/static", "docs/")
 	app.ServeStaticDir("/assets", "example/assets/")
 
-	gen.RegisterUIRoutes(app.Handler)
+	uiRouter := app.NewRouter("")
+	gen.RegisterUIRoutes(uiRouter)
+
+	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", pages.Index()))
 
 	app.Redirect("/redirect", "/test", 302)
 	app.Redirect("/favicon.ico", "/assets/favicon.ico", 301)
