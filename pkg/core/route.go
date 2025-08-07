@@ -130,7 +130,7 @@ func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *C
 
 // Ctx is the context for a request.
 type Ctx struct {
-	// TODO: Move to an Interface, prob to use HTML Responses as well
+	// TODO: Refactor ApiResponse to an interface (e.g., ResponseWriter) to allow for different response types, such as HTML responses, beyond just API responses.
 	Response *ApiResponse
 	Request  *http.Request
 
@@ -217,7 +217,7 @@ func (c *Ctx) IsClosed() bool {
 }
 
 // RouteOptionConfig holds the configuration for a route.
-// TODO: Add this to Router as well and set the Router values as default for Route
+// TODO: Integrate RouteOptionConfig into the Router to allow setting default values for routes defined within that router, which can then be overridden by individual route options.
 type RouteOptionConfig struct {
 	openApiEnabled bool
 	openApiConfig  struct {
@@ -236,7 +236,7 @@ type RouteOption func(*RouteOptionConfig)
 
 // NewRouteOptionConfig creates a new RouteOptionConfig.
 func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
-	// TODO: Make default settable in AppConfig and pass through
+	// TODO: Allow default RouteOptionConfig values to be set in AppConfig and passed through to NewRouteOptionConfig, enabling global defaults for route options.
 	config := &RouteOptionConfig{
 		openApiEnabled: true,
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 // Middleware is a function that wraps a Handler to add functionality.
-// TODO: Think Errorandling either here or in CTX
+// TODO: Define a consistent error handling strategy for middlewares, considering whether errors should be returned directly by the middleware or propagated through the Ctx object.
 type Middleware func(Handler) Handler
 
 // LogMiddleware is a middleware that logs requests.
@@ -24,10 +24,11 @@ func LogMiddleware(logger logger.Logger) Middleware {
 				<-c.conClosed
 
 				duration := c.conEnded.Sub(c.conStarted)
-				// TODO: use tabs and colors to make logs more appealing
+				// TODO: Enhance log formatting to improve readability, potentially by using a dedicated logging library or custom formatter to add tabs, colors, and structured output.
 				infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s", c.Response.StatusCode, duration.Microseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
 				if c.Response.StatusCode >= 400 {
-					// TODO: add the error Msg here
+					// TODO: Include the actual error message in the log output when a request results in an error (status code >= 400) for better debugging.
+					logger.Error(infoLog)
 					logger.Error(infoLog)
 				} else {
 					logger.Info(infoLog)
@@ -162,7 +163,7 @@ func DefaultCORSConfig() CORSConfig {
 	}
 }
 
-// TODO: ExposeAll CORSConfig
+// TODO: Implement a function that returns a CORSConfig allowing all origins, methods, and headers, similar to ExposeAllCORSConfig but for all aspects of CORS.
 
 // ExposeAllCORSConfig returns a CORSConfig that allows all origins, headers, and methods.
 // Use with caution! But might be nice for dev/testing.
@@ -331,7 +332,7 @@ func CSRFMiddleware(config CSRFConfig) Middleware {
 					HttpOnly: config.CookieHTTPOnly,
 				}
 				c.Response.AddHeader("Set-Cookie", cookie.String())
-				// TODO: Double check this logic
+				// TODO: Thoroughly review and double-check the CSRF token generation, storage (cookie vs. header), and verification logic to ensure it adheres to security best practices and correctly handles all edge cases.
 				// } else if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
 			} else {
 				// Verify CSRF token

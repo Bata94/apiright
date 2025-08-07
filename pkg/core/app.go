@@ -199,11 +199,11 @@ func NewApp(opts ...AppOption) App {
 }
 
 // App is the main application struct.
-// TODO: Add MaxConnection handling (Middleware??)
-// TODO: Add RateLimit handling (Middleware??)
-// TODO: Add Compress Middleware
-// TODO: Add Response Caching Middleware
-// TODO: Add Next/Skip function to Middlewares, to skip the middleware for i.e. endpoints or states
+// TODO: Implement a middleware to limit the maximum number of concurrent connections to prevent server overload.
+// TODO: Implement a middleware for rate limiting to control the number of requests a client can make within a specific time frame.
+// TODO: Implement a middleware to compress HTTP responses (e.g., using gzip or brotli) to reduce bandwidth usage.
+// TODO: Implement a middleware for response caching to store and serve frequently requested responses, improving performance.
+// TODO: Enhance the Middleware interface to include a mechanism (e.g., a 'Next' or 'Skip' function) allowing middlewares to conditionally bypass subsequent middlewares or handlers based on certain criteria (e.g., specific endpoints or request states).
 type App struct {
 	config  *AppConfig
 	handler *http.ServeMux
@@ -314,9 +314,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 		c := NewCtx(w, r, route, endPoint)
 		r = r.WithContext(c.Request.Context())
-		// TODO: start Middlewares here! Or add the ObjIn part as a Middleware
+		// TODO: Integrate the ObjIn (object input) processing as a middleware to ensure it's part of the request handling chain.
 
-		// TODO: Return all wrong types in respose, not only the first one
+		// TODO: Modify the input object validation to collect and return all type-related errors in a single response, instead of only the first encountered error.
 		if endPoint.routeOptionConfig.ObjIn != nil {
 			c.ObjIn = endPoint.routeOptionConfig.ObjIn
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
@@ -332,7 +332,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			case MIMETYPE_YAML.toString():
 				objInFunc = c.objInYaml
 			default:
-				// TODO: Add a MIME Sniffer
+				// TODO: Implement a MIME sniffer (e.g., using http.DetectContentType) to automatically determine the content type of the request body when the 'Content-Type' header is missing or generic.
 				// http.DetectContentType(c.Request.B)
 				c.Response.SetStatus(http.StatusUnsupportedMediaType)
 				c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
@@ -410,7 +410,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	objOutType := reflect.TypeOf(endPoint.routeOptionConfig.ObjOut)
 	errResType := reflect.TypeOf(ErrorResponse{})
 
-	// TODO: Choose between default summary and description
+	// TODO: Implement logic to allow choosing between a default summary/description for OpenAPI documentation and a custom one provided by the user.
 	summary := "Default Summary"
 	desc := "Default Description"
 	if endPoint.routeOptionConfig.openApiConfig.summary != "" {
@@ -425,7 +425,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary(summary).
 		Description(desc).
-		// TODO: Implement
+		// TODO: Implement security handling for the OpenAPI endpoint, allowing definition of security schemes (e.g., API keys, OAuth2) and their application to specific endpoints.
 		// Security(openapi.SecurityRequirement{"BearerAuth": []string{}}).
 		Response(400, "Invalid request data", allAvailableMIME, errResType).
 		Response(422, "Validation errors in request data", allAvailableMIME, errResType).
@@ -438,10 +438,10 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		newEndpointBuilder.Deprecated()
 	}
 	if endPoint.routeOptionConfig.ObjIn != nil {
-		// TODO: Add wanted MIMETypes here
+		// TODO: Dynamically add the specific MIME types that this endpoint expects for the request body based on configuration or reflection.
 		// newEndpointBuilder.RequestType(objInType)
 		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}, objInType)
-		// TODO: Implement
+		// TODO: Implement dynamic generation or inclusion of request body examples for OpenAPI documentation based on the ObjIn type.
 		// RequestExample([]UpdateUserRequest{
 		// 	{
 		// 		FirstName: openapi.StringPtr("John"),
@@ -455,7 +455,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	if endPoint.routeOptionConfig.ObjOut != nil {
 		newEndpointBuilder.Response(200, "Success", allAvailableMIME, objOutType)
 	} else {
-		// TODO: This reflect statement must be easier
+		// TODO: Refactor this reflection statement to provide a more straightforward and idiomatic way to define the success response type (e.g., for empty or simple text responses) in OpenAPI documentation when ObjOut is not specified.
 		newEndpointBuilder.Response(200, "Success", []string{MIMETYPE_TEXT.toString()}, reflect.TypeOf("i"))
 	}
 

@@ -9,13 +9,10 @@ type Config struct {
 	htmxFetchUrl string
 	htmxLinkUrl  string
 
-	// TODO: Add DaisyUI
-	// TODO: Add TailwindCSS
-	// TODO: Add AlpineJS
-	// TODO: Add TemplUI
+	// TODO: Add configuration options and integration for popular UI frameworks like DaisyUI, TailwindCSS, AlpineJS, and TemplUI to streamline their usage within the application.
 }
 
-// TODO: make sure this is not overwritten in the lifetime of the app
+// TODO: Ensure that the 'config' variable, once initialized, is not inadvertently overwritten or modified during the application's lifetime to maintain consistent configuration.
 func init() {
 	config.htmx = false
 	config.htmxFetchUrl = "https://cdn.jsdelivr.net/npm/htmx.org@latest/dist/htmx.min.js"
