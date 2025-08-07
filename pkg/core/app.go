@@ -32,6 +32,8 @@ type AppConfig struct {
 	}
 	logger  logger.Logger
 	timeout time.Duration
+	requestUnmarshallers  map[string]RequestUnmarshaller
+	responseMarshallers map[string]ResponseMarshaller
 }
 
 // AppOption is a function that configures an AppConfig.
@@ -106,6 +108,20 @@ func AppTimeout(timeout time.Duration) AppOption {
 	}
 }
 
+// AppAddRequestUnmarshaller adds a custom RequestUnmarshaller.
+func AppAddRequestUnmarshaller(contentType string, unmarshaller RequestUnmarshaller) AppOption {
+	return func(c *AppConfig) {
+		c.requestUnmarshallers[contentType] = unmarshaller
+	}
+}
+
+// AppAddResponseMarshaller adds a custom ResponseMarshaller.
+func AppAddResponseMarshaller(contentType string, marshaller ResponseMarshaller) AppOption {
+	return func(c *AppConfig) {
+		c.responseMarshallers[contentType] = marshaller
+	}
+}
+
 // GetListenAddress returns the address the application will listen on.
 func (c AppConfig) GetListenAddress() string {
 	return fmt.Sprintf("%s:%s", c.host, c.port)
@@ -129,6 +145,16 @@ func NewApp(opts ...AppOption) App {
 		title:              "My App",
 		serviceDescribtion: "My App Description",
 		version:            "0.0.0",
+		requestUnmarshallers: map[string]RequestUnmarshaller{
+			MIMETYPE_JSON.toString(): JSONUnmarshaller{},
+			MIMETYPE_XML.toString():  XMLUnmarshaller{},
+			MIMETYPE_YAML.toString(): YAMLUnmarshaller{},
+		},
+		responseMarshallers: map[string]ResponseMarshaller{
+			MIMETYPE_JSON.toString(): JSONMarshaller{},
+			MIMETYPE_XML.toString():  XMLMarshaller{},
+			MIMETYPE_YAML.toString(): YAMLMarshaller{},
+		},
 	}
 
 	for _, opt := range opts {
@@ -288,7 +314,6 @@ func (a App) ServeStaticDir(urlPath, dirPath string) {
 	a.router.ServeStaticDir(urlPath, dirPath, a)
 }
 
-// TODO: Abstract ObjIn and Out Marshalling more, so that the marshalling interfaces can be set in App/Router config and exchanged by user if default isn't right
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
 
@@ -322,24 +347,14 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			c.ObjInType = reflect.TypeOf(c.ObjIn)
 
 			contentTypeHeader := strings.TrimSpace(r.Header.Get("Content-Type"))
-			var objInFunc func() error
-
-			switch contentTypeHeader {
-			case MIMETYPE_JSON.toString():
-				objInFunc = c.objInJson
-			case MIMETYPE_XML.toString():
-				objInFunc = c.objInXml
-			case MIMETYPE_YAML.toString():
-				objInFunc = c.objInYaml
-			default:
-				// TODO: Implement a MIME sniffer (e.g., using http.DetectContentType) to automatically determine the content type of the request body when the 'Content-Type' header is missing or generic.
-				// http.DetectContentType(c.Request.B)
+			unmarshaller, ok := a.config.requestUnmarshallers[contentTypeHeader]
+			if !ok {
 				c.Response.SetStatus(http.StatusUnsupportedMediaType)
 				c.Response.SetMessage("This Content-Type isn't supported... yet... If u really need it, reach out.")
 				goto ClosingFunc
 			}
 
-			if err = objInFunc(); err != nil {
+			if err = unmarshaller.Unmarshal(c.getObjInByte(), &c.ObjIn); err != nil {
 				goto ClosingFunc
 			}
 			if !c.validateObjInType() {
@@ -359,38 +374,32 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				goto ClosingFunc
 			}
 
-			var objOutFunc func() error
+			var marshaller ResponseMarshaller
 			log.Debug(c.Request.Header.Get("accept"))
 			acceptHeaders := strings.Split(c.Request.Header.Get("accept"), ",")
 
 			for _, acceptHeader := range acceptHeaders {
 				acceptHeader = strings.TrimSpace(acceptHeader)
-				switch acceptHeader {
-				case MIMETYPE_JSON.toString():
-					log.Debug("JSON encode...")
-					objOutFunc = c.objOutJson
-				case MIMETYPE_XML.toString():
-					log.Debug("XML encode...")
-					objOutFunc = c.objOutXML
-				case MIMETYPE_YAML.toString():
-					log.Debug("YAML encode...")
-					objOutFunc = c.objOutYaml
-				}
-				if objOutFunc != nil {
+				var ok bool
+				marshaller, ok = a.config.responseMarshallers[acceptHeader]
+				if ok {
 					break
 				}
 			}
 
-			if objOutFunc == nil {
+			if marshaller == nil {
 				log.Error("406 - Requested MIMETypes aren't supported: ", acceptHeaders)
 				c.Response.SetStatus(http.StatusNotAcceptable)
 				c.Response.SetMessage("The requested MIME Type isn't supported... yet... If u really need it, reach out.")
 				goto ClosingFunc
 			}
 
-			if err = objOutFunc(); err != nil {
+			b, err := marshaller.Marshal(c.ObjOut)
+			if err != nil {
 				goto ClosingFunc
 			}
+			c.Response.SetData(b)
+			c.Response.AddHeader("Content-Type", marshaller.ContentType())
 		}
 
 	ClosingFunc:

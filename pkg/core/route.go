@@ -169,18 +169,6 @@ func (c *Ctx) validateObjInType() bool {
 	return reflect.TypeOf(c.ObjIn) == c.ObjInType
 }
 
-func (c *Ctx) objInJson() error {
-	return json.Unmarshal(c.getObjInByte(), &c.ObjIn)
-}
-
-func (c *Ctx) objInXml() error {
-	return xml.Unmarshal(c.getObjInByte(), &c.ObjIn)
-}
-
-func (c *Ctx) objInYaml() error {
-	return yaml.Unmarshal(c.getObjInByte(), c.ObjIn)
-}
-
 func (c *Ctx) setObjOutData(b []byte, err error) error {
 	if err != nil {
 		return err
@@ -191,18 +179,6 @@ func (c *Ctx) setObjOutData(b []byte, err error) error {
 
 func (c *Ctx) validateObjOutType() bool {
 	return reflect.TypeOf(c.ObjOut) == c.ObjOutType
-}
-
-func (c *Ctx) objOutJson() error {
-	return c.setObjOutData(json.Marshal(c.ObjOut))
-}
-
-func (c *Ctx) objOutXML() error {
-	return c.setObjOutData(xml.Marshal(c.ObjOut))
-}
-
-func (c *Ctx) objOutYaml() error {
-	return c.setObjOutData(yaml.Marshal(c.ObjOut))
 }
 
 // Close closes the connection.
