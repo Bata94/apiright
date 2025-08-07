@@ -199,7 +199,7 @@ func NewApp(opts ...AppOption) App {
 }
 
 // App is the main application struct.
-// TODO: Implement a middleware to limit the maximum number of concurrent connections to prevent server overload.
+
 // TODO: Implement a middleware for rate limiting to control the number of requests a client can make within a specific time frame.
 // TODO: Implement a middleware to compress HTTP responses (e.g., using gzip or brotli) to reduce bandwidth usage.
 // TODO: Implement a middleware for response caching to store and serve frequently requested responses, improving performance.
