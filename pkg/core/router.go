@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -151,9 +150,9 @@ func WithContentType(contentType string) StaticServFileOption {
 // ServeStaticFile serves a static file.
 func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) error {
 	config := NewStaticServeFileConfig(opt...)
+	absFilePath, err := filepath.Abs(filePath)
 
 	if config.preCache {
-		absFilePath, err := filepath.Abs(filePath)
 		if err != nil {
 			log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
 			return err
@@ -188,8 +187,43 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 			WithOpenApiDisabled(),
 		)
 	} else {
-		// TODO: Implement serving static files directly from the filesystem without pre-caching, handling HTTP range requests and appropriate caching headers.
-		return errors.New("not implemented")
+		h := func(c *Ctx) error {
+			if err != nil {
+				log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
+				return err
+			}
+
+			if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
+				err = fmt.Errorf("static file '%s' does not exist. Please ensure the file exists", absFilePath)
+				log.Error(err)
+
+				c.Response.SetStatus(404)
+				c.Response.SetMessage("File not found... Please double-check the URL and try again.")
+				return err
+			}
+
+			content, err := os.ReadFile(absFilePath)
+			if err != nil {
+				err = fmt.Errorf("static file '%s' exists, but is not readable: %w", absFilePath, err)
+				log.Error(err)
+
+				c.Response.SetStatus(500)
+				c.Response.SetMessage("File was found, but is not readable... Please try again later, if it persists, contact the administrator.")
+				return nil
+			}
+
+			c.Response.SetStatus(200)
+			c.Response.SetData(content)
+			c.Response.AddHeader("Content-Type", config.contentType)
+			return nil
+		}
+
+		r.addEndpoint(
+			METHOD_GET,
+			urlPath,
+			h,
+			WithOpenApiDisabled(),
+		)
 	}
 
 	return nil
