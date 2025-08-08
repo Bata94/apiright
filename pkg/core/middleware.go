@@ -29,7 +29,6 @@ func LogMiddleware(logger logger.Logger) Middleware {
 				if c.Response.StatusCode >= 400 {
 					// TODO: Include the actual error message in the log output when a request results in an error (status code >= 400) for better debugging.
 					logger.Error(infoLog)
-					logger.Error(infoLog)
 				} else {
 					logger.Info(infoLog)
 				}
