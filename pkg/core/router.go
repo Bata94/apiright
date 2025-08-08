@@ -110,7 +110,7 @@ type CrudInterface interface {
 
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
-	preCache    bool
+	preLoad    bool
 	contentType string
 }
 
@@ -120,7 +120,7 @@ type StaticServFileOption func(*StaticSevFileConfig)
 // NewStaticServeFileConfig creates a new StaticSevFileConfig.
 func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
 	c := &StaticSevFileConfig{
-		preCache:    false,
+		preLoad:    true,
 		contentType: "",
 	}
 
@@ -132,11 +132,11 @@ func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig
 }
 
 // WithPreCache caches the file content in memory.
-func WithPreCache() StaticServFileOption {
+func WithPreLoad() StaticServFileOption {
 	// Read the file content once when the handler is created.
 	// This is efficient for files that don't change frequently.
 	return func(c *StaticSevFileConfig) {
-		c.preCache = true
+		c.preLoad = true
 	}
 }
 
@@ -152,7 +152,7 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 	config := NewStaticServeFileConfig(opt...)
 	absFilePath, err := filepath.Abs(filePath)
 
-	if config.preCache {
+	if config.preLoad {
 		if err != nil {
 			log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
 			return err

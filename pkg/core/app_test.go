@@ -266,7 +266,7 @@ func TestApp_ServeStaticFile(t *testing.T) {
 	}
 	defer func() { _ = RemoveDummyFile(dummyFilePath) }()
 
-	app.ServeStaticFile("/static/dummy.txt", dummyFilePath, WithContentType("text/plain"), WithPreCache())
+	app.ServeStaticFile("/static/dummy.txt", dummyFilePath, WithContentType("text/plain"), WithPreLoad())
 	if err != nil {
 		t.Fatalf("ServeStaticFile failed: %v", err)
 	}
