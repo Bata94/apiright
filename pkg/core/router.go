@@ -147,6 +147,9 @@ func WithContentType(contentType string) StaticServFileOption {
 	}
 }
 
+// TODO: add compression on startup or on the fly based on "preLoaded"
+// TODO: add option to load files directly to memory
+
 // ServeStaticFile serves a static file.
 func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) error {
 	config := NewStaticServeFileConfig(opt...)
