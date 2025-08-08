@@ -1,7 +1,6 @@
-package main
+package ar_templ
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -29,25 +28,7 @@ type TemplateData struct {
 	ImportAlias       string
 }
 
-const (
-	defaultOutputFileName = "routes_gen.go"
-)
-
-var (
-	inputDir    string
-	outputFile  string
-	packageName string
-)
-
-func init() {
-	flag.StringVar(&inputDir, "input", "", "Input directory containing .templ files (required)")
-	flag.StringVar(&outputFile, "output", defaultOutputFileName, "Output file name for generated routes.go")
-	flag.StringVar(&packageName, "package", "uirouter", "Package name for the generated routes.go file")
-}
-
-func main() {
-	flag.Parse()
-
+func GeneratorRun(inputDir, outputFile, packageName string) {
 	if inputDir == "" {
 		log.Fatal("Error: --input directory is required.")
 	}

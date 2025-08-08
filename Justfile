@@ -26,7 +26,7 @@ dev: dev-templ dev-tailwind dev-air
 # Generate the UI routes
 gen-example:
   @echo "Generating..."
-  go run cmd/gen-ui-router/main.go --input ./example/ui/pages -output ./example/ui-router/gen/routes_gen.go -package gen
+  go run cmd/apiright-cli/main.go --input ./example/ui/pages -output ./example/ui-router/gen/routes_gen.go -package gen
 
 # Build the application
 build-example: gen-example
