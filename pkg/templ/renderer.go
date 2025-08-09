@@ -10,8 +10,14 @@ func SimpleRenderer(path string, comp templ.Component) (string, ar.Handler) {
 		buf := templ.GetBuffer()
 		defer templ.ReleaseBuffer(buf)
 
-		if err := comp.Render(ctx.Request.Context(), buf); err != nil {
-			return err
+		if ctx.QueryParams["fragment"] != "" {
+			if err := templ.RenderFragments(ctx.Request.Context(), buf, comp, ctx.QueryParams["fragment"]); err != nil {
+				return err
+			}
+		} else {
+			if err := comp.Render(ctx.Request.Context(), buf); err != nil {
+				return err
+			}
 		}
 
 		ctx.Response.SetData(buf.Bytes())

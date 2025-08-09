@@ -19,7 +19,9 @@ templ BaseLayout() {
       </header>
 
       <main class="prose mx-4 my-4">
+        @templ.Fragment("body") {
           { children... }
+        }
       </main>
 
       <footer>
