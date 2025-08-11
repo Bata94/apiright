@@ -1,7 +1,9 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -112,6 +114,12 @@ type CrudInterface interface {
 type StaticSevFileConfig struct {
 	preLoad     bool
 	contentType string
+	// TODO: Add more ConfigOptions
+	// includeHiddenFiles bool
+	// excludeFiles []strings // as regex
+	// excludeDirs []strings // as regex
+	// indexFile string
+	// customCssFile string
 }
 
 // StaticServFileOption is a function that configures a StaticSevFileConfig.
@@ -131,18 +139,15 @@ func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig
 	return c
 }
 
-// WithPreCache caches the file content in memory.
+// WithPreLoad it looks if files exits on startup, if not, it will return an error.
 func WithPreLoad() StaticServFileOption {
-	// Read the file content once when the handler is created.
-	// This is efficient for files that don't change frequently.
 	return func(c *StaticSevFileConfig) {
 		c.preLoad = true
 	}
 }
 
+// WithoutPreLoad it will not look if files exits on startup! Be careful if using this option with a Directory, this function will expose all files in the directory, even if created after Server start!
 func WithoutPreLoad() StaticServFileOption {
-	// Read the file content once when the handler is created.
-	// This is efficient for files that don't change frequently.
 	return func(c *StaticSevFileConfig) {
 		c.preLoad = false
 	}
@@ -240,27 +245,341 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 	return nil
 }
 
-// TODO: Rethink and reimplement ServeStaticDir to leverage more of the framework's features, such as middleware, routing, and context handling, instead of directly using http.FileServer.
-func (r *Router) ServeStaticDir(urlPath, dirPath string, a App) {
-	fs := http.FileServer(http.Dir(dirPath))
-	// Ensure the pattern ends with / to avoid conflicts with method-specific patterns
+const dirExplorerTemplate = `
+{{$BaseUrl := .BaseUrl}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>{{.Title}} - File Explorer</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --background-color: #f8f9fa;
+        --card-background: #ffffff;
+        --border-color: #dee2e6;
+        --text-color: #343a40;
+        --link-color: #007bff;
+        --link-hover-color: #0056b3;
+        --header-bg: #e9ecef;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol";
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: var(--background-color);
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 20px auto;
+        padding: 0 15px;
+      }
+
+      header {
+        background-color: var(--header-bg);
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        color: var(--primary-color);
+      }
+
+      .file-list {
+        list-style: none;
+        padding: 0;
+        margin-top: 20px;
+        background-color: var(--card-background);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .file-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background-color 0.2s ease;
+      }
+
+      .file-item:last-child {
+        border-bottom: none;
+      }
+
+      .file-item:hover {
+        background-color: #f1f3f5;
+      }
+
+      .file-item a {
+        text-decoration: none;
+        color: var(--link-color);
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+      }
+
+      .file-item a:hover {
+        color: var(--link-hover-color);
+      }
+
+      .file-icon {
+        width: 24px;
+        text-align: center;
+        margin-right: 15px;
+        color: var(--secondary-color);
+      }
+
+      .file-icon.folder {
+        color: #ffc107; /* Yellow for folders */
+      }
+
+      .file-name {
+        flex-grow: 1;
+        font-weight: 500;
+      }
+
+      .file-size {
+        font-size: 0.9em;
+        color: var(--secondary-color);
+        margin-left: 15px;
+      }
+
+      .path-breadcrumb {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: var(--header-bg);
+        border-radius: 5px;
+        font-size: 0.9em;
+      }
+
+      .path-breadcrumb a {
+        text-decoration: none;
+        color: var(--primary-color);
+      }
+
+      .path-breadcrumb span {
+        color: var(--secondary-color);
+      }
+
+      .path-breadcrumb a:hover {
+        text-decoration: underline;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        padding: 20px;
+        color: var(--secondary-color);
+        font-size: 0.8em;
+      }
+
+      @media (max-width: 768px) {
+        .file-item {
+          flex-wrap: wrap;
+        }
+        .file-size {
+          margin-left: 0;
+          width: 100%;
+          text-align: right;
+          font-size: 0.85em;
+          padding-top: 5px;
+        }
+        .file-name {
+          flex-basis: calc(100% - 39px); /* icon width + margin */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <h1><i class="fas fa-folder-open"></i> {{.Title}}</h1>
+      </div>
+    </header>
+    <main class="container">
+      <nav class="path-breadcrumb">
+        <!-- Example Breadcrumb (You'll need to pass this data from Go) -->
+        <!-- For now, assuming Title is the current path -->
+        You are in:
+        <a href="{{$BaseUrl}}">Home</a>
+        {{- if ne .Title "/"}}
+          <span> / </span>
+          <span>{{.Title}}</span>
+        {{- end}}
+      </nav>
+
+      <ul class="file-list">
+				{{range .Dirs}}
+					<li class="file-item">
+						<a href="{{$BaseUrl}}{{.Name}}/">
+							<span class="file-icon">
+								<i class="fas fa-folder folder"></i>
+							</span>
+							<span class="file-name">{{.Name}}</span>
+						</a>
+					</li>
+				{{end}}
+
+        {{range .Files}}
+          <li class="file-item">
+            <a href="{{$BaseUrl}}{{.Name}}">
+              <span class="file-icon">
+                {{if (hasSuffix .Name ".pdf")}}
+                  <i class="fas fa-file-pdf"></i>
+                {{else if (or (hasSuffix .Name ".png") (hasSuffix .Name ".jpg") (hasSuffix .Name ".jpeg") (hasSuffix .Name ".gif"))}}
+                  <i class="fas fa-file-image"></i>
+                {{else if (or (hasSuffix .Name ".zip") (hasSuffix .Name ".rar") (hasSuffix .Name ".7z"))}}
+                  <i class="fas fa-file-archive"></i>
+                {{else if (or (hasSuffix .Name ".doc") (hasSuffix .Name ".docx"))}}
+                  <i class="fas fa-file-word"></i>
+                {{else if (or (hasSuffix .Name ".xls") (hasSuffix .Name ".xlsx"))}}
+                  <i class="fas fa-file-excel"></i>
+                {{else if (or (hasSuffix .Name ".ppt") (hasSuffix .Name ".pptx"))}}
+                  <i class="fas fa-file-powerpoint"></i>
+                {{else if (or (hasSuffix .Name ".txt") (hasSuffix .Name ".md") (hasSuffix .Name ".go") (hasSuffix .Name ".html") (hasSuffix .Name ".css") (hasSuffix .Name ".js") (hasSuffix .Name ".json") (hasSuffix .Name ".xml"))}}
+                  <i class="fas fa-file-code"></i>
+                {{else if (or (hasSuffix .Name ".mp3") (hasSuffix .Name ".wav"))}}
+                  <i class="fas fa-file-audio"></i>
+                {{else if (or (hasSuffix .Name ".mp4") (hasSuffix .Name ".mov") (hasSuffix .Name ".avi"))}}
+                  <i class="fas fa-file-video"></i>
+                {{else}}
+                  <i class="fas fa-file"></i>
+                {{end}}
+              </span>
+              <span class="file-name">{{.Name}}</span>
+              <span class="file-size">
+								{{.Size | byteFormat}}
+              </span>
+            </a>
+          </li>
+        {{end}}
+      </ul>
+      {{if not .Files && not .Dirs}}
+        <p style="text-align: center; color: var(--secondary-color);">
+          This directory is empty.
+        </p>
+      {{end}}
+    </main>
+    <footer>
+      <p>ApiRight File Explorer</p>
+    </footer>
+  </body>
+</html>
+`
+
+type DirTemplateData struct {
+	Title string
+	BaseUrl string
+	Files []FileData
+	Dirs []DirData
+}
+
+type FileData struct {
+	Name string
+	Size int64
+}
+
+type DirData struct {
+	Name string
+}
+
+// setupTemplateFuncs creates and returns a template.FuncMap
+// containing our custom functions.
+func setupTemplateFuncs() template.FuncMap {
+	return template.FuncMap{
+		"hasSuffix": func(s, suffix string) bool {
+			return strings.HasSuffix(s, suffix)
+		},
+		"byteFormat": func(b int64) string {
+			const unit = 1024
+			if b < unit {
+				return fmt.Sprintf("%d B", b)
+			}
+			div, exp := int64(unit), 0
+			for n := b / unit; n >= unit; n /= unit {
+				div *= unit
+				exp++
+			}
+			// KMGTPE represents Kilo, Mega, Giga, Tera, Peta, Exa
+			return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "KMGTPE"[exp])
+		},
+	}
+}
+
+func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticServFileOption) {
+	config := NewStaticServeFileConfig(opt...)
+
+	dirTempl, err := template.New(urlPath).Funcs(setupTemplateFuncs()).Parse(dirExplorerTemplate)
+	if err != nil {
+		panic(err)
+	}
+	buf := new(bytes.Buffer)
+
 	pattern := urlPath
 	if !strings.HasSuffix(pattern, "/") {
 		pattern += "/"
 	}
 
-	// Use wildcard patterns to match all paths under the directory
-	// In Go 1.22+, we need {path...} for wildcard matching
-	getPattern := "GET " + pattern + "{path...}"
-	headPattern := "HEAD " + pattern + "{path...}"
+	if config.preLoad {
+		dirData :=  DirTemplateData{
+			Title: "ApiRight", // TODO: Add title from AppConfig
+			BaseUrl: pattern,
+			Files: []FileData{},
+			Dirs: []DirData{},
+		}
+		files, err := os.ReadDir(dirPath)
+		if err != nil {
+			panic(err)
+		}
+		for _, file := range files {
+			if file.IsDir() {
+				dirData.Dirs = append(dirData.Dirs, DirData{
+					Name: file.Name(),
+				})
+				continue
+			}
+			fInfo, err := file.Info()
+			if err != nil {
+				panic(err)
+			}
+			size := fInfo.Size()
+			dirData.Files = append(dirData.Files, FileData{
+				Name: file.Name(),
+				Size: size,
+			})
+			r.ServeStaticFile(pattern + file.Name(), filepath.Join(dirPath, file.Name()), opt...)
+		}
+		if err := dirTempl.Execute(buf, dirData); err != nil {
+			panic(err)
+		}
+		r.GET(urlPath, func(c *Ctx) error {
 
-	h := func(w http.ResponseWriter, r *http.Request) {
-		// Strip the URL prefix to match the file system path
-		http.StripPrefix(urlPath, fs).ServeHTTP(w, r)
+			c.Response.SetStatus(200)
+			c.Response.SetData(buf.Bytes())
+			c.Response.AddHeader("Content-Type", "text/html")
+
+			return nil
+		})
+		// r.ServeStaticFile(pattern + "{path...}", dirPath, opt...)
+	} else {
+		panic("Not implemented")
 	}
-
-	a.handler.HandleFunc(getPattern, h)
-	a.handler.HandleFunc(headPattern, h)
 }
 
 func (r *Router) routeExists(path string) int {

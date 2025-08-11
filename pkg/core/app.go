@@ -284,8 +284,8 @@ func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOpti
 	}
 }
 
-func (a App) ServeStaticDir(urlPath, dirPath string) {
-	a.router.ServeStaticDir(urlPath, dirPath, a)
+func (a App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOption) {
+	a.router.ServeStaticDir(urlPath, dirPath, a, opt...)
 }
 
 // TODO: Abstract ObjIn and Out Marshalling more, so that the marshalling interfaces can be set in App/Router config and exchanged by user if default isn't right
