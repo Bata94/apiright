@@ -3,6 +3,8 @@ package core
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -200,13 +202,90 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 	if rec.Header().Get("Content-Type") != "text/plain" {
 		t.Errorf("Expected Content-Type %q, got %q", "text/plain", rec.Header().Get("Content-Type"))
 	}
+
+	// Test case for WithoutPreLoad()
+	t.Run("WithoutPreLoad", func(t *testing.T) {
+		router := newRouter("") // New router for this sub-test
+
+		// Create a temporary directory and a dummy file for testing static serving
+		tempDir, err := os.MkdirTemp("", "static_test_without_preload")
+		if err != nil {
+			t.Fatalf("Failed to create temp dir: %v", err)
+		}
+		defer func() { _ = os.RemoveAll(tempDir) }()
+
+		filePath := filepath.Join(tempDir, "test_without_preload.txt")
+		fileContent := "This is a test static file without preload."
+		err = os.WriteFile(filePath, []byte(fileContent), 0644)
+		if err != nil {
+			t.Fatalf("Failed to write dummy file: %v", err)
+		}
+
+		err = router.ServeStaticFile("/static/without_preload.txt", filePath, WithContentType("text/plain"), WithoutPreLoad())
+		if err != nil {
+			t.Fatalf("ServeStaticFile failed: %v", err)
+		}
+
+		// Verify that a route was added for the static file
+		found := false
+		var staticRoute *Route
+		for _, route := range router.routes {
+			if route.path == "/static/without_preload.txt" {
+				found = true
+				staticRoute = route
+				break
+			}
+		}
+		if !found {
+			t.Errorf("ServeStaticFile did not add the expected route for WithoutPreLoad")
+		}
+
+		// Test serving the file
+		req := httptest.NewRequest(http.MethodGet, "/static/without_preload.txt", nil)
+		rec := httptest.NewRecorder()
+
+		// Manually call handleFunc for the static file route
+		if staticRoute != nil && len(staticRoute.endpoints) > 0 {
+			var getEndpoint *Endpoint
+			for i := range staticRoute.endpoints {
+				if staticRoute.endpoints[i].method == METHOD_GET {
+					getEndpoint = &staticRoute.endpoints[i]
+					break
+				}
+			}
+
+			if getEndpoint != nil {
+				ctx := NewCtx(rec, req, *staticRoute, *getEndpoint)
+				err := getEndpoint.handleFunc(ctx)
+				if err != nil {
+					t.Fatalf("Handler returned an error: %v", err)
+				}
+				ctx.SendingReturn(rec, nil)
+			} else {
+				t.Fatalf("GET endpoint not found for static file route for WithoutPreLoad")
+			}
+		} else {
+			t.Fatalf("No endpoints found for static file route for WithoutPreLoad")
+		}
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected status %d, got %d for WithoutPreLoad", http.StatusOK, rec.Code)
+		}
+		if rec.Body.String() != fileContent {
+			t.Errorf("Expected body %q, got %q for WithoutPreLoad", fileContent, rec.Body.String())
+		}
+		if rec.Header().Get("Content-Type") != "text/plain" {
+			t.Errorf("Expected Content-Type %q, got %q for WithoutPreLoad", "text/plain", rec.Header().Get("Content-Type"))
+		}
+	})
 }
 
 func TestRouter_ServeStaticFile_NotImplemented(t *testing.T) {
 	router := newRouter("")
 	err := router.ServeStaticFile("/static/not_implemented.txt", "/tmp/non_existent.txt")
-	if err == nil || err.Error() != "not implemented" {
-		t.Errorf("Expected 'not implemented' error, got %v", err)
+	expectedError := "static file '/tmp/non_existent.txt' does not exist. Please ensure the file exists"
+	if err == nil || err.Error() != expectedError {
+		t.Errorf("Expected error %q, got %v", expectedError, err)
 	}
 }
 

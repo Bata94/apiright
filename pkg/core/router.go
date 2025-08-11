@@ -110,7 +110,7 @@ type CrudInterface interface {
 
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
-	preLoad    bool
+	preLoad     bool
 	contentType string
 }
 
@@ -120,7 +120,7 @@ type StaticServFileOption func(*StaticSevFileConfig)
 // NewStaticServeFileConfig creates a new StaticSevFileConfig.
 func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
 	c := &StaticSevFileConfig{
-		preLoad:    true,
+		preLoad:     true,
 		contentType: "",
 	}
 
@@ -137,6 +137,14 @@ func WithPreLoad() StaticServFileOption {
 	// This is efficient for files that don't change frequently.
 	return func(c *StaticSevFileConfig) {
 		c.preLoad = true
+	}
+}
+
+func WithoutPreLoad() StaticServFileOption {
+	// Read the file content once when the handler is created.
+	// This is efficient for files that don't change frequently.
+	return func(c *StaticSevFileConfig) {
+		c.preLoad = false
 	}
 }
 

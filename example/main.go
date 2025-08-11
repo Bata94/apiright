@@ -38,6 +38,7 @@ func main() {
 
 	app.ServeStaticDir("/static", "docs/")
 	app.ServeStaticDir("/assets", "example/assets/")
+	app.ServeStaticFile("/file/not_found", "./tmp/not_existing.txt", ar.WithoutPreLoad())
 
 	uiRouter := app.NewRouter("")
 	gen.RegisterUIRoutes(uiRouter)
