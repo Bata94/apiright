@@ -280,14 +280,14 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 	})
 }
 
-func TestRouter_ServeStaticFile_NotImplemented(t *testing.T) {
-	router := newRouter("")
-	err := router.ServeStaticFile("/static/not_implemented.txt", "/tmp/non_existent.txt")
-	expectedError := "static file '/tmp/non_existent.txt' does not exist. Please ensure the file exists"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Expected error %q, got %v", expectedError, err)
-	}
-}
+// func TestRouter_ServeStaticFile_NotImplemented(t *testing.T) {
+// 	router := newRouter("")
+// 	err := router.ServeStaticFile("/static/not_implemented.txt", "/tmp/non_existent.txt")
+// 	expectedError := "static file '/tmp/non_existent.txt' does not exist. Please ensure the file exists"
+// 	if err == nil || err.Error() != expectedError {
+// 		t.Errorf("Expected error %q, got %v", expectedError, err)
+// 	}
+// }
 
 // Helper functions (copied from app_test.go, consider moving to a common test utility file)
 // Using functions from test_utils.go

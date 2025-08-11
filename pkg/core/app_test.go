@@ -1,7 +1,6 @@
 package core
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -335,37 +334,39 @@ func TestApp_ServeStaticDir(t *testing.T) {
 		t.Fatalf("Failed to create dummy file in dir: %v", err)
 	}
 
-	app.ServeStaticDir("/static_files", dummyDirPath)
+	app.ServeStaticDir("/static_files", dummyDirPath, WithPreLoad(), WithContentType("text/html"))
 
 	// Test serving a file from the static directory
-	// Create a test server to simulate a real HTTP request
-	server := httptest.NewServer(app.handler)
-	defer server.Close()
+	req := httptest.NewRequest(http.MethodGet, "/static_files/index.html", nil)
+	rec := httptest.NewRecorder()
 
-	req, err := http.NewRequest(http.MethodGet, server.URL+"/static_files/index.html", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
+	// Manually call handleFunc for the static file route
+	// This is a bit of an integration test, but necessary to verify serving
+	for _, route := range app.router.routes {
+		if route.path == "/static_files/index.html" {
+			for _, endpoint := range route.endpoints {
+				if endpoint.method == METHOD_GET {
+					ctx := NewCtx(rec, req, *route, endpoint)
+					err := endpoint.handleFunc(ctx)
+					if err != nil {
+						t.Fatalf("Handler returned an error: %v", err)
+					}
+					ctx.SendingReturn(rec, nil)
+					break
+				}
+			}
+			break
+		}
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("Failed to make request: %v", err)
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, rec.Code)
 	}
-	defer func() { _ = resp.Body.Close() }()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("Failed to read response body: %v", err)
+	if rec.Body.String() != dummyContent {
+		t.Errorf("Expected body %q, got %q", dummyContent, rec.Body.String())
 	}
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
-	}
-	if string(body) != dummyContent {
-		t.Errorf("Expected body %q, got %q", dummyContent, string(body))
-	}
-	if resp.Header.Get("Content-Type") != "text/html; charset=utf-8" {
-		t.Errorf("Expected Content-Type %q, got %q", "text/html; charset=utf-8", resp.Header.Get("Content-Type"))
+	if rec.Header().Get("Content-Type") != "text/html" {
+		t.Errorf("Expected Content-Type %q, got %q", "text/html", rec.Header().Get("Content-Type"))
 	}
 }
 

@@ -470,7 +470,7 @@ const dirExplorerTemplate = `
           </li>
         {{end}}
       </ul>
-      {{if not .Files && not .Dirs}}
+			{{if and (eq (len .Files) 0) (eq (len .Dirs) 0)}}
         <p style="text-align: center; color: var(--secondary-color);">
           This directory is empty.
         </p>
@@ -484,10 +484,10 @@ const dirExplorerTemplate = `
 `
 
 type DirTemplateData struct {
-	Title string
+	Title   string
 	BaseUrl string
-	Files []FileData
-	Dirs []DirData
+	Files   []FileData
+	Dirs    []DirData
 }
 
 type FileData struct {
@@ -531,17 +531,19 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 	}
 	buf := new(bytes.Buffer)
 
+	a.Redirect(urlPath+"/", urlPath, http.StatusMovedPermanently)
+
 	pattern := urlPath
 	if !strings.HasSuffix(pattern, "/") {
 		pattern += "/"
 	}
 
 	if config.preLoad {
-		dirData :=  DirTemplateData{
-			Title: "ApiRight", // TODO: Add title from AppConfig
+		dirData := DirTemplateData{
+			Title:   "ApiRight", // TODO: Add title from AppConfig
 			BaseUrl: pattern,
-			Files: []FileData{},
-			Dirs: []DirData{},
+			Files:   []FileData{},
+			Dirs:    []DirData{},
 		}
 		files, err := os.ReadDir(dirPath)
 		if err != nil {
@@ -552,6 +554,7 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 				dirData.Dirs = append(dirData.Dirs, DirData{
 					Name: file.Name(),
 				})
+				r.ServeStaticDir(pattern+file.Name(), filepath.Join(dirPath, file.Name()), a, opt...)
 				continue
 			}
 			fInfo, err := file.Info()
@@ -563,7 +566,10 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 				Name: file.Name(),
 				Size: size,
 			})
-			r.ServeStaticFile(pattern + file.Name(), filepath.Join(dirPath, file.Name()), opt...)
+			err = r.ServeStaticFile(pattern+file.Name(), filepath.Join(dirPath, file.Name()), opt...)
+			if err != nil {
+				panic(err)
+			}
 		}
 		if err := dirTempl.Execute(buf, dirData); err != nil {
 			panic(err)
