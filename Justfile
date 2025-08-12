@@ -30,7 +30,7 @@ gen-example:
 
 build-cli:
   @echo "Building CLI..."
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
 
 # Build the application
 build-example: gen-example
