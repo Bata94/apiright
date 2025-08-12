@@ -9,6 +9,10 @@ mod-tidy:
 	@echo "go mod tidy ..."
 	go mod tidy
 
+build-cli:
+  @echo "Building CLI..."
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
+
 dev-templ:
   templ generate --watch --proxy="http://localhost:5500" --open-browser=false
 
@@ -27,10 +31,6 @@ dev: dev-templ dev-tailwind dev-air
 gen-example:
   @echo "Generating..."
   go run cmd/apiright-cli/main.go --input ./example/ui/pages -output ./example/ui-router/gen/routes_gen.go -package gen
-
-build-cli:
-  @echo "Building CLI..."
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
 
 # Build the application
 build-example: gen-example

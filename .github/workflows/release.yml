@@ -24,7 +24,7 @@ jobs:
           just-version: '1.29.0'
 
       - name: Build temp cli
-        run: just build
+        run: just build-cli
 
       - name: Run pre-release checks
         run: just pre-release
