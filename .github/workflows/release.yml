@@ -21,7 +21,7 @@ jobs:
       - name: Set up Just
         uses: extractions/setup-just@v3
         with:
-          just-version: '^1.42.4'
+          just-version: '^1.40.0'
 
       - name: Build temp cli
         run: just build
