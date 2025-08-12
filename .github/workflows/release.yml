@@ -21,6 +21,9 @@ jobs:
       - name: Set up Just
         uses: extractions/setup-just@v3
 
+      - name: Build temp cli
+        run: just build
+
       - name: Run pre-release checks
         run: just pre-release
 
