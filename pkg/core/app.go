@@ -559,8 +559,8 @@ func (a *App) Run() error {
 	a.addRoutesToOpenApi()
 	a.genOpenApiFiles()
 
+	a.ServeStaticDir("/docs", "docs/")
 	a.addRoutesToHandler()
-	a.ServeStaticDir("/docs", "docs")
 
 	return http.ListenAndServe(a.config.GetListenAddress(), a.handler)
 }

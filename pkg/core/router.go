@@ -523,7 +523,11 @@ func setupTemplateFuncs() template.FuncMap {
 	}
 }
 
+// ServeStaticDir serves a directory at the given URL path.
+// If the directory contains a "index.html" file, it will be served as "/" route. If not a FileExplorer will be shown, by default.
+// It is highly recommended to leave the PreLoad option enabled.
 func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticServFileOption) {
+	a.Logger.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
 	config := NewStaticServeFileConfig(opt...)
 
 	dirTempl, err := template.New(urlPath).Funcs(setupTemplateFuncs()).Parse(dirExplorerTemplate)
@@ -531,8 +535,6 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 		panic(err)
 	}
 	buf := new(bytes.Buffer)
-
-	a.Redirect(urlPath+"/", urlPath, http.StatusMovedPermanently)
 
 	pattern := urlPath
 	if !strings.HasSuffix(pattern, "/") {
@@ -550,6 +552,21 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 		if err != nil {
 			panic(err)
 		}
+
+		if len(files) == 0 {
+			panic("Directory is empty: " + dirPath)
+		}
+
+		indexFileExists := false
+		for _, file := range files {
+			if file.Name() == "index.html" {
+				indexFileExists = true
+				break
+			}
+		}
+
+		a.Redirect(urlPath, urlPath+"/", http.StatusMovedPermanently)
+
 		for _, file := range files {
 			if file.IsDir() {
 				dirData.Dirs = append(dirData.Dirs, DirData{
@@ -572,18 +589,26 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 				panic(err)
 			}
 		}
-		if err := dirTempl.Execute(buf, dirData); err != nil {
-			panic(err)
-		}
-		r.GET(urlPath, func(c *Ctx) error {
 
+		if indexFileExists {
+			indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
+			if err != nil {
+				panic(err)
+			}
+			buf.Write(indexFileContent)
+		} else {
+			if err := dirTempl.Execute(buf, dirData); err != nil {
+				panic(err)
+			}
+		}
+
+		r.GET(urlPath+"/", func(c *Ctx) error {
 			c.Response.SetStatus(200)
 			c.Response.SetData(buf.Bytes())
 			c.Response.AddHeader("Content-Type", "text/html")
 
 			return nil
 		})
-		// r.ServeStaticFile(pattern + "{path...}", dirPath, opt...)
 	} else {
 		// TODO: Implement WithoutPreLoad
 		panic("Not implemented")
