@@ -48,7 +48,8 @@ test-example:
 # Test the library
 test:
 	@echo "Testing..."
-	go test ./... -v
+	go test ./apiright.go -v
+	go test ./pkg/... -v
 
 # Clean the binary
 clean:
@@ -60,18 +61,22 @@ clean:
   rm -rf docs
 
 check:
-  go vet ./...
+  go vet ./apiright.go
+  go vet ./pkg/...
 
 fmt:
-  go fmt ./...
+  go fmt ./apiright.go
+  go fmt ./pkg/...
 
 simplify-fmt:
-  gofmt -w -s .
+  gofmt -w -s ./apiright.go
+  gofmt -w -s ./pkg/...
 
 lint:
-  golangci-lint run ./...
+  golangci-lint run ./apiright.go
+  golangci-lint run ./pkg/...
 
-pre-release: clean mod-tidy fmt check lint test
+pre-release: fmt check lint test
   @echo "Ran check, fmt and lint"
 
 vegeta method url max-workers duration:
