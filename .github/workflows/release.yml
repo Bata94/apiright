@@ -7,6 +7,14 @@ jobs:
   build:
     name: Build and Release
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Grants permission to create releases and upload assets
+      # Optionally, if you also need to create/update package information
+      # packages: write
+      # This is also often used for releases, might be redundant with contents:write for softprops
+      releases: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,7 +39,7 @@ jobs:
           nix develop --command bash -c "
             # Now 'go' and 'just' are available
             echo 'Running inside Nix dev shell'
-            just build
+            just build-cli
             just pre-release
 
             # Build for Linux AMD64 (uses the 'go' from the Nix shell)
