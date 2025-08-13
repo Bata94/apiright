@@ -10,27 +10,19 @@ jobs:
 
     permissions:
       contents: write # Grants permission to create releases and upload assets
-      # Optionally, if you also need to create/update package information
-      # packages: write
-      # This is also often used for releases, might be redundant with contents:write for softprops
-      # releases: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       # Setup Nix
       - name: Install Nix
         uses: cachix/install-nix-action@v27
         with:
-          # nix_path: nixpkgs=channel:nixos-unstable # Specify a channel, or remove for flake.lock
+          # Enable flakes and unified CLI
           extra_nix_config: |
-            # Enable flakes and unified CLI
             experimental-features = nix-command flakes
-            # Optional: Set a larger build parallelism if you have many cores
-            # builders-use-substitutes = true
-            # max-jobs = 4
-          # Optional: Use a cache if you have one (e.g., via cachix)
-          # cache-uri: https://your-cachix-cache.cachix.org
+
       # Enter the Nix development shell and run commands
       - name: Run builds and checks in Nix shell
         run: |
@@ -42,19 +34,9 @@ jobs:
             rm -rf ./example
             just mod-tidy
             just pre-release
-
-            # Build for Linux AMD64 (uses the 'go' from the Nix shell)
-            GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-linux-amd64 ./cmd/apiright-cli
-
-            # Build for Windows AMD64
-            GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-windows-amd64.exe ./cmd/apiright-cli
-
-            # Build for macOS AMD64 (if on ubuntu-latest, this is cross-compilation)
-            GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-darwin-amd64 ./cmd/apiright-cli
-
-            # Build for macOS ARM64 (if on ubuntu-latest, this is cross-compilation)
-            GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-darwin-arm64 ./cmd/apiright-cli
+            just build-cli-all
           "
+
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -62,6 +44,7 @@ jobs:
         with:
           files: |
             apiright-cli-linux-amd64
+            apiright-cli-linux-arm64
             apiright-cli-windows-amd64.exe
             apiright-cli-darwin-amd64
             apiright-cli-darwin-arm64

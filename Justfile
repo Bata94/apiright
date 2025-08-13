@@ -9,9 +9,19 @@ mod-tidy:
 	@echo "go mod tidy ..."
 	go mod tidy
 
+# Build the CLI for the current platform
 build-cli:
   @echo "Building CLI..."
   GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
+
+# Build the CLI for all platforms
+build-cli-all:
+  @echo "Building CLI for all platforms..."
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-amd64 cmd/apiright-cli/main.go
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-arm64 cmd/apiright-cli/main.go
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-windows-amd64.exe cmd/apiright-cli/main.go
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-amd64 cmd/apiright-cli/main.go
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-arm64 cmd/apiright-cli/main.go
 
 dev-templ:
   templ generate --watch --proxy="http://localhost:5500" --open-browser=false
@@ -48,8 +58,7 @@ test-example:
 # Test the library
 test:
 	@echo "Testing..."
-	go test ./apiright.go -v
-	go test ./pkg/... -v
+	go test ./... -v
 
 # Clean the binary
 clean:
@@ -61,20 +70,16 @@ clean:
   rm -rf docs
 
 check:
-  go vet ./apiright.go
-  go vet ./pkg/...
+  go vet ./...
 
 fmt:
-  go fmt ./apiright.go
-  go fmt ./pkg/...
+  go fmt ./...
 
 simplify-fmt:
-  gofmt -w -s ./apiright.go
-  gofmt -w -s ./pkg/...
+  gofmt -w -s ./...
 
 lint:
-  golangci-lint run ./apiright.go
-  golangci-lint run ./pkg/...
+  golangci-lint run ./...
 
 pre-release: fmt check lint test
   @echo "Ran check, fmt and lint"
