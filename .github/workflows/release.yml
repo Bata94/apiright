@@ -1,10 +1,8 @@
 name: Release CLI Tool
-
 on:
   push:
     tags:
       - 'v*.*.*' # Trigger on new tags like v1.0.0
-
 jobs:
   build:
     name: Build and Release
@@ -12,36 +10,42 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      # Setup Nix
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
         with:
-          go-version: '1.24' # Use your desired Go version
-
-      - name: Set up Just
-        uses: extractions/setup-just@v3
-        with:
-          just-version: '^1.29.0'
-
-      - name: Build temp cli
-        run: just build-cli
-
-      - name: Run pre-release checks
-        run: just pre-release
-
-      - name: Build for Linux AMD64
+          # nix_path: nixpkgs=channel:nixos-unstable # Specify a channel, or remove for flake.lock
+          extra_nix_config: |
+            # Enable flakes and unified CLI
+            experimental-features = nix-command flakes
+            # Optional: Set a larger build parallelism if you have many cores
+            # builders-use-substitutes = true
+            # max-jobs = 4
+          # Optional: Use a cache if you have one (e.g., via cachix)
+          # cache-uri: https://your-cachix-cache.cachix.org
+      # Enter the Nix development shell and run commands
+      - name: Run builds and checks in Nix shell
         run: |
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o apiright-cli-linux-amd64 ./cmd/apiright-cli
-      - name: Build for Windows AMD64
-        run: |
-          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o apiright-cli-windows-amd64.exe ./cmd/apiright-cli
-      - name: Build for macOS AMD64
-        run: |
-          GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o apiright-cli-darwin-amd64 ./cmd/apiright-cli
-      - name: Build for macOS ARM64
-        run: |
-          GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o apiright-cli-darwin-arm64 ./cmd/apiright-cli
+          # The 'nix develop' command brings the packages and shellHook from flake.nix into scope
+          # Any commands run after this will have access to 'go', 'just', etc.
+          nix develop --command bash -c "
+            # Now 'go' and 'just' are available
+            echo 'Running inside Nix dev shell'
+            just build
+            just pre-release
 
+            # Build for Linux AMD64 (uses the 'go' from the Nix shell)
+            GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-linux-amd64 ./cmd/apiright-cli
+
+            # Build for Windows AMD64
+            GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-windows-amd64.exe ./cmd/apiright-cli
+
+            # Build for macOS AMD64 (if on ubuntu-latest, this is cross-compilation)
+            GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-darwin-amd64 ./cmd/apiright-cli
+
+            # Build for macOS ARM64 (if on ubuntu-latest, this is cross-compilation)
+            GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags \"-s -w\" -o apiright-cli-darwin-arm64 ./cmd/apiright-cli
+          "
       - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v1
