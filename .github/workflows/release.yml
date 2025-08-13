@@ -39,7 +39,8 @@ jobs:
           nix develop --command bash -c "
             # Now 'go' and 'just' are available
             echo 'Running inside Nix dev shell'
-            just build-cli
+            rm -rf ./example
+            just mod-tidy
             just pre-release
 
             # Build for Linux AMD64 (uses the 'go' from the Nix shell)
