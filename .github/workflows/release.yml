@@ -13,7 +13,7 @@ jobs:
       # Optionally, if you also need to create/update package information
       # packages: write
       # This is also often used for releases, might be redundant with contents:write for softprops
-      releases: write
+      # releases: write
 
     steps:
       - name: Checkout code
