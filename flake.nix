@@ -31,39 +31,13 @@
             delve
             vegeta
 
-            gemini-cli
-
             sqlc
             goose
 
             templ
             tailwindcss_4
           ];
-
-          shellHook = ''
-            echo "🚀 APIRight Development Environment"
-            echo "Go version: $(go version)"
-            echo "SQLC version: $(sqlc version)"
-            echo ""
-            echo "Available tools:"
-            echo "  - go: Go programming language"
-            echo "  - sqlc: Generate type-safe code from SQL"
-            echo "  - air: Live reload for Go apps"
-            echo "  - golangci-lint: Go linter"
-            echo ""
-            echo "To get started:"
-            echo "  1. Initialize your Go module: go mod init"
-            echo "  2. Set up SQLC configuration"
-            echo "  3. Start developing your API framework!"
-          '';
         };
-
-        # packages.default = pkgs.buildGoModule {
-        #   pname = "apiright";
-        #   version = "0.1.0";
-        #   src = ./.;
-        #   vendorHash = null;
-        # };
       }
     );
 }
