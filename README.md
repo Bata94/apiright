@@ -52,13 +52,15 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [ ] CLI setup/blueprint tool
     - [ ] Dokerfile template
     - [ ] Metrics
-    - [ ] Simple ReverseProxy (not recommended for production, but for hobby projects maybe nice to have)
     - [ ] Embedded "cron-jobs", like included Microservices (run once, run every hour etc.)
     - [ ] Multiworker scaling
     - [ ] CLI-Mode
     - [ ] Extensive Testsuite
     - [X] HTTP/2.0 Support (Handled automatically in net/http)
     - [ ] HTTP/3.0 Support (I think in Go net/http it's not prod ready)
+    - [ ] ACME Support
+    - [ ] Simple ReverseProxy and Load Balancer
+    - [ ] A Simple Http Server (like nginx) to serve static files
 
 ## Limitation
 
