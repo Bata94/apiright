@@ -679,7 +679,7 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 		if config.forcePreCache || config.preCache {
 			buf := new(bytes.Buffer)
 			if indexFileExists {
-				indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
+				indexFileContent, err := os.ReadFile(filepath.Join(dirPath, config.indexFile))
 				if err != nil {
 					panic(err)
 				}
