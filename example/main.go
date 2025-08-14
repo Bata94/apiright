@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/bata94/apiright/example/ui-router/gen"
@@ -36,7 +37,10 @@ func main() {
 	app.Use(ar.TimeoutMiddleware(ar.TimeoutConfigFromApp(app)))
 	app.Use(ar.CORSMiddleware(corsConfig))
 
-	app.ServeStaticDir("/static", "docs/")
+	// Need to check if "docs/" is already generated as it won't be on first run, and app will painc
+	if _, err := os.Stat("docs/"); err == nil {
+		app.ServeStaticDir("/static", "docs/")
+	}
 	app.ServeStaticDir("/assets", "example/assets/")
 	app.ServeStaticFile("/file/not_found", "./tmp/not_existing.txt", ar.WithoutPreLoad())
 	app.ServeStaticFile("/file/hallo", "example/test.txt", ar.WithoutPreLoad())
