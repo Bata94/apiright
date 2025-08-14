@@ -40,7 +40,7 @@ dev: dev-templ dev-tailwind dev-air
 # Generate the UI routes
 gen-example:
   @echo "Generating..."
-  go run ./apiright.go generate -i ./example/ui/pages -o ./example/ui-router/gen/routes_gen.go -p gen
+  go run ./apiright.go generate -i ./example/ui/pages -o ./example/uirouter/routes_gen.go
 
 # Build the application
 build-example: gen-example
@@ -65,6 +65,7 @@ clean:
   @echo "Cleaning..."
   rm -rf example/tmp/*
   rm -rf example/docs
+  rm -rf example/uirouter
   rm -rf bin/*
   rm -rf tmp/*
   rm -rf docs

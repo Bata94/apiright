@@ -6,13 +6,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/bata94/apiright/example/ui-router/gen"
+	"github.com/bata94/apiright/example/uirouter"
 	pages "github.com/bata94/apiright/example/ui/pages"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
 )
 
-//go:generate /Users/bata/Projects/personal/apiright/bin/apiright-cli -i ./ui/pages -o ./ui-router/gen/routes_gen.go -p gen
+//go:generate /Users/bata/Projects/personal/apiright/bin/apiright generate
 
 type PostStruct struct {
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
@@ -47,7 +47,7 @@ func main() {
 	// app.ServeStaticDir("/assets_not_loaded", "example/assets/", ar.WithoutPreLoad())
 
 	uiRouter := app.NewRouter("")
-	gen.RegisterUIRoutes(uiRouter)
+	uirouter.RegisterUIRoutes(uiRouter)
 
 	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", pages.Index()))
 
