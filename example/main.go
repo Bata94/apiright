@@ -11,7 +11,7 @@ import (
 	ar_templ "github.com/bata94/apiright/pkg/templ"
 )
 
-//go:generate /Users/bata/Projects/personal/apiright/bin/apiright-cli -input ./ui/pages -output ./ui-router/gen/routes_gen.go -package gen
+//go:generate /Users/bata/Projects/personal/apiright/bin/apiright-cli -i ./ui/pages -o ./ui-router/gen/routes_gen.go -p gen
 
 type PostStruct struct {
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
