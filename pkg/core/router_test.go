@@ -145,10 +145,7 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 	}
 	defer func() { _ = RemoveDummyFile(dummyFilePath) }()
 
-	err = router.ServeStaticFile("/static/router_file.txt", dummyFilePath, WithContentType("text/plain"), WithPreLoad())
-	if err != nil {
-		t.Fatalf("ServeStaticFile failed: %v", err)
-	}
+	router.ServeStaticFile("/static/router_file.txt", dummyFilePath, WithContentType("text/plain"))
 
 	// Verify that a route was added for the static file
 	found := false
@@ -221,10 +218,7 @@ func TestRouter_ServeStaticFile(t *testing.T) {
 			t.Fatalf("Failed to write dummy file: %v", err)
 		}
 
-		err = router.ServeStaticFile("/static/without_preload.txt", filePath, WithContentType("text/plain"), WithoutPreLoad())
-		if err != nil {
-			t.Fatalf("ServeStaticFile failed: %v", err)
-		}
+		router.ServeStaticFile("/static/without_preload.txt", filePath, WithContentType("text/plain"), WithoutPreLoad())
 
 		// Verify that a route was added for the static file
 		found := false

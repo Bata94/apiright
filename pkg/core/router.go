@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -113,13 +114,20 @@ type CrudInterface interface {
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
 	preLoad     bool
+	preCache    bool
+	maxPreCacheSize int64
+	forcePreCache  bool
 	contentType string
+	indexFile string
 	// TODO: Add more ConfigOptions
 	// includeHiddenFiles bool
 	// excludeFiles []strings // as regex
 	// excludeDirs []strings // as regex
-	// indexFile string
 	// customCssFile string
+	// TODO: add compression on startup or on the fly based on "preLoaded"
+	// compress bool
+	// compressLevel int
+	// compressType string
 }
 
 // StaticServFileOption is a function that configures a StaticSevFileConfig.
@@ -129,27 +137,59 @@ type StaticServFileOption func(*StaticSevFileConfig)
 func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
 	c := &StaticSevFileConfig{
 		preLoad:     true,
+		preCache:    true,
+		maxPreCacheSize: 1024 * 1024 * 10, // 10 MB
+		forcePreCache:  false,
 		contentType: "",
+		indexFile: "index.html",
 	}
 
 	for _, opt := range opts {
 		opt(c)
 	}
 
+	if c.preCache && !c.preLoad {
+		log.Fatal("Cannot set PreCache without PreLoad!")
+	}
+
+	if c.forcePreCache {
+		log.Debug("Pre-caching files on startup.")
+		c.preCache = true
+	}
+
 	return c
 }
 
-// WithPreLoad it looks if files exits on startup, if not, it will return an error.
-func WithPreLoad() StaticServFileOption {
-	return func(c *StaticSevFileConfig) {
-		c.preLoad = true
-	}
-}
-
 // WithoutPreLoad it will not look if files exits on startup! Be careful if using this option with a Directory, this function will expose all files in the directory, even if created after Server start!
+// This will also disable pre-caching.
 func WithoutPreLoad() StaticServFileOption {
 	return func(c *StaticSevFileConfig) {
 		c.preLoad = false
+		c.preCache = false
+	}
+}
+
+// WithoutPreCache it will not cache files on startup.
+func WithoutPreCache() StaticServFileOption {
+	return func(c *StaticSevFileConfig) {
+		c.preCache = false
+	}
+}
+
+// WithPreCache it will load files into memory on startup, even if bigger than the maxPreCacheSize.
+// Caching will mainly reduce latency. With NVME drives, the speed difference is negligible.
+func WithPreCache() StaticServFileOption {
+	return func(c *StaticSevFileConfig) {
+		c.preCache = true
+		c.forcePreCache = true
+	}
+}
+
+// WithPreCacheSize sets the maximum size of the pre-cache.
+func WithPreCacheSize(size int64) StaticServFileOption {
+	return func(c *StaticSevFileConfig) {
+		c.preCache = true
+		c.maxPreCacheSize = size
 	}
 }
 
@@ -160,65 +200,116 @@ func WithContentType(contentType string) StaticServFileOption {
 	}
 }
 
-// TODO: add compression on startup or on the fly based on "preLoaded"
-// TODO: add option to load files directly to memory
+// WithIndexFile sets the index file for the directory.
+func WithIndexFile(indexFile string) StaticServFileOption {
+	return func(c *StaticSevFileConfig) {
+		c.indexFile = indexFile
+	}
+}
+
+// loadFile loads a file from the given path.
+// It returns the file, the file info, and an error if any.
+// Remember to close the file after use, best use the closeFile function.
+func loadFile(p string) (*os.File, os.FileInfo, error) {
+	var (
+		f *os.File
+		fInfo os.FileInfo
+		err error
+	)
+	fInfo, err = os.Stat(p)
+	if os.IsNotExist(err) {
+		err = fmt.Errorf("static file '%s' does not exist. Please ensure the file exists", p)
+		goto Return
+	}
+
+	f, err = os.Open(p)
+	if err != nil {
+		err = fmt.Errorf("static file '%s' exists, but is not readable: %w", p, err)
+		goto Return
+	}
+
+Return:
+	return f, fInfo, err
+}
+
+func closeFile(f *os.File) {
+	err := f.Close()
+	if err != nil {
+		log.Panic("Failed to close file: ", err)
+	}
+}
 
 // ServeStaticFile serves a static file.
-func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) error {
+func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
+	var h Handler
 	config := NewStaticServeFileConfig(opt...)
 	absFilePath, err := filepath.Abs(filePath)
+	if err != nil {
+		log.Fatalf("Error resolving absolute path for static file %s: %v", filePath, err)
+	}
 
 	if config.preLoad {
-		if err != nil {
-			log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
-			return err
-		}
-
 		log.Debugf("Attempting to serve static file from absolute path: %s", absFilePath)
 
-		if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
-			err = fmt.Errorf("static file '%s' does not exist. Please ensure the file exists", absFilePath)
-			log.Error(err)
-			return err
-		}
-
-		content, err := os.ReadFile(absFilePath)
+		f, fInfo, err := loadFile(absFilePath)
+		defer closeFile(f)
 		if err != nil {
-			err = fmt.Errorf("static file '%s' exists, but is not readable: %w", absFilePath, err)
-			log.Error(err)
-			return err
+			log.Fatal("static file '%s' does not exist. Please ensure the file exists", absFilePath)
 		}
 
-		h := func(c *Ctx) error {
-			c.Response.SetStatus(200)
-			c.Response.SetData(content)
-			c.Response.AddHeader("Content-Type", config.contentType)
-			return nil
-		}
+		if config.preCache {
+			if config.forcePreCache || fInfo.Size() <= config.maxPreCacheSize {
+				log.Debug("Pre-caching file: ", absFilePath)
+				content, err := io.ReadAll(f)
+				if err != nil {
+					log.Error("static file '%s' exists, but is not readable: %w", absFilePath, err)
+				}
 
-		r.addEndpoint(
-			METHOD_GET,
-			urlPath,
-			h,
-			WithOpenApiDisabled(),
-		)
-	} else {
-		h := func(c *Ctx) error {
-			if err != nil {
-				log.Errorf("Error resolving absolute path for static file %s: %v", filePath, err)
-				return err
+				h = func(c *Ctx) error {
+					c.Response.SetStatus(200)
+					c.Response.SetData(content)
+					c.Response.AddHeader("Content-Type", config.contentType)
+					return nil
+				}
 			}
+		}
 
-			if _, err := os.Stat(absFilePath); os.IsNotExist(err) {
-				err = fmt.Errorf("static file '%s' does not exist. Please ensure the file exists", absFilePath)
-				log.Error(err)
+		if h == nil {
+			h = func(c *Ctx) error {
+				f, err := os.Open(absFilePath)
+				defer  func() {
+					err = f.Close()
+					if err != nil {
+						log.Panic("Failed to close file: ", err)
+					}
+				}()
+				content, err := io.ReadAll(f)
+				if err != nil {
+					err = fmt.Errorf("static file '%s' exists, but is not readable: %w", absFilePath, err)
+					log.Error(err)
 
+					c.Response.SetStatus(500)
+					c.Response.SetMessage("File was found, but is not readable... Please try again later, if it persists, contact the administrator.")
+					return nil
+				}
+
+				c.Response.SetStatus(200)
+				c.Response.SetData(content)
+				c.Response.AddHeader("Content-Type", config.contentType)
+				return nil
+			}
+		}
+	} else {
+		h = func(c *Ctx) error {
+			f, _, err := loadFile(absFilePath)
+			defer closeFile(f)
+			if err != nil {
 				c.Response.SetStatus(404)
 				c.Response.SetMessage("File not found... Please double-check the URL and try again.")
-				return err
+				return nil
 			}
 
-			content, err := os.ReadFile(absFilePath)
+			content, err := io.ReadAll(f)
 			if err != nil {
 				err = fmt.Errorf("static file '%s' exists, but is not readable: %w", absFilePath, err)
 				log.Error(err)
@@ -234,18 +325,17 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 			return nil
 		}
 
-		r.addEndpoint(
-			METHOD_GET,
-			urlPath,
-			h,
-			WithOpenApiDisabled(),
-		)
 	}
-
-	return nil
+	r.addEndpoint(
+		METHOD_GET,
+		urlPath,
+		h,
+		WithOpenApiDisabled(),
+	)
 }
 
 // TODO: Better Breadcrumbs
+// TODO: Move out css to a separate file
 const dirExplorerTemplate = `
 {{$BaseUrl := .BaseUrl}}
 <!DOCTYPE html>
@@ -559,7 +649,7 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 
 		indexFileExists := false
 		for _, file := range files {
-			if file.Name() == "index.html" {
+			if file.Name() == config.indexFile {
 				indexFileExists = true
 				break
 			}
@@ -584,10 +674,8 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 				Name: file.Name(),
 				Size: size,
 			})
-			err = r.ServeStaticFile(pattern+file.Name(), filepath.Join(dirPath, file.Name()), opt...)
-			if err != nil {
-				panic(err)
-			}
+
+			r.ServeStaticFile(pattern+file.Name(), filepath.Join(dirPath, file.Name()), opt...)
 		}
 
 		if indexFileExists {

@@ -278,10 +278,7 @@ func (a *App) Redirect(path, url string, code int) {
 }
 
 func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
-	err := a.router.ServeStaticFile(urlPath, filePath, opt...)
-	if err != nil {
-		panic(fmt.Errorf("error serving static file: %w", err))
-	}
+	a.router.ServeStaticFile(urlPath, filePath, opt...)
 }
 
 func (a App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOption) {

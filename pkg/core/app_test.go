@@ -265,7 +265,7 @@ func TestApp_ServeStaticFile(t *testing.T) {
 	}
 	defer func() { _ = RemoveDummyFile(dummyFilePath) }()
 
-	app.ServeStaticFile("/static/dummy.txt", dummyFilePath, WithContentType("text/plain"), WithPreLoad())
+	app.ServeStaticFile("/static/dummy.txt", dummyFilePath, WithContentType("text/plain"))
 	if err != nil {
 		t.Fatalf("ServeStaticFile failed: %v", err)
 	}
@@ -334,7 +334,7 @@ func TestApp_ServeStaticDir(t *testing.T) {
 		t.Fatalf("Failed to create dummy file in dir: %v", err)
 	}
 
-	app.ServeStaticDir("/static_files", dummyDirPath, WithPreLoad(), WithContentType("text/html"))
+	app.ServeStaticDir("/static_files", dummyDirPath, WithContentType("text/html"))
 
 	// Test serving a file from the static directory
 	req := httptest.NewRequest(http.MethodGet, "/static_files/index.html", nil)

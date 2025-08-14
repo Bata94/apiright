@@ -44,7 +44,10 @@ func main() {
 	app.ServeStaticDir("/assets", "example/assets/")
 	app.ServeStaticFile("/file/not_found", "./tmp/not_existing.txt", ar.WithoutPreLoad())
 	app.ServeStaticFile("/file/hallo", "example/test.txt", ar.WithoutPreLoad())
+	app.ServeStaticFile("/file/pre_hallo", "example/test.txt", ar.WithPreCache())
 	// app.ServeStaticDir("/assets_not_loaded", "example/assets/", ar.WithoutPreLoad())
+
+	app.ServeStaticFile("/iso", "/home/bata/Downloads/nixos-minimal-25.05.806273.650e572363c0-x86_64-linux.iso")
 
 	uiRouter := app.NewRouter("")
 	uirouter.RegisterUIRoutes(uiRouter)

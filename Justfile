@@ -1,7 +1,5 @@
 set dotenv-load := true
 
-BINARY_NAME := "ApiRight"
-
 default:
   @just --list
 
@@ -86,5 +84,5 @@ pre-release: fmt check lint test
   @echo "Ran check, fmt and lint"
 
 vegeta method url max-workers duration:
-  echo "{{method}} {{url}}" | vegeta attack -duration {{duration}} -rate 0 -max-workers {{max-workers}} | vegeta encode > results.json
-  vegeta report results.json
+  echo "{{method}} {{url}}" | vegeta attack -duration {{duration}} -rate 0 -max-workers {{max-workers}} | vegeta encode > tmp/results.json
+  vegeta report tmp/results.json
