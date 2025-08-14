@@ -113,12 +113,12 @@ type CrudInterface interface {
 
 // StaticSevFileConfig holds the configuration for serving a static file.
 type StaticSevFileConfig struct {
-	preLoad     bool
-	preCache    bool
+	preLoad         bool
+	preCache        bool
 	maxPreCacheSize int64
-	forcePreCache  bool
-	contentType string
-	indexFile string
+	forcePreCache   bool
+	contentType     string
+	indexFile       string
 	// TODO: Add more ConfigOptions
 	// includeHiddenFiles bool
 	// excludeFiles []strings // as regex
@@ -136,12 +136,12 @@ type StaticServFileOption func(*StaticSevFileConfig)
 // NewStaticServeFileConfig creates a new StaticSevFileConfig.
 func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig {
 	c := &StaticSevFileConfig{
-		preLoad:     true,
-		preCache:    true,
+		preLoad:         true,
+		preCache:        true,
 		maxPreCacheSize: 1024 * 1024 * 10, // 10 MB
-		forcePreCache:  false,
-		contentType: "",
-		indexFile: "index.html",
+		forcePreCache:   false,
+		contentType:     "",
+		indexFile:       "index.html",
 	}
 
 	for _, opt := range opts {
@@ -212,9 +212,9 @@ func WithIndexFile(indexFile string) StaticServFileOption {
 // Remember to close the file after use, best use the closeFile function.
 func loadFile(p string) (*os.File, os.FileInfo, error) {
 	var (
-		f *os.File
+		f     *os.File
 		fInfo os.FileInfo
-		err error
+		err   error
 	)
 	fInfo, err = os.Stat(p)
 	if os.IsNotExist(err) {
@@ -277,7 +277,7 @@ func (r *Router) ServeStaticFile(urlPath, filePath string, opt ...StaticServFile
 		if h == nil {
 			h = func(c *Ctx) error {
 				f, err := os.Open(absFilePath)
-				defer  func() {
+				defer func() {
 					err = f.Close()
 					if err != nil {
 						log.Panic("Failed to close file: ", err)
@@ -624,7 +624,6 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 	if err != nil {
 		panic(err)
 	}
-	buf := new(bytes.Buffer)
 
 	pattern := urlPath
 	if !strings.HasSuffix(pattern, "/") {
@@ -632,6 +631,7 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 	}
 
 	if config.preLoad {
+		var h Handler
 		dirData := DirTemplateData{
 			Title:   "ApiRight", // TODO: Add title from AppConfig
 			BaseUrl: pattern,
@@ -655,8 +655,6 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 			}
 		}
 
-		a.Redirect(urlPath, urlPath+"/", http.StatusMovedPermanently)
-
 		for _, file := range files {
 			if file.IsDir() {
 				dirData.Dirs = append(dirData.Dirs, DirData{
@@ -678,25 +676,51 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 			r.ServeStaticFile(pattern+file.Name(), filepath.Join(dirPath, file.Name()), opt...)
 		}
 
-		if indexFileExists {
-			indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
-			if err != nil {
-				panic(err)
+		if config.forcePreCache || config.preCache {
+			buf := new(bytes.Buffer)
+			if indexFileExists {
+				indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
+				if err != nil {
+					panic(err)
+				}
+				buf.Write(indexFileContent)
+			} else {
+				if err := dirTempl.Execute(buf, dirData); err != nil {
+					panic(err)
+				}
 			}
-			buf.Write(indexFileContent)
+			h = func(c *Ctx) error {
+				c.Response.SetStatus(200)
+				c.Response.SetData(buf.Bytes())
+				c.Response.AddHeader("Content-Type", "text/html")
+
+				return nil
+			}
 		} else {
-			if err := dirTempl.Execute(buf, dirData); err != nil {
-				panic(err)
+			h = func(c *Ctx) error {
+				buf := new(bytes.Buffer)
+				if indexFileExists {
+					indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
+					if err != nil {
+						panic(err)
+					}
+					buf.Write(indexFileContent)
+				} else {
+					if err := dirTempl.Execute(buf, dirData); err != nil {
+						panic(err)
+					}
+				}
+
+				c.Response.SetStatus(200)
+				c.Response.SetData(buf.Bytes())
+				c.Response.AddHeader("Content-Type", "text/html")
+
+				return nil
 			}
 		}
 
-		r.GET(urlPath+"/", func(c *Ctx) error {
-			c.Response.SetStatus(200)
-			c.Response.SetData(buf.Bytes())
-			c.Response.AddHeader("Content-Type", "text/html")
-
-			return nil
-		})
+		a.Redirect(urlPath, urlPath+"/", http.StatusMovedPermanently)
+		r.GET(urlPath+"/", h)
 	} else {
 		// TODO: Implement WithoutPreLoad
 		panic("Not implemented")

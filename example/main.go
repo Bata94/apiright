@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/bata94/apiright/example/uirouter"
 	pages "github.com/bata94/apiright/example/ui/pages"
+	"github.com/bata94/apiright/example/uirouter"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
 )
@@ -47,7 +47,7 @@ func main() {
 	app.ServeStaticFile("/file/pre_hallo", "example/test.txt", ar.WithPreCache())
 	// app.ServeStaticDir("/assets_not_loaded", "example/assets/", ar.WithoutPreLoad())
 
-	app.ServeStaticFile("/iso", "/home/bata/Downloads/nixos-minimal-25.05.806273.650e572363c0-x86_64-linux.iso")
+	// app.ServeStaticFile("/iso", "/home/bata/Downloads/nixos-minimal-25.05.806273.650e572363c0-x86_64-linux.iso")
 
 	uiRouter := app.NewRouter("")
 	uirouter.RegisterUIRoutes(uiRouter)
