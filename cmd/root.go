@@ -11,8 +11,8 @@ import (
 
 var (
 	verbose bool
-	debug bool
-	log logger.Logger
+	debug   bool
+	log     logger.Logger
 )
 
 var rootCmd = &cobra.Command{
@@ -29,6 +29,8 @@ func Execute() {
 }
 
 func init() {
+	var err error
+
 	log = logger.NewDefaultLogger()
 	if os.Getenv("ENV") == "DEV" {
 		log.SetLevel(logger.DebugLevel)
@@ -37,10 +39,18 @@ func init() {
 	log.Debug("init")
 
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Display more verbose output in console output. (default: false)")
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	err = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+	if err != nil {
+		log.Fatal("Error binding verbose flag: ", err)
+		return
+	}
 
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Display debugging output in the console. (default: false)")
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	err = viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	if err != nil {
+		log.Fatal("Error binding debug flag: ", err)
+		return
+	}
 
 	cobra.OnInitialize(initConfig)
 }

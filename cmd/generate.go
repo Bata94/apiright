@@ -13,9 +13,9 @@ var (
 )
 
 const (
-	defaultInputDir        = "./ui/pages"
+	defaultInputDir       = "./ui/pages"
 	defaultOutputFileName = "uirouter/routes_gen.go"
-	defaultPackageName     = "uirouter"
+	defaultPackageName    = "uirouter"
 )
 
 var genCmd = &cobra.Command{
@@ -28,12 +28,28 @@ var genCmd = &cobra.Command{
 }
 
 func init() {
+	var err error
+
 	genCmd.PersistentFlags().StringVarP(&inputDir, "input", "i", defaultInputDir, "Input directory containing .templ files (required)")
-	viper.BindPFlag("input", genCmd.PersistentFlags().Lookup("input"))
+	err = viper.BindPFlag("input", genCmd.PersistentFlags().Lookup("input"))
+	if err != nil {
+		log.Fatal("Error binding input flag: ", err)
+		return
+	}
+
 	genCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", defaultOutputFileName, "Output file name for generated routes.go")
-	viper.BindPFlag("output", genCmd.PersistentFlags().Lookup("output"))
+	err = viper.BindPFlag("output", genCmd.PersistentFlags().Lookup("output"))
+	if err != nil {
+		log.Fatal("Error binding output flag: ", err)
+		return
+	}
+
 	genCmd.PersistentFlags().StringVarP(&packageName, "package", "p", defaultPackageName, "Package name for the generated routes.go file")
-	viper.BindPFlag("package", genCmd.PersistentFlags().Lookup("package"))
+	err = viper.BindPFlag("package", genCmd.PersistentFlags().Lookup("package"))
+	if err != nil {
+		log.Fatal("Error binding package flag: ", err)
+		return
+	}
 
 	rootCmd.AddCommand(genCmd)
 }
