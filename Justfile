@@ -12,16 +12,16 @@ mod-tidy:
 # Build the CLI for the current platform
 build-cli:
   @echo "Building CLI..."
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli cmd/apiright-cli/main.go
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli ./apiright.go
 
 # Build the CLI for all platforms
 build-cli-all:
   @echo "Building CLI for all platforms..."
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-amd64 cmd/apiright-cli/main.go
-  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-arm64 cmd/apiright-cli/main.go
-  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-windows-amd64.exe cmd/apiright-cli/main.go
-  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-amd64 cmd/apiright-cli/main.go
-  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-arm64 cmd/apiright-cli/main.go
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-amd64 ./apiright.go
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-linux-arm64 ./apiright.go
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-windows-amd64.exe ./apiright.go
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-amd64 ./apiright.go
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o bin/apiright-cli-darwin-arm64 ./apiright.go
 
 dev-templ:
   templ generate --watch --proxy="http://localhost:5500" --open-browser=false
@@ -40,7 +40,7 @@ dev: dev-templ dev-tailwind dev-air
 # Generate the UI routes
 gen-example:
   @echo "Generating..."
-  go run cmd/apiright-cli/main.go --input ./example/ui/pages -output ./example/ui-router/gen/routes_gen.go -package gen
+  go run ./apiright.go generate --input ./example/ui/pages -output ./example/ui-router/gen/routes_gen.go -package gen
 
 # Build the application
 build-example: gen-example
