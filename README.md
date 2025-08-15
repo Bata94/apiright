@@ -38,8 +38,7 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [X] Buildin Middleware (Logging, CORS, CSRF, PanicRecovery, Timeout)
     - [X] Addable custom Middlewares
     - [ ] More Buildin Middlewares (RateLimit, Cache, Compress, SecureCookies, Session)
-    - [ ] A good Auth library like "BetterAuth" (light)
-    - [ ] Builtin Auth Middlewares (Basic-Auth, JWT-Auth, OAuth, ApiKey-Auth)
+    - [ ] A good Auth library like "BetterAuth" (light) with AuthMiddlewares (Basic-Auth, JWT-Auth, OAuth, ApiKey-Auth)
     - [ ] Function defined skip condition for Middlewares
     - [X] "Fastapi" like, streamlined simple CRUD Operations, meaning auto conversion to defined struct for RequestInput and ResponseOutput
     - [ ] Simple CRUD Endpoint support for fast v0 or prototyping
@@ -47,21 +46,25 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [ ] More MIMETypes settable and exchangeable parsers for build in MIMETypes
     - [X] Automatic OpenAPI Documention
     - [ ] Embedded SQLc and Goose implementation (like in Flask and SQLAlchemy)
+    - [~] Embeded Templ Support
     - [ ] Embedded HTMX Support
+    - [ ] Embedded TailwindCSS & DaisyUI Support
+    - [ ] Embedded Bootstrap Support
+    - [ ] Embedded AlpineJS Support
     - [ ] HtmGo Support (?!)
     - [ ] CLI setup/blueprint tool
     - [ ] Dokerfile template
-    - [ ] Metrics
+    - [ ] Metrics Page and API
     - [ ] Embedded "cron-jobs", like included Microservices (run once, run every hour etc.)
     - [ ] Multiworker scaling
-    - [ ] CLI-Mode
-    - [ ] Extensive Testsuite
     - [X] HTTP/2.0 Support (Handled automatically in net/http)
     - [ ] HTTP/3.0 Support (I think in Go net/http it's not prod ready)
     - [ ] ACME Support
     - [ ] Simple ReverseProxy and Load Balancer
     - [ ] A Simple Http Server (like nginx) to serve static files
     - [ ] ObjIn & ObjOut Protobuf Support
+    - [ ] CLI-Mode
+    - [ ] Extensive Testsuite
 
 ## Limitation
 
