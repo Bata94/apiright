@@ -42,6 +42,7 @@ func main() {
 		app.ServeStaticDir("/static", "docs/")
 	}
 	app.ServeStaticDir("/assets", "example/assets/")
+	app.ServeStaticDir("/assets_dynamic", "example/assets/", ar.WithoutPreLoad())
 	app.ServeStaticFile("/file/not_found", "./tmp/not_existing.txt", ar.WithoutPreLoad())
 	app.ServeStaticFile("/file/hallo", "example/test.txt", ar.WithoutPreLoad())
 	app.ServeStaticFile("/file/pre_hallo", "example/test.txt", ar.WithPreCache())

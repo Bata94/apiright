@@ -120,6 +120,7 @@ type StaticSevFileConfig struct {
 	contentType     string
 	indexFile       string
 	// TODO: Add more ConfigOptions
+	// disableFileExplorer bool
 	// includeHiddenFiles bool
 	// excludeFiles []strings // as regex
 	// excludeDirs []strings // as regex
@@ -617,6 +618,7 @@ func setupTemplateFuncs() template.FuncMap {
 // If the directory contains a "index.html" file, it will be served as "/" route. If not a FileExplorer will be shown, by default.
 // It is highly recommended to leave the PreLoad option enabled.
 func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticServFileOption) {
+	var h Handler
 	a.Logger.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
 	config := NewStaticServeFileConfig(opt...)
 
@@ -631,7 +633,6 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 	}
 
 	if config.preLoad {
-		var h Handler
 		dirData := DirTemplateData{
 			Title:   "ApiRight", // TODO: Add title from AppConfig
 			BaseUrl: pattern,
@@ -718,13 +719,72 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticSer
 				return nil
 			}
 		}
-
-		a.Redirect(urlPath, urlPath+"/", http.StatusMovedPermanently)
-		r.GET(urlPath+"/", h)
 	} else {
-		// TODO: Implement WithoutPreLoad
-		panic("Not implemented")
+		h = func(c *Ctx) error {
+			dirData := DirTemplateData{
+				Title:   "ApiRight", // TODO: Add title from AppConfig
+				BaseUrl: pattern,
+				Files:   []FileData{},
+				Dirs:    []DirData{},
+			}
+			files, err := os.ReadDir(dirPath)
+			if err != nil {
+				panic(err)
+			}
+
+			if len(files) == 0 {
+				panic("Directory is empty: " + dirPath)
+			}
+
+			indexFileExists := false
+			for _, file := range files {
+				if file.Name() == config.indexFile {
+					indexFileExists = true
+					break
+				}
+			}
+
+			for _, file := range files {
+				if file.IsDir() {
+					dirData.Dirs = append(dirData.Dirs, DirData{
+						Name: file.Name(),
+					})
+					// r.ServeStaticDir(pattern+file.Name(), filepath.Join(dirPath, file.Name()), a, opt...)
+					continue
+				}
+				fInfo, err := file.Info()
+				if err != nil {
+					panic(err)
+				}
+				size := fInfo.Size()
+				dirData.Files = append(dirData.Files, FileData{
+					Name: file.Name(),
+					Size: size,
+				})
+
+				// r.ServeStaticFile(pattern+file.Name(), filepath.Join(dirPath, file.Name()), opt...)
+			}
+
+			buf := new(bytes.Buffer)
+			if indexFileExists {
+				indexFileContent, err := os.ReadFile(filepath.Join(dirPath, "index.html"))
+				if err != nil {
+					panic(err)
+				}
+				buf.Write(indexFileContent)
+			} else {
+				if err := dirTempl.Execute(buf, dirData); err != nil {
+					panic(err)
+				}
+			}
+			c.Response.SetStatus(200)
+			c.Response.SetData(buf.Bytes())
+			c.Response.AddHeader("Content-Type", "text/html")
+			return nil
+		}
 	}
+	a.Redirect(urlPath, urlPath+"/", http.StatusMovedPermanently)
+	r.GET(urlPath+"/", h)
 }
 
 func (r *Router) routeExists(path string) int {
