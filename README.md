@@ -61,6 +61,7 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [ ] ACME Support
     - [ ] Simple ReverseProxy and Load Balancer
     - [ ] A Simple Http Server (like nginx) to serve static files
+    - [ ] ObjIn & ObjOut Protobuf Support
 
 ## Limitation
 
