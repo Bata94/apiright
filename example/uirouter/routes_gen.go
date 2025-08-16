@@ -6,20 +6,20 @@ package uirouter
 import (
 	"log"
 
-	pages "github.com/bata94/apiright/example/ui/pages"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
+	pages "github.com/bata94/apiright/example/ui/pages"
 )
 
 // RegisterUIRoutes registers the UI routes with the given http.ServeMux.
 func RegisterUIRoutes(router *ar.Router) {
 	log.Println("Registering UI routes...")
-
+	
 	router.GET(ar_templ.SimpleRenderer("/about", pages.About()))
-
+	
 	router.GET(ar_templ.SimpleRenderer("/", pages.Index()))
-
+	
 	router.GET(ar_templ.SimpleRenderer("/templTest", pages.TemplTest()))
-
+	
 	log.Println("UI routes registered.")
 }

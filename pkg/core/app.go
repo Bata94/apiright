@@ -238,6 +238,7 @@ func (a *App) SetLogger(logger logger.Logger) {
 	a.Logger = logger
 }
 
+// TODO: Add RoutOptions
 // NewRouter creates a new router with a given base path.
 func (a *App) NewRouter(path string) *Router {
 	// Creates and adds a new Router, with a BasePath
