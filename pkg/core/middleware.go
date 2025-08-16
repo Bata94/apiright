@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/bata94/apiright/pkg/logger"
 )
@@ -15,6 +16,27 @@ import (
 // Middleware is a function that wraps a Handler to add functionality.
 // TODO: Define a consistent error handling strategy for middlewares, considering whether errors should be returned directly by the middleware or propagated through the Ctx object.
 type Middleware func(Handler) Handler
+
+func FavIcon(path string) Middleware {
+	return func(next Handler) Handler {
+		return func(c *Ctx) error {
+			log.Debug("Middleware FavIcon")
+			log.Debugf("Path: %s", path)
+			log.Debugf("c.Request.URL.Path: %s", c.Request.URL.Path)
+			if strings.HasSuffix(c.Request.URL.Path, "/favicon.ico") {
+					iconBytes, err := os.ReadFile(path)
+					if err != nil {
+						return err
+					}
+					c.Response.AddHeader("Content-Type", "image/x-icon")
+					c.Response.SetStatus(200)
+					c.Response.SetData(iconBytes)
+					return nil
+			}
+			return next(c)
+		}
+	}
+}
 
 // LogMiddleware is a middleware that logs requests.
 func LogMiddleware(logger logger.Logger) Middleware {

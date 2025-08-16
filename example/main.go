@@ -32,6 +32,7 @@ func main() {
 	// corsConfig := ar.DefaultCORSConfig()
 	corsConfig := ar.ExposeAllCORSConfig()
 
+	app.Use(ar.FavIcon("example/assets/favicon.ico"))
 	app.Use(ar.PanicMiddleware())
 	app.Use(ar.LogMiddleware(app.Logger))
 	app.Use(ar.TimeoutMiddleware(ar.TimeoutConfigFromApp(app)))
