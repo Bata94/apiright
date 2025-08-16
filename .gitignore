@@ -9,3 +9,4 @@ example/ui-router
 results.json
 *_templ.go
 *_gen.css
+*_gen.go

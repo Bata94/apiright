@@ -6,9 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/bata94/apiright/pkg/logger"
 )
@@ -24,14 +24,14 @@ func FavIcon(path string) Middleware {
 			log.Debugf("Path: %s", path)
 			log.Debugf("c.Request.URL.Path: %s", c.Request.URL.Path)
 			if strings.HasSuffix(c.Request.URL.Path, "/favicon.ico") {
-					iconBytes, err := os.ReadFile(path)
-					if err != nil {
-						return err
-					}
-					c.Response.AddHeader("Content-Type", "image/x-icon")
-					c.Response.SetStatus(200)
-					c.Response.SetData(iconBytes)
-					return nil
+				iconBytes, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				c.Response.AddHeader("Content-Type", "image/x-icon")
+				c.Response.SetStatus(200)
+				c.Response.SetData(iconBytes)
+				return nil
 			}
 			return next(c)
 		}
