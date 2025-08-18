@@ -437,7 +437,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	}
 	if endPoint.routeOptionConfig.ObjIn != nil {
 		// TODO: Dynamically add the specific MIME types that this endpoint expects for the request body based on configuration or reflection.
-		// newEndpointBuilder.RequestType(objInType)
+		newEndpointBuilder.RequestType(objInType)
 		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}, objInType)
 		// TODO: Implement dynamic generation or inclusion of request body examples for OpenAPI documentation based on the ObjIn type.
 		// RequestExample([]UpdateUserRequest{
