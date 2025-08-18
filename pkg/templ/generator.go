@@ -14,6 +14,7 @@ import (
 )
 
 // TODO: By Default all Routes are registerd to OpenApi Docs, maybe disable this by default and add a flag to enable it.
+// TODO: Subdirectories are not supported yet.
 
 // Route represents a single route with its path and component name.
 type Route struct {
