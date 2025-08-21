@@ -560,5 +560,6 @@ func (a *App) Run() error {
 	a.ServeStaticDir("/docs", "docs/")
 	a.addRoutesToHandler()
 
+	log.Warn("Listening on: ", a.config.GetListenAddress())
 	return http.ListenAndServe(a.config.GetListenAddress(), a.handler)
 }

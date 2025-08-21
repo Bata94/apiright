@@ -23,6 +23,7 @@ var genCmd = &cobra.Command{
 	Short: "Generate go code files",
 	Long:  "Generate go code files",
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Debug("Generating routes with params: inputDir=", inputDir, " outputFile=", outputFile, " packageName=", packageName)
 		ar_templ.GeneratorRun(inputDir, outputFile, packageName)
 	},
 }
