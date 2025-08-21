@@ -306,6 +306,10 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		var err error
 
 		currentHandler := h
+		log.Debugf("Handling request: %s %s", r.Method, r.URL.String())
+		log.Debugf("Route base path: %s", route.basePath)
+		log.Debugf("Router base path: %s", router.GetBasePath())
+		log.Debugf("Condition: %t", r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()))
 		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			currentHandler = a.defRouteHandler
 		}
