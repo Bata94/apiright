@@ -17,14 +17,16 @@ import (
 // TODO: Define a consistent error handling strategy for middlewares, considering whether errors should be returned directly by the middleware or propagated through the Ctx object.
 type Middleware func(Handler) Handler
 
-func FavIcon(path string) Middleware {
+// FavIcon is a middleware that serves a favicon.ico file
+// filePath should be the relative path to the favicon.ico file
+func FavIcon(filePath string) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
 			log.Debug("Middleware FavIcon")
-			log.Debugf("Path: %s", path)
+			log.Debugf("Path: %s", filePath)
 			log.Debugf("c.Request.URL.Path: %s", c.Request.URL.Path)
 			if strings.HasSuffix(c.Request.URL.Path, "/favicon.ico") {
-				iconBytes, err := os.ReadFile(path)
+				iconBytes, err := os.ReadFile(filePath)
 				if err != nil {
 					return err
 				}
