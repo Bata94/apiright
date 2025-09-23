@@ -28,7 +28,7 @@ dev-tailwind:
   tailwindcss -i ./example/ui/css/input.css -o ./example/assets/styles_gen.css --minify --watch
 
 dev-air:
-  ENV=dev air
+  GOEXPERIMENT=greenteagc ENV=dev air
 
 # Develop with Example Application
 [parallel]

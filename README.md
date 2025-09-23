@@ -10,7 +10,7 @@
 
 ## Description
 
-Apiright (Name is WIP), is yet another go Webframework, mainly for APIs. Why another one, aren't there enough?
+Apiright (Name is WIP), is yet another Go Webframework, mainly for APIs. Why another one, aren't there enough?
 Probably yes... But I usually write my APIs with the stdlib and use often the same boilerplate.
 So this Framework will be a wrapper for the stdlib net/http server, with some quality of life additions.
 
@@ -34,6 +34,7 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [ ] Multi domain support
     - [X] Routergroups
     - [X] Static File serving
+    - [ ] FileUploads
     - [X] Middleware support
     - [ ] Make Middlewares groupable (like Marshallers in JSON v2)
     - [X] Buildin Middleware (Logging, CORS, CSRF, PanicRecovery, Timeout)
