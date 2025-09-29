@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
-	pages "github.com/bata94/apiright/example/ui/pages"
+	ui_pages "github.com/bata94/apiright/example/ui/pages"
 	"github.com/bata94/apiright/example/uirouter"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
@@ -54,7 +55,8 @@ func main() {
 	uiRouter := app.NewRouter("")
 	uirouter.RegisterUIRoutes(uiRouter)
 
-	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", pages.Index()))
+	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", ui_pages.Index()))
+	app.GET(ar_templ.SimpleRenderer("/upload", ui_pages.Upload()))
 
 	app.Redirect("/redirect", "/test", 302)
 	app.Redirect("/favicon.ico", "/assets/favicon.ico", 301)
@@ -67,6 +69,12 @@ func main() {
 	})
 
 	app.GET("/test", func(c *ar.Ctx) error {
+		dst := "/test/upload/file.txt"
+
+		fmt.Println(dst)
+		fmt.Println(filepath.Base(dst))
+		fmt.Println(filepath.Dir(dst))
+
 		c.Response.SetMessage("Test")
 		return nil
 	})
@@ -104,6 +112,8 @@ func main() {
 		ar.WithOpenApiInfos("Post Test", "A simple Route to test Posting with ObjectIn and ObjectOut Structs"),
 		ar.WithOpenApiTags("Test", "post"),
 	)
+
+	app.POST("/upload", upload_handler)
 
 	group := app.NewRouter("/group")
 	group.GET(
@@ -149,4 +159,13 @@ func post_test(c *ar.Ctx) error {
 func err_handler(c *ar.Ctx) error {
 	err := errors.New("test Error")
 	return err
+}
+
+func upload_handler(c *ar.Ctx) error {
+	if err := c.SaveFile("file", "./example/uploads/upload.txt"); err != nil {
+		return err
+	}
+
+	c.Response.SetMessage("File uploaded successfully")
+	return nil
 }

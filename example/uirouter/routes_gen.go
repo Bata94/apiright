@@ -21,5 +21,7 @@ func RegisterUIRoutes(router *ar.Router) {
 	
 	router.GET(ar_templ.SimpleRenderer("/templTest", pages.TemplTest()))
 	
+	router.GET(ar_templ.SimpleRenderer("/upload", pages.Upload()))
+	
 	log.Println("UI routes registered.")
 }

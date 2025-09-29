@@ -3,8 +3,12 @@ package core
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"time"
@@ -203,6 +207,71 @@ func (c *Ctx) objOutXML() error {
 
 func (c *Ctx) objOutYaml() error {
 	return c.setObjOutData(yaml.Marshal(c.ObjOut))
+}
+
+type FileSaveOption func(*FileSaveConfig)
+
+type FileSaveConfig struct {
+	overwrite bool
+	// TODO: Add more OPTIONS
+	// autoTimestamp bool
+	// autoFileSuffix bool
+	// filename string
+}
+
+func NewFileSaveConfig(opts ...FileSaveOption) *FileSaveConfig {
+	config := &FileSaveConfig{}
+
+	for _, opt := range opts {
+		opt(config)
+	}
+
+	return config
+}
+
+// WithOverwrite overwrites the file if it already exists.
+func WithOverwrite() FileSaveOption {
+	return func(c *FileSaveConfig) {
+		c.overwrite = true
+	}
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
+}
+
+func (c *Ctx) SaveFile(formKey, dstPath string, opts ...FileSaveOption) error {
+	config := NewFileSaveConfig(opts...)
+
+	file, fileHeader, err := c.Request.FormFile(formKey)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	filename := fmt.Sprint(time.Now().Unix(), "-", filepath.Base(fileHeader.Filename))
+
+	dstPath = filepath.Clean(dstPath)
+	dstPath = filepath.Dir(dstPath)
+
+	if err := os.MkdirAll(dstPath, os.ModePerm); err != nil {
+		return err
+	}
+
+	dstPath = filepath.Join(dstPath, filename)
+	if !config.overwrite && fileExists(dstPath) {
+		return errors.New("file already exists")
+	}
+
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, file)
+	return err
 }
 
 // Close closes the connection.

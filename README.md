@@ -35,6 +35,7 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [X] Routergroups
     - [X] Static File serving
     - [ ] FileUploads
+    - [ ] SendFiles
     - [X] Middleware support
     - [ ] Make Middlewares groupable (like Marshallers in JSON v2)
     - [X] Buildin Middleware (Logging, CORS, CSRF, PanicRecovery, Timeout)

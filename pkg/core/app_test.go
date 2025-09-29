@@ -370,5 +370,44 @@ func TestApp_ServeStaticDir(t *testing.T) {
 	}
 }
 
+func TestApp_SaveFile(t *testing.T) {
+	// Create a dummy file to upload
+	dummyContent := "Hello, upload!"
+	dummyFile, err := CreateDummyMultipartFile("upload.txt", dummyContent)
+	if err != nil {
+		t.Fatalf("Failed to create dummy multipart file: %v", err)
+	}
+
+	// Create a request with the dummy file
+	req := httptest.NewRequest(http.MethodPost, "/upload", dummyFile.Body)
+	req.Header.Set("Content-Type", dummyFile.ContentType)
+
+	// Create a response recorder
+	rec := httptest.NewRecorder()
+
+	// Create a context
+	route := &Route{path: "/upload"}
+	endpoint := Endpoint{method: METHOD_POST}
+	ctx := NewCtx(rec, req, *route, endpoint)
+
+	// Call the SaveFile method
+	dstPath := "/tmp/upload.txt"
+	err = ctx.SaveFile("file", dstPath)
+	if err != nil {
+		t.Fatalf("SaveFile failed: %v", err)
+	}
+	defer func() { _ = RemoveDummyFile(dstPath) }()
+
+	// Check if the file was saved correctly
+	savedContent, err := ReadDummyFile(dstPath)
+	if err != nil {
+		t.Fatalf("Failed to read saved file: %v", err)
+	}
+
+	if savedContent != dummyContent {
+		t.Errorf("Expected saved content %q, got %q", dummyContent, savedContent)
+	}
+}
+
 // Helper functions for static file/dir tests
 // Using functions from test_utils.go

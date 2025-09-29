@@ -195,6 +195,7 @@ func NewApp(opts ...AppOption) App {
 		defRouteHandler:  defCatchallHandler,
 		openapiGenerator: openapiGenerator,
 		timeoutConfig:    timeoutConfig,
+		registeredRoutes: make(map[string][]string),
 	}
 }
 
@@ -216,6 +217,8 @@ type App struct {
 
 	// Timeout configuration for request handling
 	timeoutConfig TimeoutConfig
+
+	registeredRoutes map[string][]string
 }
 
 // SetDefaultRoute sets the default route handler for the application.
@@ -289,6 +292,16 @@ func (a App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOption
 // TODO: Abstract ObjIn and Out Marshalling more, so that the marshalling interfaces can be set in App/Router config and exchanged by user if default isn't right
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
+
+	// Check if the route is already registered
+	if methods, ok := a.registeredRoutes[route.path]; ok {
+		for _, method := range methods {
+			if method == endPoint.method.toPathString() {
+				log.Warnf("Route already registered: %s", handlerPath)
+				return
+			}
+		}
+	}
 
 	h := endPoint.handleFunc
 	if len(router.middlewares) > 0 {
@@ -398,6 +411,8 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	ClosingFunc:
 		c.SendingReturn(w, err)
 	})
+
+	a.registeredRoutes[route.path] = append(a.registeredRoutes[route.path], endPoint.method.toPathString())
 }
 
 func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, _ Router) {

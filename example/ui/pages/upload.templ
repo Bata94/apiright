@@ -1,0 +1,15 @@
+package ui_pages
+
+import ui_layouts "github.com/bata94/apiright/example/ui/layouts"
+
+templ Upload() {
+	@ui_layouts.BaseLayout() {
+		<div class="container mx-auto">
+			<h1 class="text-2xl font-bold mb-4">Upload File</h1>
+			<form action="/upload" method="post" enctype="multipart/form-data">
+				<input type="file" name="file" id="file" class="file-input file-input-bordered w-full max-w-xs" />
+				<button type="submit" class="btn btn-primary">Upload</button>
+			</form>
+		</div>
+	}
+}
