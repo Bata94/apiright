@@ -374,6 +374,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 				goto ClosingFunc
 			}
 
+			// TODO: Add default MIMEType, when no Accept header is provided.
 			var objOutFunc func() error
 			log.Debug(c.Request.Header.Get("accept"))
 			acceptHeaders := strings.Split(c.Request.Header.Get("accept"), ",")
@@ -447,6 +448,16 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 		Response(400, "Invalid request data", allAvailableMIME, errResType).
 		Response(422, "Validation errors in request data", allAvailableMIME, errResType).
 		Response(500, "Internal server error", allAvailableMIME, errResType)
+
+	if strings.Contains(route.path, "{") {
+		pNames := strings.SplitSeq(route.path, "{")
+		for pName := range pNames {
+			if strings.Contains(pName, "}") {
+				pName = strings.TrimSuffix(pName, "}")
+				newEndpointBuilder.PathParam(pName, "", reflect.TypeOf(""))
+			}
+		}
+	}
 
 	if len(endPoint.routeOptionConfig.openApiConfig.tags) != 0 {
 		newEndpointBuilder.Tags(endPoint.routeOptionConfig.openApiConfig.tags...)
