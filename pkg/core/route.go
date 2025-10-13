@@ -248,7 +248,7 @@ func (c *Ctx) SaveFile(formKey, dstPath string, opts ...FileSaveOption) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	filename := fmt.Sprint(time.Now().Unix(), "-", filepath.Base(fileHeader.Filename))
 
@@ -268,7 +268,7 @@ func (c *Ctx) SaveFile(formKey, dstPath string, opts ...FileSaveOption) error {
 	if err != nil {
 		return err
 	}
-	defer dst.Close()
+	defer func() { _ = dst.Close() }()
 
 	_, err = io.Copy(dst, file)
 	return err

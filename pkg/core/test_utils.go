@@ -27,7 +27,10 @@ func CreateDummyMultipartFile(fileName, fileContent string) (*DummyFile, error) 
 		return nil, err
 	}
 
-	writer.Close()
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	return &DummyFile{
 		Body:        body,
