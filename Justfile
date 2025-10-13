@@ -80,7 +80,7 @@ simplify-fmt:
 lint:
   golangci-lint run ./...
 
-pre-release: fmt check lint # test
+pre-release: fmt check lint test
   @echo "Ran check, fmt and lint"
 
 vegeta method url max-workers duration:
