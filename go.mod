@@ -6,6 +6,7 @@ require github.com/bata94/gogen-openapi v0.1.2
 
 require (
 	github.com/a-h/templ v0.3.924
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	golang.org/x/text v0.27.0
