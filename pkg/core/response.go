@@ -41,16 +41,17 @@ func (r *ApiResponse) AddHeader(k, v string) {
 
 // SendingReturn sends the response to the client.
 func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
-	defer func() {
-		c.Close()
-	}()
+	defer c.Close()
 
 	if err != nil {
 		err = fmt.Errorf("error in HanlderFunc: %w", err)
 		log.Errorf("handler error: %v", err)
 		c.Response.SetMessage(err.Error())
 		// Only set status to 500 if no status has been set yet (still default 200)
-		if c.Response.StatusCode == http.StatusOK {
+		log.Debug("Global Errorhandler:")
+		log.Debug("Current Response status: ", c.Response.StatusCode)
+		if c.Response.StatusCode == http.StatusOK || c.Response.StatusCode == 0 {
+			log.Debug("Setting status to 500")
 			c.Response.SetStatus(http.StatusInternalServerError)
 		}
 	}
@@ -72,8 +73,9 @@ func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 	}
 
 	if err != nil {
+		log.Debug("error writing body, this should not happen!")
 		log.Errorf("error writing body: %v", err)
-		panic(err)
+		// panic(err)
 	}
 }
 

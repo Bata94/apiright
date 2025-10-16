@@ -261,19 +261,19 @@ func (a *App) GET(path string, handler Handler, opt ...RouteOption) {
 	a.router.GET(path, handler, opt...)
 }
 
-func (a App) POST(path string, handler Handler, opt ...RouteOption) {
+func (a *App) POST(path string, handler Handler, opt ...RouteOption) {
 	a.router.POST(path, handler, opt...)
 }
 
-func (a App) PUT(path string, handler Handler, opt ...RouteOption) {
+func (a *App) PUT(path string, handler Handler, opt ...RouteOption) {
 	a.router.PUT(path, handler, opt...)
 }
 
-func (a App) DELETE(path string, handler Handler, opt ...RouteOption) {
+func (a *App) DELETE(path string, handler Handler, opt ...RouteOption) {
 	a.router.DELETE(path, handler, opt...)
 }
 
-func (a App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
+func (a *App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	a.router.OPTIONS(path, handler, opt...)
 }
 
@@ -281,11 +281,11 @@ func (a *App) Redirect(path, url string, code int) {
 	a.router.Redirect(path, url, code)
 }
 
-func (a App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
+func (a *App) ServeStaticFile(urlPath, filePath string, opt ...StaticServFileOption) {
 	a.router.ServeStaticFile(urlPath, filePath, opt...)
 }
 
-func (a App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOption) {
+func (a *App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOption) {
 	a.router.ServeStaticDir(urlPath, dirPath, a, opt...)
 }
 
@@ -323,7 +323,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		log.Debugf("Route base path: %s", route.basePath)
 		log.Debugf("Router base path: %s", router.GetBasePath())
 		log.Debugf("Condition: %t", r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()))
-		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
+if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			currentHandler = a.defRouteHandler
 		}
 
@@ -416,7 +416,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	a.registeredRoutes[route.path] = append(a.registeredRoutes[route.path], endPoint.method.toPathString())
 }
 
-func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, _ Router) {
+func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, _ Router) {
 	if endPoint.method == METHOD_OPTIONS || !endPoint.routeOptionConfig.openApiEnabled {
 		return
 	}
@@ -493,7 +493,7 @@ func (a App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint E
 	a.Logger.Debug("✅ Endpoint added - ", handlerPath)
 }
 
-func (a App) addRoutesToHandler() {
+func (a *App) addRoutesToHandler() {
 	a.Logger.Info("Registering available routes")
 
 	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
@@ -513,7 +513,7 @@ func (a App) addRoutesToHandler() {
 	}
 }
 
-func (a App) addRoutesToOpenApi() {
+func (a *App) addRoutesToOpenApi() {
 	a.Logger.Info("Documenting available routes")
 
 	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))

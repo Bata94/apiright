@@ -44,17 +44,21 @@ func FavIcon(filePath string) Middleware {
 func LogMiddleware(logger logger.Logger) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
+			log.Debug("LogMiddleware starting GoRoutine")
 			go func(c *Ctx) {
-				<-c.conClosed
-
-				duration := c.conEnded.Sub(c.conStarted)
-				// TODO: Enhance log formatting to improve readability, potentially by using a dedicated logging library or custom formatter to add tabs, colors, and structured output.
-				infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s", c.Response.StatusCode, duration.Milliseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
-				if c.Response.StatusCode >= 400 {
-					// TODO: Include the actual error message in the log output when a request results in an error (status code >= 400) for better debugging.
-					logger.Error(infoLog)
-				} else {
-					logger.Info(infoLog)
+				log.Debug("LogMiddleware GoRoutine started, waiting for connection to close")
+				select {
+				case <-c.conClosed:
+					log.Debug("LogMiddleware GoRoutine Connection closed, running logs")
+					duration := c.conEnded.Sub(c.conStarted)
+					// TODO: Enhance log formatting to improve readability, potentially by using a dedicated logging library or custom formatter to add tabs, colors, and structured output.
+					infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s", c.Response.StatusCode, duration.Milliseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
+					if c.Response.StatusCode >= 400 {
+						// TODO: Include the actual error message in the log output when a request results in an error (status code >= 400) for better debugging.
+						logger.Error(infoLog)
+					} else {
+						logger.Info(infoLog)
+					}
 				}
 			}(c)
 

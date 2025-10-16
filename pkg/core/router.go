@@ -624,7 +624,7 @@ func setupTemplateFuncs() template.FuncMap {
 }
 
 // TODO: Refactor Inputs
-func (r *Router) getStaticDirData(baseDirPath, dirPath, baseUrl string, config *StaticSevFileConfig, a App, addStaticRoutes bool, opt ...StaticServFileOption) (DirTemplateData, error) {
+func (r *Router) getStaticDirData(baseDirPath, dirPath, baseUrl string, config *StaticSevFileConfig, a *App, addStaticRoutes bool, opt ...StaticServFileOption) (DirTemplateData, error) {
 	dirData := DirTemplateData{
 		Title:           "ApiRight", // TODO: Add title from AppConfig
 		BaseUrl:         baseUrl,
@@ -701,7 +701,7 @@ func decideStaticIndexFile(dirData DirTemplateData, dirPath string, dirTempl *te
 // ServeStaticDir serves a directory at the given URL path.
 // If the directory contains a "index.html" file, it will be served as "/" route. If not a FileExplorer will be shown, by default.
 // It is highly recommended to leave the PreLoad option enabled.
-func (r *Router) ServeStaticDir(urlPath, dirPath string, a App, opt ...StaticServFileOption) {
+func (r *Router) ServeStaticDir(urlPath, dirPath string, a *App, opt ...StaticServFileOption) {
 	var h Handler
 	a.Logger.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
 	config := NewStaticServeFileConfig(opt...)

@@ -140,6 +140,7 @@ type Ctx struct {
 
 	PathParams  map[string]string
 	QueryParams map[string]string
+	Session map[string]any
 
 	conClosed  chan (bool)
 	conStarted time.Time
@@ -276,6 +277,7 @@ func (c *Ctx) SaveFile(formKey, dstPath string, opts ...FileSaveOption) error {
 
 // Close closes the connection.
 func (c *Ctx) Close() {
+	log.Debug("Closing connection")
 	c.conEnded = time.Now()
 	c.conClosed <- true
 }
