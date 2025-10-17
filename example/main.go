@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	ui_pages "github.com/bata94/apiright/example/ui/pages"
@@ -61,12 +62,17 @@ func main() {
 	app.Redirect("/redirect", "/test", 302)
 	app.Redirect("/favicon.ico", "/assets/favicon.ico", 301)
 
-	app.GET("/params/{id}", func(c *ar.Ctx) error {
-		fmt.Println(c.PathParams)
-		fmt.Println(c.QueryParams)
-		c.Response.SetMessagef("PathParams: %s\nQueryParams: %s\n", c.PathParams, c.QueryParams)
-		return nil
-	})
+	app.GET(
+		"/params/{id}",
+		func(c *ar.Ctx) error {
+			fmt.Println(c.PathParams)
+			fmt.Println(c.QueryParams)
+			c.Response.SetMessagef("PathParams: %s\nQueryParams: %s\n", c.PathParams, c.QueryParams)
+			return nil
+		},
+		ar.WithQueryParam("name", "Test Name Description", false, reflect.TypeOf("")),
+		// ar.WithQueryParam("perPage", "Items per Page", true, reflect.TypeOf(123)),
+	)
 
 	app.GET("/test", func(c *ar.Ctx) error {
 		dst := "/test/upload/file.txt"

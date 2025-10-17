@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"errors"
 	"fmt"
 	"net/http"
@@ -295,12 +296,10 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 	// Check if the route is already registered
 	if methods, ok := a.registeredRoutes[route.path]; ok {
-		for _, method := range methods {
-			if method == endPoint.method.toPathString() {
+		if slices.Contains(methods, endPoint.method.toPathString()) {
 				log.Warnf("Route already registered: %s", handlerPath)
 				return
 			}
-		}
 	}
 
 	h := endPoint.handleFunc
@@ -323,7 +322,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		log.Debugf("Route base path: %s", route.basePath)
 		log.Debugf("Router base path: %s", router.GetBasePath())
 		log.Debugf("Condition: %t", r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()))
-if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
+	if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			currentHandler = a.defRouteHandler
 		}
 
@@ -456,6 +455,12 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 				pName = strings.TrimSuffix(pName, "}")
 				newEndpointBuilder.PathParam(pName, "", reflect.TypeOf(""))
 			}
+		}
+	}
+
+	if len(endPoint.routeOptionConfig.queryParams) != 0 {
+		for _, queryParam := range endPoint.routeOptionConfig.queryParams {
+			newEndpointBuilder.QueryParam(queryParam.Name, queryParam.Description, queryParam.Required, queryParam.Type)
 		}
 	}
 

@@ -299,6 +299,12 @@ type RouteOptionConfig struct {
 
 	ObjIn       any
 	ObjOut      any
+	queryParams []struct {
+		Name, Description string
+		Required          bool
+		Type              reflect.Type
+		Example           any
+	}
 	middlewares []Middleware
 }
 
@@ -323,6 +329,22 @@ func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
 func Use(m Middleware) RouteOption {
 	return func(c *RouteOptionConfig) {
 		c.middlewares = append(c.middlewares, m)
+	}
+}
+
+func WithQueryParam(name, description string, required bool, t reflect.Type) RouteOption {
+	return func(c *RouteOptionConfig) {
+		c.queryParams = append(c.queryParams, struct {
+			Name, Description string
+			Required          bool
+			Type              reflect.Type
+			Example           any
+		}{
+			Name:        name,
+			Description: description,
+			Required:    required,
+			Type:        t,
+		})
 	}
 }
 
