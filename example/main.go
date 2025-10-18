@@ -12,6 +12,7 @@ import (
 	"github.com/bata94/apiright/example/uirouter"
 	ar "github.com/bata94/apiright/pkg/core"
 	ar_templ "github.com/bata94/apiright/pkg/templ"
+	"github.com/bata94/apiright/pkg/auth/jwt"
 )
 
 //go:generate /Users/bata/Projects/personal/apiright/bin/apiright generate
@@ -55,6 +56,31 @@ func main() {
 
 	uiRouter := app.NewRouter("")
 	uirouter.RegisterUIRoutes(uiRouter)
+
+	jwt.DefaultJWTConfig()
+	jwt.SetLogger(app.Logger)
+
+	app.GET("/jwt", func(c *ar.Ctx) error {
+		app.Logger.Info("JWT")
+		c.Session["userID"] = 123
+		tokenPair, err := jwt.NewTokenPair(c)
+		if err != nil {
+			return err
+		} else if (tokenPair == jwt.TokenPair{}) {
+			return errors.New("tokenPair is nil")
+		}
+
+		msgStr := fmt.Sprintf("AccessToken: %s\n", tokenPair.AccessToken)
+		msgStr += fmt.Sprintf("RefreshToken: %s\n", tokenPair.RefreshToken)
+
+		// c.ObjOut = tokenPair
+		c.Response.StatusCode = 200
+		c.Response.SetMessage(msgStr)
+
+		return nil
+	},
+	// ar.WithObjOut(&jwt.TokenPair{}),
+	)
 
 	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", ui_pages.Index()))
 	app.GET(ar_templ.SimpleRenderer("/upload", ui_pages.Upload()))

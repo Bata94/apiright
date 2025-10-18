@@ -111,6 +111,7 @@ func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *C
 
 		PathParams:  make(map[string]string),
 		QueryParams: make(map[string]string),
+		Session:     make(map[string]any),
 
 		conClosed:  make(chan bool, 1),
 		conStarted: time.Now(),
@@ -195,6 +196,8 @@ func (c *Ctx) setObjOutData(b []byte, err error) error {
 }
 
 func (c *Ctx) validateObjOutType() bool {
+	log.Debugf("ObjOutType: %v", c.ObjOutType)
+	log.Debugf("ObjOut: %v", c.ObjOut)
 	return reflect.TypeOf(c.ObjOut) == c.ObjOutType
 }
 
