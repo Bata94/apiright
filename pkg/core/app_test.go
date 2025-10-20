@@ -3,6 +3,8 @@ package core
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -396,10 +398,29 @@ func TestApp_SaveFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SaveFile failed: %v", err)
 	}
-	defer func() { _ = RemoveDummyFile(dstPath) }()
+
+	// Find the created file
+	files, err := os.ReadDir("/tmp")
+	if err != nil {
+		t.Fatalf("Failed to read /tmp directory: %v", err)
+	}
+
+	var savedFilePath string
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), "-upload.txt") {
+			savedFilePath = "/tmp/" + file.Name()
+			break
+		}
+	}
+
+	if savedFilePath == "" {
+		t.Fatalf("Failed to find saved file in /tmp")
+	}
+
+	defer func() { _ = RemoveDummyFile(savedFilePath) }()
 
 	// Check if the file was saved correctly
-	savedContent, err := ReadDummyFile(dstPath)
+	savedContent, err := ReadDummyFile(savedFilePath)
 	if err != nil {
 		t.Fatalf("Failed to read saved file: %v", err)
 	}

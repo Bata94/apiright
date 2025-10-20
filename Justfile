@@ -61,11 +61,12 @@ test:
 # Clean the binary
 clean:
   @echo "Cleaning..."
-  rm -rf example/tmp/*
+  rm -rf example/tmp
   rm -rf example/docs
   rm -rf example/uirouter
-  rm -rf bin/*
-  rm -rf tmp/*
+  rm -rf example/uploads
+  rm -rf bin
+  rm -rf tmp
   rm -rf docs
 
 check:
@@ -80,7 +81,7 @@ simplify-fmt:
 lint:
   golangci-lint run ./...
 
-pre-release: fmt check lint test
+pre-release: clean build-example fmt check lint test
   @echo "Ran check, fmt and lint"
 
 vegeta method url max-workers duration:
