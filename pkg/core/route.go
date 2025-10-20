@@ -298,6 +298,7 @@ type RouteOptionConfig struct {
 		summary, description string
 		tags                 []string
 		deprecated           bool
+		jwtAuth              bool
 	}
 
 	ObjIn       any
@@ -400,5 +401,12 @@ func WithOpenApiDeprecated() RouteOption {
 func WithOpenApiTags(tags ...string) RouteOption {
 	return func(c *RouteOptionConfig) {
 		c.openApiConfig.tags = tags
+	}
+}
+
+// WithOpenApiJwtAuth enables JWT authentication for the route in OpenAPI.
+func WithOpenApiJwtAuth() RouteOption {
+	return func(c *RouteOptionConfig) {
+		c.openApiConfig.jwtAuth = true
 	}
 }

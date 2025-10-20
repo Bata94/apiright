@@ -169,7 +169,7 @@ func main() {
 		c.Response.SetMessage(fmt.Sprintf("UserID: %v", c.Session["userID"]))
 		c.Response.SetStatus(200)
 		return nil
-	}, ar.Use(jwt.JWTMiddleware(*jwtConfig)))
+	}, ar.Use(jwt.JWTMiddleware(*jwtConfig)), ar.WithOpenApiJwtAuth())
 
 	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", ui_pages.Index()))
 	app.GET(ar_templ.SimpleRenderer("/upload", ui_pages.Upload()))

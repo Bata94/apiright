@@ -181,6 +181,12 @@ func NewApp(opts ...AppOption) App {
 		}
 	}
 
+	openapiGenerator.AddSecurityScheme("BearerAuth", openapi.SecurityScheme{
+		Type:         "http",
+		Scheme:       "bearer",
+		BearerFormat: "JWT",
+	})
+
 	// Initialize timeout configuration
 	timeoutConfig := DefaultTimeoutConfig()
 	if config.timeout > 0 {
@@ -470,6 +476,11 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 	if endPoint.routeOptionConfig.openApiConfig.deprecated {
 		newEndpointBuilder.Deprecated()
 	}
+
+	if endPoint.routeOptionConfig.openApiConfig.jwtAuth {
+		newEndpointBuilder.Security(openapi.SecurityRequirement{"BearerAuth": []string{}})
+	}
+
 	if endPoint.routeOptionConfig.ObjIn != nil {
 		// TODO: Dynamically add the specific MIME types that this endpoint expects for the request body based on configuration or reflection.
 		newEndpointBuilder.RequestType(objInType)
