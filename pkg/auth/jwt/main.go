@@ -223,3 +223,30 @@ func ValidateRefreshToken(c *ar.Ctx, refreshToken string) (any, error) {
 
 	return claims["sub"], nil
 }
+
+func GetSubFromToken(c *ar.Ctx) (any, error) {
+	var (
+		claims Claims
+		err    error
+	)
+
+	authHeaderToken := c.Request.Header.Get("Authorization")
+	if authHeaderToken == "" {
+		return nil, errors.New("authorization header is missing")
+	}
+
+	accessToken := strings.Replace(authHeaderToken, "Bearer ", "", 1)
+	token, err := jwt.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(config.SecretAccessToken), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sub, ok := token.Claims.(jwt.MapClaims)["sub"]
+	if !ok {
+		return nil, errors.New("sub is not in claims")
+	}
+
+	return sub, nil
+}
