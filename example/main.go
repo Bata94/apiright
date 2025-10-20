@@ -60,7 +60,7 @@ func main() {
 	uiRouter := app.NewRouter("")
 	uirouter.RegisterUIRoutes(uiRouter)
 
-	jwt.DefaultJWTConfig()
+	jwtConfig := jwt.DefaultJWTConfig()
 	jwt.SetLogger(app.Logger)
 
 	app.GET("/jwt", func(c *ar.Ctx) error {
@@ -164,6 +164,12 @@ func main() {
 	},
 	// ar.WithObjOut(&jwt.TokenPair{}),
 	)
+
+	app.GET("/protected", func(c *ar.Ctx) error {
+		c.Response.SetMessage("Protected")
+		c.Response.SetStatus(200)
+		return nil
+	}, ar.Use(jwt.JWTMiddleware(*jwtConfig)))
 
 	app.GET(ar_templ.SimpleRenderer("/simpleRenderer", ui_pages.Index()))
 	app.GET(ar_templ.SimpleRenderer("/upload", ui_pages.Upload()))

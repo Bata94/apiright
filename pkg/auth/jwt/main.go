@@ -78,6 +78,16 @@ type TokenPair struct {
 func JWTMiddleware(config JWTConfig) ar.Middleware {
 	return ar.Middleware(func(next ar.Handler) ar.Handler {
 		return func(c *ar.Ctx) error {
+			if c.Request.Header.Get("Authorization") == "" {
+				return errors.New("Authorization header is missing")
+			}
+
+			accessToken := strings.Replace(c.Request.Header.Get("Authorization"), "Bearer ", "", 1)
+			err := ValidateAccessToken(c, accessToken)
+			if err != nil {
+				return err
+			}
+
 			return next(c)
 		}
 	})
@@ -198,7 +208,6 @@ func ValidateRefreshToken(c *ar.Ctx, refreshToken string) (any, error) {
 		return nil, errors.New("token is empty")
 	}
 
-	refreshToken = strings.Replace(refreshToken, "Bearer ", "", 1)
 	_, err = jwt.ParseWithClaims(refreshToken, &claims, func(token *jwt.Token) (any, error) {
 		return []byte(config.SecretRefreshToken), nil
 	},
