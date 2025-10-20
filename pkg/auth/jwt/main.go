@@ -1,8 +1,10 @@
 package jwt
 
 import (
+	"errors"
 	"maps"
 	"math/rand/v2"
+	"strings"
 	"time"
 
 	ar "github.com/bata94/apiright/pkg/core"
@@ -12,7 +14,7 @@ import (
 
 var (
 	config JWTConfig
-	log logger.Logger
+	log    logger.Logger
 )
 
 func randomString() string {
@@ -34,17 +36,18 @@ type JWTConfig struct {
 	Issuer string
 
 	SecretRefreshToken string
-	SecretAccessToken string
+	SecretAccessToken  string
 
 	SigningMethod SigningMethod
 
-	TTL time.Duration
+	TTL             time.Duration
 	TTLRefreshToken time.Duration
 	// MaxRefreshTokenAge is the maximum age of a refresh token.
 	// If set to 0, RefreshToken will live forever.
 	MaxRefreshTokenAge time.Duration
+	Leeway             time.Duration
 
-	AdditionalClaimsFunc func(ar.Ctx) Claims
+	AdditionalClaimsFunc func(*ar.Ctx) Claims
 }
 
 func SetLogger(logger logger.Logger) {
@@ -53,13 +56,14 @@ func SetLogger(logger logger.Logger) {
 
 func DefaultJWTConfig() *JWTConfig {
 	config = JWTConfig{
-		Issuer: "Apiright AuthServer",
-		SecretRefreshToken: randomString(),
-		SecretAccessToken: randomString(),
-		SigningMethod: jwt.SigningMethodHS256,
-		TTL: time.Hour,
-		TTLRefreshToken: time.Duration(15 * time.Minute),
-		MaxRefreshTokenAge: time.Duration(0),
+		Issuer:               "Apiright AuthServer",
+		SecretRefreshToken:   randomString(),
+		SecretAccessToken:    randomString(),
+		SigningMethod:        jwt.SigningMethodHS256,
+		TTL:                  time.Hour,
+		Leeway:               time.Duration(15 * time.Second),
+		TTLRefreshToken:      time.Duration(15 * time.Minute),
+		MaxRefreshTokenAge:   time.Duration(0),
 		AdditionalClaimsFunc: nil,
 	}
 
@@ -67,7 +71,7 @@ func DefaultJWTConfig() *JWTConfig {
 }
 
 type TokenPair struct {
-	AccessToken string `json:"access_token" xml:"access_token" yaml:"access_token"`
+	AccessToken  string `json:"access_token" xml:"access_token" yaml:"access_token"`
 	RefreshToken string `json:"refresh_token" xml:"refresh_token" yaml:"refresh_token"`
 }
 
@@ -79,47 +83,132 @@ func JWTMiddleware(config JWTConfig) ar.Middleware {
 	})
 }
 
-func NewTokenPair(c *ar.Ctx) (TokenPair, error) {
+func NewTokenPair(c *ar.Ctx, userID any) (TokenPair, error) {
 	var (
 		accessToken, refreshToken string
-		err error
+		err                       error
 	)
-	log.Debug("NewTokenPairFunc")
 
 	claims := jwt.MapClaims{
 		"iss": config.Issuer,
-		"sub": c.Session["userID"],
+		"sub": userID,
 		"iat": time.Now().Unix(),
 		"exp": time.Now().Add(config.TTL).Unix(),
 	}
-	log.Debugf("Claims: %v", claims)
 
 	if config.AdditionalClaimsFunc != nil {
 		log.Debug("AdditionalClaimsFunc")
-		maps.Copy(claims, config.AdditionalClaimsFunc(*c))
+		maps.Copy(claims, config.AdditionalClaimsFunc(c))
 		log.Debugf("Claims: %v", claims)
 	}
 
-	log.Debug(config.SecretAccessToken , " ", len([]byte(config.SecretAccessToken)))
 	accessToken, err = jwt.NewWithClaims(config.SigningMethod, claims).SignedString([]byte(config.SecretAccessToken))
 	if err != nil {
 		return TokenPair{}, err
 	}
-	log.Debugf("AccessToken: %s", accessToken)
 
-	log.Debug(config.SecretRefreshToken, " ", len([]byte(config.SecretRefreshToken)))
 	refreshToken, err = jwt.NewWithClaims(config.SigningMethod, claims).SignedString([]byte(config.SecretRefreshToken))
 	if err != nil {
 		return TokenPair{}, err
 	}
-	log.Debugf("RefreshToken: %s", refreshToken)
+
+	c.Session["userID"] = userID
 
 	return TokenPair{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
 
-func NewAccessToken(c ar.Ctx) (string, error) {
-	return "", nil
+func NewAccessToken(c *ar.Ctx, userID any) (string, error) {
+	var (
+		accessToken string
+		err         error
+	)
+
+	claims := jwt.MapClaims{
+		"iss": config.Issuer,
+		"sub": userID,
+		"iat": time.Now().Unix(),
+		"exp": time.Now().Add(config.TTL).Unix(),
+	}
+
+	accessToken, err = jwt.NewWithClaims(config.SigningMethod, claims).SignedString([]byte(config.SecretAccessToken))
+	if err != nil {
+		return "", err
+	}
+
+	c.Session["userID"] = userID
+
+	return accessToken, nil
+}
+
+func NewAccessTokenWithRefreshToken(c *ar.Ctx, userID any, refreshToken string) (string, error) {
+	userID, err := ValidateRefreshToken(c, refreshToken)
+	if err != nil {
+		return "", err
+	} else if userID == nil {
+		return "", errors.New("userID is nil")
+	}
+
+	accessToken, err := NewAccessToken(c, userID)
+	if err != nil {
+		return "", err
+	}
+
+	return accessToken, nil
+}
+
+func ValidateAccessToken(c *ar.Ctx, accessToken string) error {
+	var (
+		claims Claims
+		err    error
+	)
+
+	if accessToken == "" {
+		return errors.New("token is empty")
+	}
+
+	accessToken = strings.Replace(accessToken, "Bearer ", "", 1)
+	_, err = jwt.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(config.SecretAccessToken), nil
+	},
+		// BUG: Leeway is not working
+		jwt.WithLeeway(config.Leeway),
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuer(config.Issuer),
+		jwt.WithStrictDecoding(),
+	)
+	if err != nil {
+		return err
+	}
+
+	c.Session["userID"] = claims["sub"]
+
+	return nil
+}
+
+func ValidateRefreshToken(c *ar.Ctx, refreshToken string) (any, error) {
+	var (
+		claims Claims
+		err    error
+	)
+
+	if refreshToken == "" {
+		return nil, errors.New("token is empty")
+	}
+
+	refreshToken = strings.Replace(refreshToken, "Bearer ", "", 1)
+	_, err = jwt.ParseWithClaims(refreshToken, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(config.SecretRefreshToken), nil
+	},
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuer(config.Issuer),
+		jwt.WithStrictDecoding(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return claims["sub"], nil
 }

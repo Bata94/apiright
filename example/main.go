@@ -10,12 +10,15 @@ import (
 
 	ui_pages "github.com/bata94/apiright/example/ui/pages"
 	"github.com/bata94/apiright/example/uirouter"
-	ar "github.com/bata94/apiright/pkg/core"
-	ar_templ "github.com/bata94/apiright/pkg/templ"
 	"github.com/bata94/apiright/pkg/auth/jwt"
+	ar "github.com/bata94/apiright/pkg/core"
+	"github.com/bata94/apiright/pkg/logger"
+	ar_templ "github.com/bata94/apiright/pkg/templ"
 )
 
 //go:generate /Users/bata/Projects/personal/apiright/bin/apiright generate
+
+var log = logger.NewDefaultLogger()
 
 type PostStruct struct {
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
@@ -62,8 +65,7 @@ func main() {
 
 	app.GET("/jwt", func(c *ar.Ctx) error {
 		app.Logger.Info("JWT")
-		c.Session["userID"] = 123
-		tokenPair, err := jwt.NewTokenPair(c)
+		tokenPair, err := jwt.NewTokenPair(c, "123")
 		if err != nil {
 			return err
 		} else if (tokenPair == jwt.TokenPair{}) {
@@ -76,6 +78,87 @@ func main() {
 		// c.ObjOut = tokenPair
 		c.Response.StatusCode = 200
 		c.Response.SetMessage(msgStr)
+
+		return nil
+	},
+	// ar.WithObjOut(&jwt.TokenPair{}),
+	)
+
+	app.POST("/jwt", func(c *ar.Ctx) error {
+		tp, ok := c.ObjIn.(*jwt.TokenPair)
+		if !ok {
+			return errors.New("object is not correctly parsed")
+		}
+
+		err := jwt.ValidateAccessToken(c, tp.AccessToken)
+		if err != nil {
+			return err
+		}
+
+		if c.Session["userID"] == nil {
+			return errors.New("userID is nil")
+		}
+
+		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session["userID"]))
+		c.ObjOut = tp
+
+		return nil
+	},
+		ar.WithObjIn(&jwt.TokenPair{}),
+	)
+
+	type GrantParams struct {
+		GrantType string `json:"grant_type" xml:"grant_type" yml:"grant_type" example:"refresh_token"`
+		Token     string `json:"token" xml:"token" yml:"token" example:"<YOUR REFRESH TOKEN>"`
+	}
+
+	app.POST("/jwt/{id}", func(c *ar.Ctx) error {
+		id := c.PathParams["id"]
+		rt, ok := c.ObjIn.(*GrantParams)
+		if !ok {
+			log.Error("object is not correctly parsed")
+			return errors.New("object is not correctly parsed")
+		}
+
+		if rt.GrantType != "refresh_token" {
+			return errors.New("grant_type is not supported")
+		}
+
+		at, err := jwt.NewAccessTokenWithRefreshToken(c, id, rt.Token)
+		if err != nil {
+			return err
+		}
+
+		c.Response.SetMessage(at)
+		c.Response.SetStatus(200)
+
+		return nil
+	}, ar.WithObjIn(&GrantParams{}))
+
+	app.GET("/jwt_test", func(c *ar.Ctx) error {
+		app.Logger.Info("JWT")
+		tp, err := jwt.NewTokenPair(c, "123")
+		if err != nil {
+			return err
+		} else if (tp == jwt.TokenPair{}) {
+			return errors.New("tokenPair is nil")
+		}
+
+		c.Session["userID"] = 999
+
+		// time.Sleep(time.Second * 5)
+
+		err = jwt.ValidateAccessToken(c, tp.AccessToken)
+		if err != nil {
+			return err
+		}
+
+		if c.Session["userID"] == nil {
+			return errors.New("userID is nil")
+		}
+
+		c.Response.StatusCode = 200
+		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session["userID"]))
 
 		return nil
 	},

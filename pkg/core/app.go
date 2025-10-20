@@ -1,12 +1,12 @@
 package core
 
 import (
-	"slices"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -297,9 +297,9 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 	// Check if the route is already registered
 	if methods, ok := a.registeredRoutes[route.path]; ok {
 		if slices.Contains(methods, endPoint.method.toPathString()) {
-				log.Warnf("Route already registered: %s", handlerPath)
-				return
-			}
+			log.Warnf("Route already registered: %s", handlerPath)
+			return
+		}
 	}
 
 	h := endPoint.handleFunc
@@ -322,7 +322,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		log.Debugf("Route base path: %s", route.basePath)
 		log.Debugf("Router base path: %s", router.GetBasePath())
 		log.Debugf("Condition: %t", r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()))
-	if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
+		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			currentHandler = a.defRouteHandler
 		}
 

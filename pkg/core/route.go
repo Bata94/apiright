@@ -141,7 +141,7 @@ type Ctx struct {
 
 	PathParams  map[string]string
 	QueryParams map[string]string
-	Session map[string]any
+	Session     map[string]any
 
 	conClosed  chan (bool)
 	conStarted time.Time
