@@ -166,7 +166,7 @@ func main() {
 	)
 
 	app.GET("/protected", func(c *ar.Ctx) error {
-		c.Response.SetMessage("Protected")
+		c.Response.SetMessage(fmt.Sprintf("UserID: %v", c.Session["userID"]))
 		c.Response.SetStatus(200)
 		return nil
 	}, ar.Use(jwt.JWTMiddleware(*jwtConfig)))

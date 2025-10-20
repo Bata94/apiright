@@ -79,7 +79,7 @@ func JWTMiddleware(config JWTConfig) ar.Middleware {
 	return ar.Middleware(func(next ar.Handler) ar.Handler {
 		return func(c *ar.Ctx) error {
 			if c.Request.Header.Get("Authorization") == "" {
-				return errors.New("Authorization header is missing")
+				return errors.New("authorization header is missing")
 			}
 
 			accessToken := strings.Replace(c.Request.Header.Get("Authorization"), "Bearer ", "", 1)
@@ -154,11 +154,13 @@ func NewAccessToken(c *ar.Ctx, userID any) (string, error) {
 }
 
 func NewAccessTokenWithRefreshToken(c *ar.Ctx, userID any, refreshToken string) (string, error) {
-	userID, err := ValidateRefreshToken(c, refreshToken)
+	userID_RT, err := ValidateRefreshToken(c, refreshToken)
 	if err != nil {
 		return "", err
-	} else if userID == nil {
+	} else if userID_RT == nil {
 		return "", errors.New("userID is nil")
+	} else if userID_RT != userID {
+		return "", errors.New("userID is not the same")
 	}
 
 	accessToken, err := NewAccessToken(c, userID)
