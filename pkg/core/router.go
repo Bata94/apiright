@@ -130,6 +130,7 @@ type StaticSevFileConfig struct {
 	forcePreCache   bool
 	contentType     string
 	indexFile       string
+	Title           string
 	// TODO: Add more ConfigOptions
 	// disableFileExplorer bool
 	// includeHiddenFiles bool
@@ -154,6 +155,7 @@ func NewStaticServeFileConfig(opts ...StaticServFileOption) *StaticSevFileConfig
 		forcePreCache:   false,
 		contentType:     "",
 		indexFile:       "index.html",
+		Title:           "ApiRight",
 	}
 
 	for _, opt := range opts {
@@ -216,6 +218,13 @@ func WithContentType(contentType string) StaticServFileOption {
 func WithIndexFile(indexFile string) StaticServFileOption {
 	return func(c *StaticSevFileConfig) {
 		c.indexFile = indexFile
+	}
+}
+
+// WithTitle sets the title for the directory listing page.
+func WithTitle(title string) StaticServFileOption {
+	return func(c *StaticSevFileConfig) {
+		c.Title = title
 	}
 }
 
@@ -636,7 +645,7 @@ func setupTemplateFuncs() template.FuncMap {
 // TODO: Refactor Inputs
 func (r *Router) getStaticDirData(baseDirPath, dirPath, baseUrl string, config *StaticSevFileConfig, a *App, addStaticRoutes bool, opt ...StaticServFileOption) (DirTemplateData, error) {
 	dirData := DirTemplateData{
-		Title:           "ApiRight", // TODO: Add title from AppConfig
+		Title:           config.Title,
 		BaseUrl:         baseUrl,
 		IndexFileExists: false,
 		Files:           []FileData{},

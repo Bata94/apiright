@@ -104,7 +104,7 @@ func TimeoutConfigFromApp(a App) TimeoutConfig {
 	return a.timeoutConfig
 }
 
-// BUG: Exec of HandlerFunc is not prob stopped!
+// TODO: Implement proper handler cancellation on timeout to prevent goroutine leaks
 // TimeoutMiddleware returns a middleware that handles request timeouts
 func TimeoutMiddleware(config TimeoutConfig) Middleware {
 	return func(next Handler) Handler {
@@ -182,8 +182,6 @@ func DefaultCORSConfig() CORSConfig {
 		MaxAge:           86400, // 24 hours
 	}
 }
-
-// TODO: Implement a function that returns a CORSConfig allowing all origins, methods, and headers, similar to ExposeAllCORSConfig but for all aspects of CORS.
 
 // ExposeAllCORSConfig returns a CORSConfig that allows all origins, headers, and methods.
 // Use with caution! But might be nice for dev/testing.

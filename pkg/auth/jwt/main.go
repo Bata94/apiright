@@ -182,15 +182,15 @@ func ValidateAccessToken(c *ar.Ctx, accessToken string) error {
 	}
 
 	accessToken = strings.Replace(accessToken, "Bearer ", "", 1)
-	_, err = jwt.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
-		return []byte(config.SecretAccessToken), nil
-	},
-		// BUG: Leeway is not working
+	parser := jwt.NewParser(
 		jwt.WithLeeway(config.Leeway),
 		jwt.WithExpirationRequired(),
 		jwt.WithIssuer(config.Issuer),
 		jwt.WithStrictDecoding(),
 	)
+	_, err = parser.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
+		return []byte(config.SecretAccessToken), nil
+	})
 	if err != nil {
 		return err
 	}
