@@ -76,6 +76,27 @@ func TestApiResponse_SetData(t *testing.T) {
 	}
 }
 
+func TestApiResponse_SetMessagef(t *testing.T) {
+	resp := NewApiResponse()
+	resp.SetMessagef("Hello %s, count: %d", "world", 42)
+
+	if resp.Message != "Hello world, count: 42" {
+		t.Errorf("Expected message 'Hello world, count: 42', got %s", resp.Message)
+	}
+}
+
+func TestApiResponse_Redirect(t *testing.T) {
+	resp := NewApiResponse()
+	resp.Redirect("/new-location", http.StatusMovedPermanently)
+
+	if resp.StatusCode != http.StatusMovedPermanently {
+		t.Errorf("Expected status %d, got %d", http.StatusMovedPermanently, resp.StatusCode)
+	}
+	if resp.Headers["Location"] != "/new-location" {
+		t.Errorf("Expected Location header '/new-location', got %s", resp.Headers["Location"])
+	}
+}
+
 func TestApiResponse_SendingReturn(t *testing.T) {
 	var rec *httptest.ResponseRecorder
 	var req *http.Request

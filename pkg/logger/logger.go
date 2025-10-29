@@ -541,13 +541,19 @@ func NewColoredSlogLogger(level LogLevel, output io.Writer) *slog.Logger {
 // NewStructuredLogger creates a new SlogWrapper with JSON output
 func NewStructuredLogger(level LogLevel, output io.Writer) *SlogWrapper {
 	slogLogger := NewSlogLogger(level, output)
-	return NewSlogWrapper(slogLogger)
+	return &SlogWrapper{
+		logger: slogLogger,
+		level:  level,
+	}
 }
 
 // NewColoredStructuredLogger creates a new SlogWrapper with colored text output
 func NewColoredStructuredLogger(level LogLevel, output io.Writer) *SlogWrapper {
 	slogLogger := NewColoredSlogLogger(level, output)
-	return NewSlogWrapper(slogLogger)
+	return &SlogWrapper{
+		logger: slogLogger,
+		level:  level,
+	}
 }
 
 // parseArgs parses the arguments into message and attributes
@@ -581,61 +587,85 @@ func (w *SlogWrapper) shouldLog(level LogLevel) bool {
 }
 
 func (w *SlogWrapper) Debug(args ...any) {
-	msg, attrs := w.parseArgs(args)
-	w.logger.LogAttrs(context.TODO(), slog.LevelDebug, msg, attrs...)
+	if w.shouldLog(DebugLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelDebug, msg, attrs...)
+	}
 }
 
 func (w *SlogWrapper) Debugf(format string, args ...any) {
-	w.logger.Debug(fmt.Sprintf(format, args...))
+	if w.shouldLog(DebugLevel) {
+		w.logger.Debug(fmt.Sprintf(format, args...))
+	}
 }
 
 func (w *SlogWrapper) Info(args ...any) {
-	msg, attrs := w.parseArgs(args)
-	w.logger.LogAttrs(context.TODO(), slog.LevelInfo, msg, attrs...)
+	if w.shouldLog(InfoLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelInfo, msg, attrs...)
+	}
 }
 
 func (w *SlogWrapper) Infof(format string, args ...any) {
-	w.logger.Info(fmt.Sprintf(format, args...))
+	if w.shouldLog(InfoLevel) {
+		w.logger.Info(fmt.Sprintf(format, args...))
+	}
 }
 
 func (w *SlogWrapper) Warn(args ...any) {
-	msg, attrs := w.parseArgs(args)
-	w.logger.LogAttrs(context.TODO(), slog.LevelWarn, msg, attrs...)
+	if w.shouldLog(WarnLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelWarn, msg, attrs...)
+	}
 }
 
 func (w *SlogWrapper) Warnf(format string, args ...any) {
-	w.logger.Warn(fmt.Sprintf(format, args...))
+	if w.shouldLog(WarnLevel) {
+		w.logger.Warn(fmt.Sprintf(format, args...))
+	}
 }
 
 func (w *SlogWrapper) Error(args ...any) {
-	msg, attrs := w.parseArgs(args)
-	w.logger.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
+	if w.shouldLog(ErrorLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
+	}
 }
 
 func (w *SlogWrapper) Errorf(format string, args ...any) {
-	w.logger.Error(fmt.Sprintf(format, args...))
+	if w.shouldLog(ErrorLevel) {
+		w.logger.Error(fmt.Sprintf(format, args...))
+	}
 }
 
 func (w *SlogWrapper) Fatal(args ...any) {
-	w.logger.Error(fmt.Sprint(args...))
+	if w.shouldLog(FatalLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
+	}
 	os.Exit(1)
 }
 
 func (w *SlogWrapper) Fatalf(format string, args ...any) {
-	w.logger.Error(fmt.Sprintf(format, args...))
+	if w.shouldLog(FatalLevel) {
+		w.logger.Error(fmt.Sprintf(format, args...))
+	}
 	os.Exit(1)
 }
 
 func (w *SlogWrapper) Panic(args ...any) {
-	message := fmt.Sprint(args...)
-	w.logger.Error(message)
-	panic(message)
+	if w.shouldLog(PanicLevel) {
+		msg, attrs := w.parseArgs(args)
+		w.logger.LogAttrs(context.TODO(), slog.LevelError, msg, attrs...)
+	}
+	panic(fmt.Sprint(args...))
 }
 
 func (w *SlogWrapper) Panicf(format string, args ...any) {
-	message := fmt.Sprintf(format, args...)
-	w.logger.Error(message)
-	panic(message)
+	if w.shouldLog(PanicLevel) {
+		w.logger.Error(fmt.Sprintf(format, args...))
+	}
+	panic(fmt.Sprintf(format, args...))
 }
 
 func (w *SlogWrapper) SetLevel(level LogLevel) {

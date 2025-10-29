@@ -236,14 +236,14 @@ func GetSubFromToken(c *ar.Ctx) (any, error) {
 	}
 
 	accessToken := strings.Replace(authHeaderToken, "Bearer ", "", 1)
-	token, err := jwt.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
+	_, err = jwt.ParseWithClaims(accessToken, &claims, func(token *jwt.Token) (any, error) {
 		return []byte(config.SecretAccessToken), nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	sub, ok := token.Claims.(jwt.MapClaims)["sub"]
+	sub, ok := claims["sub"]
 	if !ok {
 		return nil, errors.New("sub is not in claims")
 	}

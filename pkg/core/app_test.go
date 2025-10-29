@@ -115,6 +115,28 @@ func TestNewApp(t *testing.T) {
 				timeout:            5 * time.Second,
 			},
 		},
+		{
+			name: "Custom Description",
+			opts: []AppOption{AppDescription("Custom Description")},
+			want: AppConfig{
+				host:               "127.0.0.1",
+				port:               "5500",
+				title:              "My App",
+				serviceDescribtion: "Custom Description",
+				version:            "0.0.0",
+			},
+		},
+		{
+			name: "Custom Version",
+			opts: []AppOption{AppVersion("1.2.3")},
+			want: AppConfig{
+				host:               "127.0.0.1",
+				port:               "5500",
+				title:              "My App",
+				serviceDescribtion: "My App Description",
+				version:            "1.2.3",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -427,6 +449,208 @@ func TestApp_SaveFile(t *testing.T) {
 
 	if savedContent != dummyContent {
 		t.Errorf("Expected saved content %q, got %q", dummyContent, savedContent)
+	}
+}
+
+func TestAppConfig_GetListenAddress(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   AppConfig
+		expected string
+	}{
+		{
+			name: "Default config",
+			config: AppConfig{
+				host: "127.0.0.1",
+				port: "5500",
+			},
+			expected: "127.0.0.1:5500",
+		},
+		{
+			name: "Custom host and port",
+			config: AppConfig{
+				host: "0.0.0.0",
+				port: "8080",
+			},
+			expected: "0.0.0.0:8080",
+		},
+		{
+			name: "Localhost",
+			config: AppConfig{
+				host: "localhost",
+				port: "3000",
+			},
+			expected: "localhost:3000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.config.GetListenAddress() != tt.expected {
+				t.Errorf("GetListenAddress() = %v, want %v", tt.config.GetListenAddress(), tt.expected)
+			}
+		})
+	}
+}
+
+func TestApp_Redirect(t *testing.T) {
+	app := NewApp()
+	app.Redirect("/old-path", "/new-path", http.StatusMovedPermanently)
+
+	// Verify that a route was added
+	found := false
+	for _, route := range app.router.routes {
+		if route.path == "/old-path" {
+			found = true
+			// Check that it has a redirect handler
+			if len(route.endpoints) == 0 {
+				t.Error("Expected at least one endpoint for redirect route")
+			}
+			break
+		}
+	}
+	if !found {
+		t.Error("Redirect did not add the expected route")
+	}
+}
+
+func TestApp_Run(t *testing.T) {
+	// Test that Run doesn't panic with basic setup
+	app := NewApp()
+
+	// Add a simple route
+	app.GET("/test", func(c *Ctx) error {
+		c.Response.SetMessage("OK")
+		return nil
+	})
+
+	// We can't easily test the full Run method without starting a server
+	// But we can test that addRoutesToHandler doesn't panic
+	app.addRoutesToHandler()
+
+	if app.handler == nil {
+		t.Error("Expected handler to be set after addRoutesToHandler")
+	}
+}
+
+func TestApp_ErrorHandling(t *testing.T) {
+	app := NewApp()
+
+	// Test NewRouter with empty path
+	router := app.NewRouter("")
+	if router.GetBasePath() != "/" {
+		t.Errorf("Expected base path '/', got '%s'", router.GetBasePath())
+	}
+
+	// Test NewRouter with path without leading slash
+	router2 := app.NewRouter("api")
+	if router2.GetBasePath() != "api/" {
+		t.Errorf("Expected base path 'api/', got '%s'", router2.GetBasePath())
+	}
+}
+
+func TestApp_RouteOptions(t *testing.T) {
+	app := NewApp()
+
+	// Test routing with options (though options are not implemented yet)
+	app.GET("/test", func(c *Ctx) error {
+		c.Response.SetMessage("OK")
+		return nil
+	}) // No options for now
+
+	if len(app.router.routes) != 1 {
+		t.Errorf("Expected 1 route, got %d", len(app.router.routes))
+	}
+}
+
+func TestApp_MultipleRoutes(t *testing.T) {
+	app := NewApp()
+
+	// Add multiple routes
+	app.GET("/users", func(c *Ctx) error { return nil })
+	app.POST("/users", func(c *Ctx) error { return nil })
+	app.GET("/posts", func(c *Ctx) error { return nil })
+
+	if len(app.router.routes) != 2 { // /users and /posts
+		t.Errorf("Expected 2 routes, got %d", len(app.router.routes))
+	}
+
+	// Check /users route has 3 endpoints (OPTIONS, GET and POST)
+	usersRoute := app.router.routes[0]
+	if usersRoute.path == "/users" && len(usersRoute.endpoints) != 3 {
+		t.Errorf("Expected 3 endpoints for /users, got %d", len(usersRoute.endpoints))
+	}
+}
+
+func TestApp_MiddlewareOrder(t *testing.T) {
+	app := NewApp()
+
+	var executionOrder []string
+
+	// Add middleware that records execution
+	app.Use(func(next Handler) Handler {
+		return func(c *Ctx) error {
+			executionOrder = append(executionOrder, "middleware1")
+			return next(c)
+		}
+	})
+
+	app.Use(func(next Handler) Handler {
+		return func(c *Ctx) error {
+			executionOrder = append(executionOrder, "middleware2")
+			return next(c)
+		}
+	})
+
+	app.GET("/test", func(c *Ctx) error {
+		executionOrder = append(executionOrder, "handler")
+		c.Response.SetMessage("OK")
+		return nil
+	})
+
+	// Manually test middleware execution
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+
+	// Find the route and endpoint
+	var route *Route
+	var endpoint Endpoint
+	for _, r := range app.router.routes {
+		if r.path == "/test" {
+			route = r
+			for _, ep := range r.endpoints {
+				if ep.method == METHOD_GET {
+					endpoint = ep
+					break
+				}
+			}
+			break
+		}
+	}
+
+	ctx := NewCtx(rec, req, *route, endpoint)
+
+	// Apply middlewares manually
+	handler := endpoint.handleFunc
+	for i := len(app.router.middlewares) - 1; i >= 0; i-- {
+		handler = app.router.middlewares[i](handler)
+	}
+
+	err := handler(ctx)
+	if err != nil {
+		t.Errorf("Handler execution failed: %v", err)
+	}
+
+	expectedOrder := []string{"middleware1", "middleware2", "handler"}
+	if len(executionOrder) != len(expectedOrder) {
+		t.Errorf("Expected execution order %v, got %v", expectedOrder, executionOrder)
+	}
+
+	for i, expected := range expectedOrder {
+		if i >= len(executionOrder) || executionOrder[i] != expected {
+			t.Errorf("Expected execution order %v, got %v", expectedOrder, executionOrder)
+			break
+		}
 	}
 }
 

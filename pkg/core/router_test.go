@@ -93,6 +93,34 @@ func TestRouter_AddEndpoint(t *testing.T) {
 	}
 }
 
+func TestRouter_GetRoutes(t *testing.T) {
+	router := newRouter("")
+	mockHandler := func(c *Ctx) error { return nil }
+	router.addEndpoint(METHOD_GET, "/test", mockHandler)
+
+	routes := router.GetRoutes()
+	if len(routes) != 1 {
+		t.Errorf("Expected 1 route, got %d", len(routes))
+	}
+	if routes[0].path != "/test" {
+		t.Errorf("Expected route path /test, got %s", routes[0].path)
+	}
+}
+
+func TestRouter_GetGroups(t *testing.T) {
+	router := newRouter("")
+	subRouter := newRouter("/api")
+	router.groups = append(router.groups, subRouter)
+
+	groups := router.GetGroups()
+	if len(groups) != 1 {
+		t.Errorf("Expected 1 group, got %d", len(groups))
+	}
+	if groups[0].GetBasePath() != "/api/" {
+		t.Errorf("Expected group base path /api/, got %s", groups[0].GetBasePath())
+	}
+}
+
 func TestRouter_RoutingMethods(t *testing.T) {
 	router := newRouter("")
 	mockHandler := func(c *Ctx) error { return nil }

@@ -46,6 +46,7 @@ Apiright is a Go web framework in development, focusing on easy developer experi
 - **Live Reload**: Use `just dev` for development with hot reloading
 - **Testing**: Run `just test` for comprehensive testing
 - **Linting**: Run `just lint` before commits
+- **Checkup**: Run `just pre-release` before telling the user, that you are done with the task
 
 ## Testing Best Practices
 - **Table-Driven Tests**: Use struct slices for test cases with httptest

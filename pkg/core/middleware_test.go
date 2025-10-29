@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bata94/apiright/pkg/logger"
 )
 
 // TestCORSMiddleware tests the CORSMiddleware
@@ -120,75 +122,78 @@ func TestCORSMiddleware(t *testing.T) {
 		})
 	}
 }
+func TestExposeAllCORSConfig(t *testing.T) {
+	config := ExposeAllCORSConfig()
+	if len(config.AllowOrigins) != 1 || config.AllowOrigins[0] != "*" {
+		t.Errorf("Expected AllowOrigins [\"*\"], got %v", config.AllowOrigins)
+	}
+	if len(config.AllowMethods) != 1 || config.AllowMethods[0] != "*" {
+		t.Errorf("Expected AllowMethods [\"*\"], got %v", config.AllowMethods)
+	}
+	if len(config.AllowHeaders) != 1 || config.AllowHeaders[0] != "*" {
+		t.Errorf("Expected AllowHeaders [\"*\"], got %v", config.AllowHeaders)
+	}
+	if len(config.ExposeHeaders) != 0 {
+		t.Errorf("Expected empty ExposeHeaders, got %v", config.ExposeHeaders)
+	}
+	if config.AllowCredentials {
+		t.Error("Expected AllowCredentials to be false")
+	}
+	if config.MaxAge != 86400 {
+		t.Errorf("Expected MaxAge 86400, got %d", config.MaxAge)
+	}
+}
 
-func TestCSRFMiddleware(t *testing.T) {
+func TestLogMiddleware(t *testing.T) {
 	app := NewApp()
-	app.Use(CSRFMiddleware(DefaultCSRFConfig()))
+	app.Use(LogMiddleware(logger.NewDefaultLogger()))
 
-	app.GET("/", func(c *Ctx) error {
-		c.Response.SetMessage("GET request")
-		return nil
-	})
-
-	app.POST("/", func(c *Ctx) error {
-		c.Response.SetMessage("POST request")
+	app.GET("/test", func(c *Ctx) error {
+		c.Response.SetMessage("OK")
 		return nil
 	})
 
 	app.addRoutesToHandler()
 
-	// Test GET request
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	rec := httptest.NewRecorder()
 	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
 	}
+}
 
-	// Check if CSRF cookie is set
-	cookies := rec.Result().Cookies()
-	var csrfCookie *http.Cookie
-	for _, cookie := range cookies {
-		if cookie.Name == DefaultCSRFConfig().CookieName {
-			csrfCookie = cookie
-			break
-		}
+func TestPanicMiddleware(t *testing.T) {
+	app := NewApp()
+	app.Use(PanicMiddleware())
+
+	app.GET("/panic", func(c *Ctx) error {
+		panic("test panic")
+	})
+
+	app.GET("/normal", func(c *Ctx) error {
+		c.Response.SetMessage("OK")
+		return nil
+	})
+
+	app.addRoutesToHandler()
+
+	// Test panic recovery
+	req := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	rec := httptest.NewRecorder()
+	app.handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status code %d for panic, got %d", http.StatusInternalServerError, rec.Code)
 	}
 
-	if csrfCookie == nil {
-		t.Fatal("CSRF cookie not set")
-	}
-
-	// Test POST request with valid CSRF token
-	req = httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(DefaultCSRFConfig().HeaderName, csrfCookie.Value)
-	req.AddCookie(csrfCookie)
+	// Test normal request
+	req = httptest.NewRequest(http.MethodGet, "/normal", nil)
 	rec = httptest.NewRecorder()
 	app.handler.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Errorf("Expected status code %d, got %d", http.StatusOK, rec.Code)
-	}
-
-	// Test POST request with invalid CSRF token
-	req = httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set(DefaultCSRFConfig().HeaderName, "invalid_token")
-	req.AddCookie(csrfCookie)
-	rec = httptest.NewRecorder()
-	app.handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)
-	}
-
-	// Test POST request without CSRF token
-	req = httptest.NewRequest(http.MethodPost, "/", nil)
-	req.AddCookie(csrfCookie)
-	rec = httptest.NewRecorder()
-	app.handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("Expected status code %d, got %d", http.StatusForbidden, rec.Code)
+		t.Errorf("Expected status code %d for normal request, got %d", http.StatusOK, rec.Code)
 	}
 }

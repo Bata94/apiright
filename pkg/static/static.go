@@ -140,6 +140,9 @@ Return:
 }
 
 func closeFile(f *os.File) {
+	if f == nil {
+		return
+	}
 	err := f.Close()
 	if err != nil {
 		log.Panic("Failed to close file: ", err)
@@ -349,7 +352,7 @@ func ServeStaticDir(urlPath, dirPath string, opts ...StaticServFileOption) (core
 				log.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
 				log.Debugf("Current URLPath %s", c.Request.URL.Path)
 
-				content, err = os.ReadFile(dirPath + strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"))
+				content, err = os.ReadFile(filepath.Join(dirPath, strings.TrimPrefix(c.Request.URL.Path, urlPath+"/")))
 				if err != nil {
 					log.Error(err)
 					if errors.Is(err, os.ErrNotExist) {
@@ -618,7 +621,7 @@ const dirExplorerTemplate = `
         <!-- Example Breadcrumb (You'll need to pass this data from Go) -->
         <!-- For now, assuming Title is the current path -->
         You are in:
-        <a href="{{$BaseUrl}}">Home</a>
+        <a href="{{.BaseUrl}}">Home</a>
         {{- if ne .Title "/"}}
           <span> / </span>
           <span>{{.Title}}</span>
@@ -628,7 +631,7 @@ const dirExplorerTemplate = `
       <ul class="file-list">
 				{{range .Dirs}}
 					<li class="file-item">
-						<a href="{{$BaseUrl}}{{.Name}}/">
+						<a href="{{$.BaseUrl}}{{.Name}}/">
 							<span class="file-icon">
 								<i class="fas fa-folder folder"></i>
 							</span>
@@ -639,7 +642,7 @@ const dirExplorerTemplate = `
 
         {{range .Files}}
           <li class="file-item">
-            <a href="{{$BaseUrl}}{{.DirPath}}{{.Name}}">
+            <a href="{{$.BaseUrl}}{{.DirPath}}{{.Name}}">
               <span class="file-icon">
                 {{if (hasSuffix .Name ".pdf")}}
                   <i class="fas fa-file-pdf"></i>
@@ -651,7 +654,7 @@ const dirExplorerTemplate = `
                   <i class="fas fa-file-word"></i>
                 {{else if (or (hasSuffix .Name ".xls") (hasSuffix .Name ".xlsx"))}}
                   <i class="fas fa-file-excel"></i>
-                {{else if (or (hasSuffix .Name ".ppt") (hasSuffix ".pptx"))}}
+                {{else if (or (hasSuffix .Name ".ppt") (hasSuffix .Name ".pptx"))}}
                   <i class="fas fa-file-powerpoint"></i>
                 {{else if (or (hasSuffix .Name ".txt") (hasSuffix .Name ".md") (hasSuffix .Name ".go") (hasSuffix .Name ".html") (hasSuffix .Name ".css") (hasSuffix .Name ".js") (hasSuffix .Name ".json") (hasSuffix .Name ".xml"))}}
                   <i class="fas fa-file-code"></i>

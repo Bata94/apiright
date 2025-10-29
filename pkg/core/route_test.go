@@ -91,6 +91,149 @@ func TestCtx_IsClosed(t *testing.T) {
 	}
 }
 
+func TestCtx_ConClosed(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	route := Route{}
+	ep := Endpoint{}
+	ctx := NewCtx(rec, req, route, ep)
+
+	select {
+	case <-ctx.ConClosed():
+		t.Error("Expected ConClosed channel to not be closed initially")
+	default:
+		// Expected
+	}
+
+	ctx.Close()
+
+	select {
+	case <-ctx.ConClosed():
+		// Expected to receive
+	default:
+		t.Error("Expected ConClosed channel to be closed after Close()")
+	}
+}
+
+func TestCtx_GetConnectionDuration(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	route := Route{}
+	ep := Endpoint{}
+	ctx := NewCtx(rec, req, route, ep)
+
+	// Test before closing
+	duration := ctx.GetConnectionDuration()
+	if duration <= 0 {
+		t.Error("Expected positive duration")
+	}
+
+	// Sleep a bit
+	time.Sleep(5 * time.Millisecond)
+
+	// Close and test
+	ctx.Close()
+	duration = ctx.GetConnectionDuration()
+	if duration <= 0 {
+		t.Error("Expected positive duration after close")
+	}
+}
+
+func TestRoute_GetPath(t *testing.T) {
+	route := &Route{path: "/test"}
+	if route.GetPath() != "/test" {
+		t.Errorf("Expected path '/test', got %s", route.GetPath())
+	}
+}
+
+func TestRoute_GetEndpoints(t *testing.T) {
+	endpoints := []Endpoint{{method: METHOD_GET}}
+	route := &Route{endpoints: endpoints}
+	if len(route.GetEndpoints()) != 1 {
+		t.Errorf("Expected 1 endpoint, got %d", len(route.GetEndpoints()))
+	}
+	if route.GetEndpoints()[0].method != METHOD_GET {
+		t.Errorf("Expected method GET, got %v", route.GetEndpoints()[0].method)
+	}
+}
+
+func TestEndpoint_GetMethod(t *testing.T) {
+	endpoint := Endpoint{method: METHOD_POST}
+	if endpoint.GetMethod() != METHOD_POST {
+		t.Errorf("Expected method POST, got %v", endpoint.GetMethod())
+	}
+}
+
+func TestEndpoint_GetRouteOptionConfig(t *testing.T) {
+	config := RouteOptionConfig{openApiEnabled: true}
+	endpoint := Endpoint{routeOptionConfig: config}
+	if !endpoint.GetRouteOptionConfig().openApiEnabled {
+		t.Error("Expected openApiEnabled to be true")
+	}
+}
+
+func TestRouteOptionConfig_GetOpenApiEnabled(t *testing.T) {
+	config := RouteOptionConfig{openApiEnabled: true}
+	if !config.GetOpenApiEnabled() {
+		t.Error("Expected openApiEnabled to be true")
+	}
+}
+
+func TestRouteOptionConfig_GetOpenApiConfig(t *testing.T) {
+	config := RouteOptionConfig{
+		openApiEnabled: true,
+		openApiConfig: struct {
+			summary, description string
+			tags                 []string
+			deprecated           bool
+			jwtAuth              bool
+		}{
+			summary:     "Test Summary",
+			description: "Test Description",
+			tags:        []string{"test"},
+			deprecated:  true,
+			jwtAuth:     true,
+		},
+	}
+
+	result := config.GetOpenApiConfig()
+	if result.Summary != "Test Summary" {
+		t.Errorf("Expected Summary 'Test Summary', got %s", result.Summary)
+	}
+	if result.Description != "Test Description" {
+		t.Errorf("Expected Description 'Test Description', got %s", result.Description)
+	}
+	if len(result.Tags) != 1 || result.Tags[0] != "test" {
+		t.Errorf("Expected Tags ['test'], got %v", result.Tags)
+	}
+	if !result.Deprecated {
+		t.Error("Expected Deprecated to be true")
+	}
+	if !result.JwtAuth {
+		t.Error("Expected JwtAuth to be true")
+	}
+}
+
+func TestRouteOptionConfig_GetQueryParams(t *testing.T) {
+	queryParams := []struct {
+		Name, Description string
+		Required          bool
+		Type              reflect.Type
+		Example           any
+	}{
+		{Name: "id", Description: "User ID", Required: true, Type: reflect.TypeOf(1), Example: 123},
+	}
+	config := RouteOptionConfig{queryParams: queryParams}
+
+	result := config.GetQueryParams()
+	if len(result) != 1 {
+		t.Errorf("Expected 1 query param, got %d", len(result))
+	}
+	if result[0].Name != "id" {
+		t.Errorf("Expected name 'id', got %s", result[0].Name)
+	}
+}
+
 func TestNewRouteOptionConfig(t *testing.T) {
 	tests := []struct {
 		name string
