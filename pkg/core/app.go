@@ -14,9 +14,8 @@ import (
 	"github.com/bata94/gogen-openapi"
 )
 
-var (
-	log logger.Logger
-)
+// log is the global logger instance for the core package
+var log logger.Logger = logger.GetLogger()
 
 // AppConfig holds the configuration for the application.
 type AppConfig struct {
@@ -120,7 +119,7 @@ func NewApp(opts ...AppOption) App {
 
 	if os.Getenv("ENV") == "dev" {
 		defaultLogger.SetLevel(logger.TraceLevel)
-		defaultLogger.Debug("ENV = dev, set log level to trace")
+		defaultLogger.Debug("development environment detected", "env", "dev", "log_level", "trace")
 	}
 
 	config := AppConfig{
@@ -136,7 +135,9 @@ func NewApp(opts ...AppOption) App {
 		opt(&config)
 	}
 
+	// Set the global logger for the core package and the logger package
 	log = config.logger
+	logger.SetLogger(config.logger)
 
 	// Setup OpenApi Builder
 	openapiGenerator := openapi.NewBasicGenerator(
@@ -298,12 +299,12 @@ func (a *App) ServeStaticDir(urlPath, dirPath string, opt ...StaticServFileOptio
 
 // TODO: Abstract ObjIn and Out Marshalling more, so that the marshalling interfaces can be set in App/Router config and exchanged by user if default isn't right
 func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
-	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
+	handlerPath := fmt.Sprintf("%s %s", endPoint.method.ToPathString(), route.path)
 
 	// Check if the route is already registered
 	if methods, ok := a.registeredRoutes[route.path]; ok {
-		if slices.Contains(methods, endPoint.method.toPathString()) {
-			log.Warnf("Route already registered: %s", handlerPath)
+		if slices.Contains(methods, endPoint.method.ToPathString()) {
+			log.Warn("route already registered", "path", route.path, "method", endPoint.method.ToPathString())
 			return
 		}
 	}
@@ -324,10 +325,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		var err error
 
 		currentHandler := h
-		log.Debugf("Handling request: %s %s", r.Method, r.URL.String())
-		log.Debugf("Route base path: %s", route.basePath)
-		log.Debugf("Router base path: %s", router.GetBasePath())
-		log.Debugf("Condition: %t", r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()))
+		log.Debug("handling request", "method", r.Method, "url", r.URL.String(), "route_base", route.basePath, "router_base", router.GetBasePath())
 		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
 			currentHandler = a.defRouteHandler
 		}
@@ -345,11 +343,11 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			var objInFunc func() error
 
 			switch contentTypeHeader {
-			case MIMETYPE_JSON.toString():
+			case MIMETYPE_JSON.ToString():
 				objInFunc = c.objInJson
-			case MIMETYPE_XML.toString():
+			case MIMETYPE_XML.ToString():
 				objInFunc = c.objInXml
-			case MIMETYPE_YAML.toString():
+			case MIMETYPE_YAML.ToString():
 				objInFunc = c.objInYaml
 			default:
 				// TODO: Implement a MIME sniffer (e.g., using http.DetectContentType) to automatically determine the content type of the request body when the 'Content-Type' header is missing or generic.
@@ -381,20 +379,21 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 			// TODO: Add default MIMEType, when no Accept header is provided.
 			var objOutFunc func() error
-			log.Debug(c.Request.Header.Get("accept"))
-			acceptHeaders := strings.Split(c.Request.Header.Get("accept"), ",")
+			acceptHeader := c.Request.Header.Get("accept")
+			log.Debug("processing accept header", "accept", acceptHeader)
+			acceptHeaders := strings.Split(acceptHeader, ",")
 
 			for _, acceptHeader := range acceptHeaders {
 				acceptHeader = strings.TrimSpace(acceptHeader)
 				switch acceptHeader {
-				case MIMETYPE_JSON.toString():
-					log.Debug("JSON encode...")
+				case MIMETYPE_JSON.ToString():
+					log.Debug("encoding response as JSON")
 					objOutFunc = c.objOutJson
-				case MIMETYPE_XML.toString():
-					log.Debug("XML encode...")
+				case MIMETYPE_XML.ToString():
+					log.Debug("encoding response as XML")
 					objOutFunc = c.objOutXML
-				case MIMETYPE_YAML.toString():
-					log.Debug("YAML encode...")
+				case MIMETYPE_YAML.ToString():
+					log.Debug("encoding response as YAML")
 					objOutFunc = c.objOutYaml
 				}
 				if objOutFunc != nil {
@@ -403,7 +402,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 			}
 
 			if objOutFunc == nil {
-				log.Error("406 - Requested MIMETypes aren't supported: ", acceptHeaders)
+				log.Error("unsupported MIME types requested", "accept", acceptHeaders)
 				c.Response.SetStatus(http.StatusNotAcceptable)
 				c.Response.SetMessage("The requested MIME Type isn't supported... yet... If u really need it, reach out.")
 				goto ClosingFunc
@@ -418,7 +417,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		c.SendingReturn(w, err)
 	})
 
-	a.registeredRoutes[route.path] = append(a.registeredRoutes[route.path], endPoint.method.toPathString())
+	a.registeredRoutes[route.path] = append(a.registeredRoutes[route.path], endPoint.method.ToPathString())
 }
 
 func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint Endpoint, _ Router) {
@@ -426,7 +425,7 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 		return
 	}
 
-	handlerPath := fmt.Sprintf("%s %s", endPoint.method.toPathString(), route.path)
+	handlerPath := fmt.Sprintf("%s %s", endPoint.method.ToPathString(), route.path)
 	a.Logger.Debugf("OpenApiGen adding function for path: %s", handlerPath)
 
 	objInType := reflect.TypeOf(endPoint.routeOptionConfig.ObjIn)
@@ -443,7 +442,7 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 		desc = endPoint.routeOptionConfig.openApiConfig.description
 	}
 
-	allAvailableMIME := []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}
+	allAvailableMIME := []string{MIMETYPE_JSON.ToString(), MIMETYPE_YAML.ToString(), MIMETYPE_XML.ToString()}
 
 	newEndpointBuilder := openapi.NewEndpointBuilder().
 		Summary(summary).
@@ -484,7 +483,7 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 	if endPoint.routeOptionConfig.ObjIn != nil {
 		// TODO: Dynamically add the specific MIME types that this endpoint expects for the request body based on configuration or reflection.
 		newEndpointBuilder.RequestType(objInType)
-		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.toString(), MIMETYPE_YAML.toString(), MIMETYPE_XML.toString()}, objInType)
+		newEndpointBuilder.RequestBody("Request body", true, []string{MIMETYPE_JSON.ToString(), MIMETYPE_YAML.ToString(), MIMETYPE_XML.ToString()}, objInType)
 		// TODO: Implement dynamic generation or inclusion of request body examples for OpenAPI documentation based on the ObjIn type.
 		// RequestExample([]UpdateUserRequest{
 		// 	{
@@ -500,19 +499,18 @@ func (a *App) addFuncToOpenApiGen(gen *openapi.Generator, route Route, endPoint 
 		newEndpointBuilder.Response(200, "Success", allAvailableMIME, objOutType)
 	} else {
 		// TODO: Refactor this reflection statement to provide a more straightforward and idiomatic way to define the success response type (e.g., for empty or simple text responses) in OpenAPI documentation when ObjOut is not specified.
-		newEndpointBuilder.Response(200, "Success", []string{MIMETYPE_TEXT.toString()}, reflect.TypeOf("i"))
+		newEndpointBuilder.Response(200, "Success", []string{MIMETYPE_TEXT.ToString()}, reflect.TypeOf("i"))
 	}
 
-	if err := gen.AddEndpointWithBuilder(endPoint.method.toPathString(), route.path, newEndpointBuilder); err != nil {
+	if err := gen.AddEndpointWithBuilder(endPoint.method.ToPathString(), route.path, newEndpointBuilder); err != nil {
 		log.Fatal("Failed to add endpoint: ", err)
 	}
 	a.Logger.Debug("✅ Endpoint added - ", handlerPath)
 }
 
 func (a *App) addRoutesToHandler() {
-	a.Logger.Info("Registering available routes")
+	a.Logger.Info("registering available routes", "global_routes", len(a.router.routes), "router_groups", len(a.router.groups))
 
-	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
 	for _, r := range a.router.routes {
 		for _, e := range r.endpoints {
 			a.handleFunc(*r, e, *a.router)
@@ -520,7 +518,7 @@ func (a *App) addRoutesToHandler() {
 	}
 
 	for _, group := range a.router.groups {
-		a.Logger.Infof("Router group with %d routes", len(group.routes))
+		a.Logger.Debug("registering router group routes", "group_routes", len(group.routes))
 		for _, r := range group.routes {
 			for _, e := range r.endpoints {
 				a.handleFunc(*r, e, *group)
@@ -530,9 +528,8 @@ func (a *App) addRoutesToHandler() {
 }
 
 func (a *App) addRoutesToOpenApi() {
-	a.Logger.Info("Documenting available routes")
+	a.Logger.Info("documenting available routes", "global_routes", len(a.router.routes), "router_groups", len(a.router.groups))
 
-	a.Logger.Infof("Global Router with %d routes", len(a.router.routes))
 	for _, r := range a.router.routes {
 		for _, e := range r.endpoints {
 			a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
@@ -540,7 +537,7 @@ func (a *App) addRoutesToOpenApi() {
 	}
 
 	for _, group := range a.router.groups {
-		a.Logger.Infof("Router group with %d routes", len(group.routes))
+		a.Logger.Debug("documenting router group routes", "group_routes", len(group.routes))
 		for _, r := range group.routes {
 			for _, e := range r.endpoints {
 				a.addFuncToOpenApiGen(a.openapiGenerator, *r, e, *a.router)
@@ -551,51 +548,34 @@ func (a *App) addRoutesToOpenApi() {
 
 func (a *App) genOpenApiFiles() []string {
 	// Generate the documentation
-	a.Logger.Info("")
-	a.Logger.Info("📝 Generating documentation...")
+	a.Logger.Info("generating OpenAPI documentation")
 
 	writer := openapi.NewWriter(a.openapiGenerator)
 	if err := writer.WriteFiles(); err != nil {
-		log.Fatal("Failed to generate documentation:", err)
+		log.Error("failed to generate documentation", "error", err)
+		os.Exit(1)
 	}
-	a.Logger.Info("✅ Documentation files generated")
+	a.Logger.Info("documentation files generated")
 
 	// Generate markdown documentation
 	if err := writer.GenerateMarkdownDocs(); err != nil {
-		a.Logger.Fatal("Failed to generate markdown documentation:", err)
+		a.Logger.Error("failed to generate markdown documentation", "error", err)
+		os.Exit(1)
 	}
-	a.Logger.Info("✅ Markdown documentation generated")
+	a.Logger.Info("markdown documentation generated")
 
 	// Get and display statistics
 	stats := a.openapiGenerator.GetStatistics()
-	a.Logger.Info("")
-	a.Logger.Info("📊 Documentation Statistics:")
-	a.Logger.Infof("   Total endpoints: %d", stats.TotalEndpoints)
-	a.Logger.Infof("   Total schemas: %d", stats.TotalSchemas)
-	a.Logger.Infof("   Endpoints by method:")
-	for method, count := range stats.EndpointsByMethod {
-		a.Logger.Infof("     %s: %d", method, count)
-	}
-	a.Logger.Infof("   Endpoints by tag:")
-	for tag, count := range stats.EndpointsByTag {
-		a.Logger.Infof("     %s: %d", tag, count)
-	}
+	a.Logger.Info("documentation statistics", "total_endpoints", stats.TotalEndpoints, "total_schemas", stats.TotalSchemas)
 
 	// List all generated files
 	files := writer.GetGeneratedFiles()
-	a.Logger.Info("")
-	a.Logger.Info("📁 Generated files:")
-	for _, file := range files {
-		a.Logger.Infof("   %s", file)
-	}
+	a.Logger.Info("generated files", "count", len(files), "files", files)
 
 	// List all endpoints
 	endpoints := a.openapiGenerator.ListEndpoints()
-	a.Logger.Info("")
-	a.Logger.Info("🔗 Generated endpoints:")
-	for path, methods := range endpoints {
-		a.Logger.Infof("   %s: %v", path, methods)
-	}
+	a.Logger.Debug("generated endpoints", "endpoints", endpoints)
+
 	return files
 }
 
@@ -606,6 +586,6 @@ func (a *App) Run() error {
 	a.ServeStaticDir("/docs", "docs/")
 	a.addRoutesToHandler()
 
-	log.Warn("Listening on: ", a.config.GetListenAddress())
+	log.Info("server starting", "address", a.config.GetListenAddress())
 	return http.ListenAndServe(a.config.GetListenAddress(), a.handler)
 }

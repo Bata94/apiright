@@ -29,7 +29,7 @@ These are the features I have in mind, they are roughly ordered by importance.
     - [X] Path- and QueryParams Support
     - [X] Catch-all/default Route
     - [X] Global ErrorHandling
-    - [~] App Logger, compatible/exchangeable with a slog Logger (Default logger supporting colored and formatted logging)
+    - [X] App Logger, compatible/exchangeable with a slog Logger (Default logger supporting colored and formatted logging, plus structured JSON logging)
     - [ ] Custom global ErrorHandling
     - [ ] Multi domain support
     - [X] Routergroups
@@ -94,4 +94,43 @@ app.SetDefaultRoute(func(c *Ctx) error {
 	return nil
 })
 
+```
+
+### Logging
+
+Apiright provides flexible logging options, including structured JSON logging compatible with Go's `log/slog` package.
+
+#### Default Logger
+
+The default logger provides colored, formatted output:
+
+```go
+app := apiright.NewApp(ar.AppLogger(logger.NewDefaultLogger()))
+```
+
+#### Structured JSON Logger
+
+For production environments, use structured JSON logging:
+
+```go
+// Create a structured logger with JSON output
+structuredLogger := logger.NewStructuredLogger(logger.InfoLevel, os.Stdout)
+app := apiright.NewApp(ar.AppLogger(structuredLogger))
+```
+
+#### Structured Logging Usage
+
+Use structured logging with key-value pairs for better observability:
+
+```go
+// Instead of: logger.Info("user login successful")
+// Use: logger.Info("user login successful", "user_id", 123, "ip", "192.168.1.1")
+
+app.Logger.Info("request completed", "status", 200, "method", "GET", "path", "/api/users", "duration_ms", 150)
+app.Logger.Error("database error", "error", "connection timeout", "table", "users")
+```
+
+This produces JSON output like:
+```json
+{"level":"INFO","msg":"request completed","status":200,"method":"GET","path":"/api/users","duration_ms":150}
 ```

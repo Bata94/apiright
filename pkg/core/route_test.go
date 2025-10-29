@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestRequestMethod_toPathString(t *testing.T) {
+func TestRequestMethod_ToPathString(t *testing.T) {
 	tests := []struct {
 		method   RequestMethod
 		expected string
@@ -26,8 +26,8 @@ func TestRequestMethod_toPathString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			if tt.method.toPathString() != tt.expected {
-				t.Errorf("Expected %s, got %s", tt.expected, tt.method.toPathString())
+			if tt.method.ToPathString() != tt.expected {
+				t.Errorf("Expected %s, got %s", tt.expected, tt.method.ToPathString())
 			}
 		})
 	}
@@ -136,6 +136,7 @@ func TestNewRouteOptionConfig(t *testing.T) {
 					summary, description string
 					tags                 []string
 					deprecated           bool
+					jwtAuth              bool
 				}{
 					summary:     "Summary",
 					description: "Description",
@@ -151,6 +152,7 @@ func TestNewRouteOptionConfig(t *testing.T) {
 					summary, description string
 					tags                 []string
 					deprecated           bool
+					jwtAuth              bool
 				}{
 					summary:     "New Summary",
 					description: "New Description",
@@ -166,6 +168,7 @@ func TestNewRouteOptionConfig(t *testing.T) {
 					summary, description string
 					tags                 []string
 					deprecated           bool
+					jwtAuth              bool
 				}{
 					deprecated: true,
 				},
@@ -180,6 +183,7 @@ func TestNewRouteOptionConfig(t *testing.T) {
 					summary, description string
 					tags                 []string
 					deprecated           bool
+					jwtAuth              bool
 				}{
 					tags: []string{"tag1", "tag2"},
 				},

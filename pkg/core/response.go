@@ -45,13 +45,12 @@ func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 
 	if err != nil {
 		err = fmt.Errorf("error in HanlderFunc: %w", err)
-		log.Errorf("handler error: %v", err)
+		log.Error("handler error", "error", err)
 		c.Response.SetMessage(err.Error())
 		// Only set status to 500 if no status has been set yet (still default 200)
-		log.Debug("Global Errorhandler:")
-		log.Debug("Current Response status: ", c.Response.StatusCode)
+		log.Debug("handling global error", "current_status", c.Response.StatusCode)
 		if c.Response.StatusCode == http.StatusOK || c.Response.StatusCode == 0 {
-			log.Debug("Setting status to 500")
+			log.Debug("setting status to 500")
 			c.Response.SetStatus(http.StatusInternalServerError)
 		}
 	}
@@ -73,8 +72,7 @@ func (c *Ctx) SendingReturn(w http.ResponseWriter, err error) {
 	}
 
 	if err != nil {
-		log.Debug("error writing body, this should not happen!")
-		log.Errorf("error writing body: %v", err)
+		log.Error("error writing response body", "error", err)
 		// panic(err)
 	}
 }

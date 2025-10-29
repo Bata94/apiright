@@ -22,6 +22,16 @@ type Route struct {
 	endpoints      []Endpoint
 }
 
+// GetPath returns the route path
+func (r *Route) GetPath() string {
+	return r.path
+}
+
+// GetEndpoints returns the route endpoints
+func (r *Route) GetEndpoints() []Endpoint {
+	return r.endpoints
+}
+
 // RequestMethod is the HTTP request method.
 type RequestMethod int
 
@@ -60,7 +70,7 @@ var (
 	}
 )
 
-func (m RequestMethod) toPathString() string {
+func (m RequestMethod) ToPathString() string {
 	return requestMethodPathStrings[m]
 }
 
@@ -70,6 +80,16 @@ type Endpoint struct {
 	handleFunc        Handler
 	middlewares       []Middleware
 	routeOptionConfig RouteOptionConfig
+}
+
+// GetMethod returns the endpoint method
+func (e Endpoint) GetMethod() RequestMethod {
+	return e.method
+}
+
+// GetRouteOptionConfig returns the route option config
+func (e Endpoint) GetRouteOptionConfig() RouteOptionConfig {
+	return e.routeOptionConfig
 }
 
 // Handler is a function that handles a request.
@@ -99,7 +119,7 @@ var (
 	}
 )
 
-func (m MIMEType) toString() string {
+func (m MIMEType) ToString() string {
 	return mimeTypeStrings[m]
 }
 
@@ -160,12 +180,13 @@ func (c *Ctx) getObjInByte() []byte {
 		return c.objInByte
 	}
 
-	log.Debug("ObjInByte not set, reading from request body")
+	log.Debug("reading request body for input object")
 	b, err := io.ReadAll(c.Request.Body)
 	defer func() { _ = c.Request.Body.Close() }()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error("failed to read request body", "error", err)
+		return nil
 	}
 
 	return b
@@ -196,8 +217,7 @@ func (c *Ctx) setObjOutData(b []byte, err error) error {
 }
 
 func (c *Ctx) validateObjOutType() bool {
-	log.Debugf("ObjOutType: %v", c.ObjOutType)
-	log.Debugf("ObjOut: %v", c.ObjOut)
+	log.Debug("validating output object type", "expected_type", c.ObjOutType, "actual_type", reflect.TypeOf(c.ObjOut))
 	return reflect.TypeOf(c.ObjOut) == c.ObjOutType
 }
 
@@ -280,7 +300,7 @@ func (c *Ctx) SaveFile(formKey, dstPath string, opts ...FileSaveOption) error {
 
 // Close closes the connection.
 func (c *Ctx) Close() {
-	log.Debug("Closing connection")
+	log.Debug("closing connection")
 	c.conEnded = time.Now()
 	c.conClosed <- true
 }
@@ -288,6 +308,19 @@ func (c *Ctx) Close() {
 // IsClosed returns true if the connection is closed.
 func (c *Ctx) IsClosed() bool {
 	return <-c.conClosed
+}
+
+// ConClosed returns the connection closed channel.
+func (c *Ctx) ConClosed() <-chan bool {
+	return c.conClosed
+}
+
+// GetConnectionDuration returns the duration of the connection.
+func (c *Ctx) GetConnectionDuration() time.Duration {
+	if c.conEnded.IsZero() {
+		return time.Since(c.conStarted)
+	}
+	return c.conEnded.Sub(c.conStarted)
 }
 
 // RouteOptionConfig holds the configuration for a route.
@@ -310,6 +343,42 @@ type RouteOptionConfig struct {
 		Example           any
 	}
 	middlewares []Middleware
+}
+
+// GetOpenApiEnabled returns whether OpenAPI is enabled
+func (c RouteOptionConfig) GetOpenApiEnabled() bool {
+	return c.openApiEnabled
+}
+
+// GetOpenApiConfig returns the OpenAPI configuration
+func (c RouteOptionConfig) GetOpenApiConfig() struct {
+	Summary, Description string
+	Tags                 []string
+	Deprecated           bool
+	JwtAuth              bool
+} {
+	return struct {
+		Summary, Description string
+		Tags                 []string
+		Deprecated           bool
+		JwtAuth              bool
+	}{
+		Summary:     c.openApiConfig.summary,
+		Description: c.openApiConfig.description,
+		Tags:        c.openApiConfig.tags,
+		Deprecated:  c.openApiConfig.deprecated,
+		JwtAuth:     c.openApiConfig.jwtAuth,
+	}
+}
+
+// GetQueryParams returns the query parameters
+func (c RouteOptionConfig) GetQueryParams() []struct {
+	Name, Description string
+	Required          bool
+	Type              reflect.Type
+	Example           any
+} {
+	return c.queryParams
 }
 
 // RouteOption is a function that configures a RouteOptionConfig.

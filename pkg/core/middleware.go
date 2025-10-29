@@ -22,9 +22,7 @@ type Middleware func(Handler) Handler
 func FavIcon(filePath string) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
-			log.Debug("Middleware FavIcon")
-			log.Debugf("Path: %s", filePath)
-			log.Debugf("c.Request.URL.Path: %s", c.Request.URL.Path)
+			log.Debug("favicon middleware", "path", filePath, "request_path", c.Request.URL.Path)
 			if strings.HasSuffix(c.Request.URL.Path, "/favicon.ico") {
 				iconBytes, err := os.ReadFile(filePath)
 				if err != nil {
@@ -44,20 +42,16 @@ func FavIcon(filePath string) Middleware {
 func LogMiddleware(logger logger.Logger) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
-			log.Debug("LogMiddleware starting GoRoutine")
+			log.Debug("starting request logging goroutine")
 			go func(c *Ctx) {
-				log.Debug("LogMiddleware GoRoutine started, waiting for connection to close...")
+				log.Debug("request logging goroutine waiting for connection close")
 				<-c.conClosed
-				log.Debug("LogMiddleware GoRoutine Connection closed, running logs")
-
 				duration := c.conEnded.Sub(c.conStarted)
-				// TODO: Enhance log formatting to improve readability, potentially by using a dedicated logging library or custom formatter to add tabs, colors, and structured output.
-				infoLog := fmt.Sprintf("[%d] <%d ms> | [%s] %s - %s", c.Response.StatusCode, duration.Milliseconds(), c.Request.Method, c.Request.RequestURI, c.Request.RemoteAddr)
+
 				if c.Response.StatusCode >= 400 {
-					// TODO: Include the actual error message in the log output when a request results in an error (status code >= 400) for better debugging.
-					logger.Error(infoLog)
+					logger.Error("request completed", "status", c.Response.StatusCode, "method", c.Request.Method, "path", c.Request.RequestURI, "remote", c.Request.RemoteAddr, "duration_ms", duration.Milliseconds())
 				} else {
-					logger.Info(infoLog)
+					logger.Info("request completed", "status", c.Response.StatusCode, "method", c.Request.Method, "path", c.Request.RequestURI, "remote", c.Request.RemoteAddr, "duration_ms", duration.Milliseconds())
 				}
 			}(c)
 

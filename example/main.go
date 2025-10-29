@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	ui_pages "github.com/bata94/apiright/example/ui/pages"
+	"github.com/bata94/apiright/example/ui/pages"
 	"github.com/bata94/apiright/example/uirouter"
 	"github.com/bata94/apiright/pkg/auth/jwt"
 	ar "github.com/bata94/apiright/pkg/core"
@@ -18,8 +18,6 @@ import (
 
 //go:generate /Users/bata/Projects/personal/apiright/bin/apiright generate
 
-var log = logger.NewDefaultLogger()
-
 type PostStruct struct {
 	Name  string `json:"name" xml:"name" yml:"name" example:"John Doe"`
 	Email string `json:"email" xml:"email" yml:"email" example:"jdoe@me.com"`
@@ -27,11 +25,17 @@ type PostStruct struct {
 }
 
 func main() {
-	fmt.Println("Starting...")
+	// Use colored structured logging for better readability and observability
+	logLvl := logger.InfoLevel
+	if os.Getenv("ENV") == "dev" {
+		logLvl = logger.DebugLevel
+	}
+	coloredLogger := logger.NewColoredStructuredLogger(logLvl, os.Stdout)
 
 	app := ar.NewApp(
 		ar.AppAddr("0.0.0.0", "5500"),
 		ar.AppTimeout(time.Duration(10)*time.Second),
+		ar.AppLogger(coloredLogger),
 	)
 
 	// Create CORS config with permissive settings for quick integration
@@ -62,6 +66,8 @@ func main() {
 
 	jwtConfig := jwt.DefaultJWTConfig()
 	jwt.SetLogger(app.Logger)
+
+	app.Logger.Info("Application initialized and starting")
 
 	app.GET("/jwt", func(c *ar.Ctx) error {
 		app.Logger.Info("JWT")
@@ -116,7 +122,7 @@ func main() {
 		id := c.PathParams["id"]
 		rt, ok := c.ObjIn.(*GrantParams)
 		if !ok {
-			log.Error("object is not correctly parsed")
+			logger.Error("object is not correctly parsed")
 			return errors.New("object is not correctly parsed")
 		}
 
@@ -180,8 +186,7 @@ func main() {
 	app.GET(
 		"/params/{id}",
 		func(c *ar.Ctx) error {
-			fmt.Println(c.PathParams)
-			fmt.Println(c.QueryParams)
+			logger.Debug("request params", "path_params", c.PathParams, "query_params", c.QueryParams)
 			c.Response.SetMessagef("PathParams: %s\nQueryParams: %s\n", c.PathParams, c.QueryParams)
 			return nil
 		},
@@ -192,23 +197,21 @@ func main() {
 	app.GET("/test", func(c *ar.Ctx) error {
 		dst := "/test/upload/file.txt"
 
-		fmt.Println(dst)
-		fmt.Println(filepath.Base(dst))
-		fmt.Println(filepath.Dir(dst))
+		logger.Debug("file path operations", "dst", dst, "base", filepath.Base(dst), "dir", filepath.Dir(dst))
 
 		c.Response.SetMessage("Test")
 		return nil
 	})
 
 	app.GET("/timeout", func(c *ar.Ctx) error {
-		fmt.Println("Waiting 30 seconds")
+		logger.Info("starting timeout test - waiting 30 seconds")
 
 		// This and time.Sleep(...) block and don't get canceled by the timeout Middleware
 		// Need to test with "real" http calls or DB calls
 		<-time.After(30 * time.Second)
-		fmt.Println("Done waiting")
+		logger.Info("timeout test completed")
 
-		c.Response.SetStatus(200)
+		c.Response.StatusCode = 200
 		c.Response.SetMessage("Test Timeout")
 		return nil
 	})
@@ -240,7 +243,7 @@ func main() {
 	group.GET(
 		"/",
 		func(c *ar.Ctx) error {
-			fmt.Println("Group Index")
+			logger.Info("group index accessed")
 			c.Response.SetStatus(200)
 			c.Response.SetMessage("Hello from Group Index")
 			return nil
@@ -256,21 +259,21 @@ func main() {
 
 	err := app.Run()
 	if err != nil {
-		fmt.Println("Exited with err: ", err)
+		logger.Error("application exited with error", "error", err)
 		return
 	}
 
-	fmt.Println("Exited without err")
+	logger.Info("application exited normally")
 }
 
 func post_test(c *ar.Ctx) error {
-	fmt.Printf("Post Test ObjectIn: %v ObjInType: %v\n", c.ObjIn, c.ObjInType)
+	logger.Debug("post test processing", "object_in", c.ObjIn, "object_in_type", c.ObjInType)
 	test, ok := c.ObjIn.(*PostStruct)
 	if !ok {
 		return errors.New("object is not correctly parsed")
 	}
 
-	fmt.Println("Success!")
+	logger.Info("post test successful", "name", test.Name)
 	c.Response.SetMessage("Test ObjectIn: " + test.Name)
 	c.ObjOut = test
 
