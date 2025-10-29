@@ -47,6 +47,9 @@ Apiright is a Go web framework in development, focusing on easy developer experi
 - **Testing**: Run `just test` for comprehensive testing
 - **Linting**: Run `just lint` before commits
 - **Checkup**: Run `just pre-release` before telling the user, that you are done with the task
+- **Committing**: Commit with a descriptive message
+- **Pull Requests**: Create a pull request with a descriptive title and reference the issue number (if applicable)
+- **Pushing**: Never push to GitHub, if your are not directly asked to do so
 
 ## Testing Best Practices
 - **Table-Driven Tests**: Use struct slices for test cases with httptest
