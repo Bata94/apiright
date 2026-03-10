@@ -126,8 +126,9 @@ func (m MIMEType) ToString() string {
 // NewCtx creates a new Ctx instance.
 func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *Ctx {
 	c := &Ctx{
-		Request:  r,
 		Response: NewApiResponse(),
+		req:      r,
+		Request:  newRequest(r),
 
 		PathParams:  make(map[string]string),
 		QueryParams: make(map[string]string),
@@ -155,9 +156,9 @@ func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *C
 
 // Ctx is the context for a request.
 type Ctx struct {
-	// TODO: Refactor ApiResponse to an interface (e.g., ResponseWriter) to allow for different response types, such as HTML responses, beyond just API responses.
 	Response *ApiResponse
-	Request  *http.Request
+	Request  *Request
+	req      *http.Request
 
 	PathParams  map[string]string
 	QueryParams map[string]string
@@ -181,8 +182,8 @@ func (c *Ctx) getObjInByte() []byte {
 	}
 
 	log.Debug("reading request body for input object")
-	b, err := io.ReadAll(c.Request.Body)
-	defer func() { _ = c.Request.Body.Close() }()
+	b, err := io.ReadAll(c.req.Body)
+	defer func() { _ = c.req.Body.Close() }()
 
 	if err != nil {
 		log.Error("failed to read request body", "error", err)

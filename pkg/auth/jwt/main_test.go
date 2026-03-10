@@ -259,7 +259,7 @@ func TestGetSubFromToken(t *testing.T) {
 	}
 
 	// Set authorization header
-	ctx.Request.Header.Set("Authorization", "Bearer "+token)
+	ctx.Request.Header().Set("Authorization", "Bearer "+token)
 
 	// Test getting sub
 	sub, err := GetSubFromToken(ctx)
@@ -273,7 +273,7 @@ func TestGetSubFromToken(t *testing.T) {
 
 	// Test without Bearer prefix
 	ctx2 := core.NewCtx(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil), core.Route{}, core.Endpoint{})
-	ctx2.Request.Header.Set("Authorization", token)
+	ctx2.Request.Header().Set("Authorization", token)
 	sub2, err := GetSubFromToken(ctx2)
 	if err != nil {
 		t.Errorf("GetSubFromToken returned error without Bearer prefix: %v", err)
@@ -292,7 +292,7 @@ func TestGetSubFromToken(t *testing.T) {
 
 	// Test with invalid token
 	ctx4 := core.NewCtx(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil), core.Route{}, core.Endpoint{})
-	ctx4.Request.Header.Set("Authorization", "Bearer invalid-token")
+	ctx4.Request.Header().Set("Authorization", "Bearer invalid-token")
 	_, err = GetSubFromToken(ctx4)
 	if err == nil {
 		t.Error("Expected error with invalid token")

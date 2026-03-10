@@ -379,7 +379,7 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 
 			// TODO: Add default MIMEType, when no Accept header is provided.
 			var objOutFunc func() error
-			acceptHeader := c.Request.Header.Get("accept")
+			acceptHeader := c.Request.Header().Get("accept")
 			log.Debug("processing accept header", "accept", acceptHeader)
 			acceptHeaders := strings.Split(acceptHeader, ",")
 

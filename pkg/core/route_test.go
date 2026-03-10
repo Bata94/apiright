@@ -40,8 +40,8 @@ func TestNewCtx(t *testing.T) {
 	ep := Endpoint{}
 	ctx := NewCtx(rec, req, route, ep)
 
-	if ctx.Request != req {
-		t.Errorf("Expected request to be %v, got %v", req, ctx.Request)
+	if ctx.Request.Method() != http.MethodGet {
+		t.Errorf("Expected method to be %v, got %v", http.MethodGet, ctx.Request.Method())
 	}
 	if ctx.Response == nil {
 		t.Error("Expected response to be initialized, got nil")

@@ -349,19 +349,19 @@ func ServeStaticDir(urlPath, dirPath string, opts ...StaticServFileOption) (core
 				err     error
 			)
 
-			if strings.HasSuffix(c.Request.URL.Path, "/") {
+			if strings.HasSuffix(c.Request.Path(), "/") {
 				var dirData DirTemplateData
-				dirData, err = getStaticDirData(dirPath, dirPath+strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"), pattern, config)
+				dirData, err = getStaticDirData(dirPath, dirPath+strings.TrimPrefix(c.Request.Path(), urlPath+"/"), pattern, config)
 				if err != nil {
 					log.Error(err)
 					return err
 				}
-				content = decideStaticIndexFile(dirData, dirPath+strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"), dirTempl, config)
+				content = decideStaticIndexFile(dirData, dirPath+strings.TrimPrefix(c.Request.Path(), urlPath+"/"), dirTempl, config)
 			} else {
 				log.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
-				log.Debugf("Current URLPath %s", c.Request.URL.Path)
+				log.Debugf("Current URLPath %s", c.Request.Path())
 
-				content, err = os.ReadFile(filepath.Join(dirPath, strings.TrimPrefix(c.Request.URL.Path, urlPath+"/")))
+				content, err = os.ReadFile(filepath.Join(dirPath, strings.TrimPrefix(c.Request.Path(), urlPath+"/")))
 				if err != nil {
 					log.Error(err)
 					if errors.Is(err, os.ErrNotExist) {

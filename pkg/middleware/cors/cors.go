@@ -95,20 +95,20 @@ func isOriginAllowed(origin string, allowedOrigins []string) (string, bool) {
 func handlePreflight(c *core.Ctx, config CORSConfig) {
 	// Set allowed methods
 	if len(config.AllowMethods) == 1 && config.AllowMethods[0] == "*" {
-		c.Response.AddHeader("Access-Control-Allow-Methods", c.Request.Header.Get("Access-control-request-method"))
+		c.Response.AddHeader("Access-Control-Allow-Methods", c.Request.Header().Get("Access-control-request-method"))
 	} else {
 		c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
 	}
 
 	// Set allowed headers
 	if len(config.AllowHeaders) == 1 && config.AllowHeaders[0] == "*" {
-		c.Response.AddHeader("Access-Control-Allow-Headers", c.Request.Header.Get("Access-control-request-headers"))
+		c.Response.AddHeader("Access-Control-Allow-Headers", c.Request.Header().Get("Access-control-request-headers"))
 		c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
 	} else if len(config.AllowHeaders) > 0 {
 		c.Response.AddHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
 	} else {
 		// If no specific headers are defined, allow the requested ones
-		reqHeaders := c.Request.Header.Get("Access-Control-Request-Headers")
+		reqHeaders := c.Request.Header().Get("Access-Control-Request-Headers")
 		if reqHeaders != "" {
 			c.Response.AddHeader("Access-Control-Allow-Headers", reqHeaders)
 			c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
@@ -135,7 +135,7 @@ func CORSMiddleware(config CORSConfig) core.Middleware {
 
 	return func(next core.Handler) core.Handler {
 		return func(c *core.Ctx) error {
-			origin := c.Request.Header.Get("Origin")
+			origin := c.Request.Header().Get("Origin")
 			allowedOrigin, ok := isOriginAllowed(origin, config.AllowOrigins)
 			if !ok {
 				return next(c)
@@ -146,7 +146,7 @@ func CORSMiddleware(config CORSConfig) core.Middleware {
 				c.Response.AddHeader("Vary", "Origin")
 			}
 
-			if c.Request.Method == http.MethodOptions {
+			if c.Request.Method() == http.MethodOptions {
 				handlePreflight(c, config)
 				return nil
 			}

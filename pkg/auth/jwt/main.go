@@ -78,11 +78,11 @@ type TokenPair struct {
 func JWTMiddleware(config JWTConfig) ar.Middleware {
 	return ar.Middleware(func(next ar.Handler) ar.Handler {
 		return func(c *ar.Ctx) error {
-			if c.Request.Header.Get("Authorization") == "" {
+			if c.Request.Header().Get("Authorization") == "" {
 				return errors.New("authorization header is missing")
 			}
 
-			accessToken := strings.Replace(c.Request.Header.Get("Authorization"), "Bearer ", "", 1)
+			accessToken := strings.Replace(c.Request.Header().Get("Authorization"), "Bearer ", "", 1)
 			err := ValidateAccessToken(c, accessToken)
 			if err != nil {
 				return err
@@ -230,7 +230,7 @@ func GetSubFromToken(c *ar.Ctx) (any, error) {
 		err    error
 	)
 
-	authHeaderToken := c.Request.Header.Get("Authorization")
+	authHeaderToken := c.Request.Header().Get("Authorization")
 	if authHeaderToken == "" {
 		return nil, errors.New("authorization header is missing")
 	}

@@ -22,8 +22,8 @@ type Middleware func(Handler) Handler
 func FavIcon(filePath string) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
-			log.Debug("favicon middleware", "path", filePath, "request_path", c.Request.URL.Path)
-			if strings.HasSuffix(c.Request.URL.Path, "/favicon.ico") {
+			log.Debug("favicon middleware", "path", filePath, "request_path", c.Request.Path())
+			if strings.HasSuffix(c.Request.Path(), "/favicon.ico") {
 				iconBytes, err := os.ReadFile(filePath)
 				if err != nil {
 					return err
@@ -49,9 +49,9 @@ func LogMiddleware(logger logger.Logger) Middleware {
 				duration := c.conEnded.Sub(c.conStarted)
 
 				if c.Response.StatusCode >= 400 {
-					logger.Error("request completed", "status", c.Response.StatusCode, "method", c.Request.Method, "path", c.Request.RequestURI, "remote", c.Request.RemoteAddr, "duration_ms", duration.Milliseconds())
+					logger.Error("request completed", "status", c.Response.StatusCode, "method", c.Request.Method(), "path", c.Request.RequestURI(), "remote", c.Request.RemoteAddr(), "duration_ms", duration.Milliseconds())
 				} else {
-					logger.Info("request completed", "status", c.Response.StatusCode, "method", c.Request.Method, "path", c.Request.RequestURI, "remote", c.Request.RemoteAddr, "duration_ms", duration.Milliseconds())
+					logger.Info("request completed", "status", c.Response.StatusCode, "method", c.Request.Method(), "path", c.Request.RequestURI(), "remote", c.Request.RemoteAddr(), "duration_ms", duration.Milliseconds())
 				}
 			}(c)
 
@@ -114,7 +114,7 @@ func TimeoutMiddleware(config TimeoutConfig) Middleware {
 			defer cancel()
 
 			// Replace the request context with the timeout context
-			c.Request = c.Request.WithContext(ctx)
+			c.req = c.Request.WithContext(ctx)
 
 			// Create a channel to receive the result of the handler
 			done := make(chan error, 1)
@@ -230,20 +230,20 @@ func isOriginAllowed(origin string, allowedOrigins []string) (string, bool) {
 func handlePreflight(c *Ctx, config CORSConfig) {
 	// Set allowed methods
 	if len(config.AllowMethods) == 1 && config.AllowMethods[0] == "*" {
-		c.Response.AddHeader("Access-Control-Allow-Methods", c.Request.Header.Get("Access-control-request-method"))
+		c.Response.AddHeader("Access-Control-Allow-Methods", c.Request.Header().Get("Access-control-request-method"))
 	} else {
 		c.Response.AddHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
 	}
 
 	// Set allowed headers
 	if len(config.AllowHeaders) == 1 && config.AllowHeaders[0] == "*" {
-		c.Response.AddHeader("Access-Control-Allow-Headers", c.Request.Header.Get("Access-control-request-headers"))
+		c.Response.AddHeader("Access-Control-Allow-Headers", c.Request.Header().Get("Access-control-request-headers"))
 		c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
 	} else if len(config.AllowHeaders) > 0 {
 		c.Response.AddHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
 	} else {
 		// If no specific headers are defined, allow the requested ones
-		reqHeaders := c.Request.Header.Get("Access-Control-Request-Headers")
+		reqHeaders := c.Request.Header().Get("Access-Control-Request-Headers")
 		if reqHeaders != "" {
 			c.Response.AddHeader("Access-Control-Allow-Headers", reqHeaders)
 			c.Response.AddHeader("Vary", "Access-Control-Request-Headers")
@@ -270,7 +270,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
-			origin := c.Request.Header.Get("Origin")
+			origin := c.Request.Header().Get("Origin")
 			allowedOrigin, ok := isOriginAllowed(origin, config.AllowOrigins)
 			if !ok {
 				return next(c)
@@ -281,7 +281,7 @@ func CORSMiddleware(config CORSConfig) Middleware {
 				c.Response.AddHeader("Vary", "Origin")
 			}
 
-			if c.Request.Method == http.MethodOptions {
+			if c.Request.Method() == http.MethodOptions {
 				handlePreflight(c, config)
 				return nil
 			}
@@ -334,7 +334,7 @@ func DefaultCSRFConfig() CSRFConfig {
 func CSRFMiddleware(config CSRFConfig) Middleware {
 	return func(next Handler) Handler {
 		return func(c *Ctx) error {
-			if c.Request.Method == http.MethodGet {
+			if c.Request.Method() == http.MethodGet {
 				// Generate and set CSRF cookie
 				token, err := generateRandomToken(config.TokenLength)
 				if err != nil {
@@ -354,7 +354,7 @@ func CSRFMiddleware(config CSRFConfig) Middleware {
 				// } else if c.Request.Method == http.MethodPost || c.Request.Method == http.MethodPut || c.Request.Method == http.MethodDelete {
 			} else {
 				// Verify CSRF token
-				csrfTokenFromHeader := c.Request.Header.Get(config.HeaderName)
+				csrfTokenFromHeader := c.Request.Header().Get(config.HeaderName)
 				csrfTokenFromCookie, err := c.Request.Cookie(config.CookieName)
 				if err != nil {
 					c.Response.SetStatus(http.StatusForbidden)

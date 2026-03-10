@@ -45,7 +45,7 @@ func DefaultCSRFConfig() CSRFConfig {
 func CSRFMiddleware(config CSRFConfig) core.Middleware {
 	return func(next core.Handler) core.Handler {
 		return func(c *core.Ctx) error {
-			if c.Request.Method == http.MethodGet {
+			if c.Request.Method() == http.MethodGet {
 				// Generate and set CSRF cookie
 				token, err := generateRandomToken(config.TokenLength)
 				if err != nil {
@@ -63,7 +63,7 @@ func CSRFMiddleware(config CSRFConfig) core.Middleware {
 				c.Response.AddHeader("Set-Cookie", cookie.String())
 			} else {
 				// Verify CSRF token
-				csrfTokenFromHeader := c.Request.Header.Get(config.HeaderName)
+				csrfTokenFromHeader := c.Request.Header().Get(config.HeaderName)
 				csrfTokenFromCookie, err := c.Request.Cookie(config.CookieName)
 				if err != nil {
 					c.Response.SetStatus(http.StatusForbidden)

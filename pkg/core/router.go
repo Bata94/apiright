@@ -13,7 +13,7 @@ import (
 )
 
 var defCatchallHandler = func(c *Ctx) error {
-	log.Info("Default CatchAll Handler, URL: ", c.Request.URL.String())
+	log.Info("Default CatchAll Handler, URL: ", c.Request.URL().String())
 	c.Response.SetStatus(404)
 	c.Response.Message = "Not found!"
 	return nil
@@ -769,19 +769,19 @@ func (r *Router) ServeStaticDir(urlPath, dirPath string, a *App, opt ...StaticSe
 				err     error
 			)
 
-			if strings.HasSuffix(c.Request.URL.Path, "/") {
+			if strings.HasSuffix(c.Request.Path(), "/") {
 				var dirData DirTemplateData
-				dirData, err = r.getStaticDirData(dirPath, dirPath+strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"), pattern, config, a, false, opt...)
+				dirData, err = r.getStaticDirData(dirPath, dirPath+strings.TrimPrefix(c.Request.Path(), urlPath+"/"), pattern, config, a, false, opt...)
 				if err != nil {
 					log.Error(err)
 					return err
 				}
-				content = decideStaticIndexFile(dirData, dirPath+strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"), dirTempl, config)
+				content = decideStaticIndexFile(dirData, dirPath+strings.TrimPrefix(c.Request.Path(), urlPath+"/"), dirTempl, config)
 			} else {
 				a.Logger.Debug("📁 Serving static directory: ", dirPath, " at: ", urlPath)
-				a.Logger.Debugf("Current URLPath %s", c.Request.URL.Path)
+				a.Logger.Debugf("Current URLPath %s", c.Request.Path())
 
-				content, err = os.ReadFile(dirPath + strings.TrimPrefix(c.Request.URL.Path, urlPath+"/"))
+				content, err = os.ReadFile(dirPath + strings.TrimPrefix(c.Request.Path(), urlPath+"/"))
 				if err != nil {
 					log.Error(err)
 					if errors.Is(err, os.ErrNotExist) {
