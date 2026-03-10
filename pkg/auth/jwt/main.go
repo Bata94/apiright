@@ -122,7 +122,7 @@ func NewTokenPair(c *ar.Ctx, userID any) (TokenPair, error) {
 		return TokenPair{}, err
 	}
 
-	c.Session["userID"] = userID
+	c.Session.Set("userID", userID)
 
 	return TokenPair{
 		AccessToken:  accessToken,
@@ -148,7 +148,7 @@ func NewAccessToken(c *ar.Ctx, userID any) (string, error) {
 		return "", err
 	}
 
-	c.Session["userID"] = userID
+	c.Session.Set("userID", userID)
 
 	return accessToken, nil
 }
@@ -195,7 +195,7 @@ func ValidateAccessToken(c *ar.Ctx, accessToken string) error {
 		return err
 	}
 
-	c.Session["userID"] = claims["sub"]
+	c.Session.Set("userID", claims["sub"])
 
 	return nil
 }

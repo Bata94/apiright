@@ -81,6 +81,11 @@ func (r *Router) DELETE(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_DELETE, path, handler, opt...)
 }
 
+// PATCH adds a PATCH endpoint to the router.
+func (r *Router) PATCH(path string, handler Handler, opt ...RouteOption) {
+	r.addEndpoint(METHOD_PATCH, path, handler, opt...)
+}
+
 // OPTIONS adds an OPTIONS endpoint to the router.
 func (r *Router) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	r.addEndpoint(METHOD_OPTIONS, path, handler, opt...)

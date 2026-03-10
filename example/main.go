@@ -101,11 +101,11 @@ func main() {
 			return err
 		}
 
-		if c.Session["userID"] == nil {
+		if c.Session.Get("userID") == nil {
 			return errors.New("userID is nil")
 		}
 
-		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session["userID"]))
+		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session.Get("userID")))
 		c.ObjOut = tp
 
 		return nil
@@ -150,7 +150,7 @@ func main() {
 			return errors.New("tokenPair is nil")
 		}
 
-		c.Session["userID"] = 999
+		c.Session.Set("userID", 999)
 
 		// time.Sleep(time.Second * 5)
 
@@ -159,12 +159,12 @@ func main() {
 			return err
 		}
 
-		if c.Session["userID"] == nil {
+		if c.Session.Get("userID") == nil {
 			return errors.New("userID is nil")
 		}
 
 		c.Response.StatusCode = 200
-		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session["userID"]))
+		c.Response.SetMessage("Sucess - UserID: " + fmt.Sprint(c.Session.Get("userID")))
 
 		return nil
 	},
@@ -172,7 +172,7 @@ func main() {
 	)
 
 	app.GET("/protected", func(c *ar.Ctx) error {
-		c.Response.SetMessage(fmt.Sprintf("UserID: %v", c.Session["userID"]))
+		c.Response.SetMessage(fmt.Sprintf("UserID: %v", c.Session.Get("userID")))
 		c.Response.SetStatus(200)
 		return nil
 	}, ar.Use(jwt.JWTMiddleware(*jwtConfig)), ar.WithOpenApiJwtAuth())

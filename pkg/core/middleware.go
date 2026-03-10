@@ -380,3 +380,92 @@ func generateRandomToken(length uint8) (string, error) {
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
 }
+
+type SessionConfig struct {
+	CookieName    string
+	CookiePath    string
+	CookieExpires time.Duration
+	Store         SessionStore
+}
+
+func DefaultSessionConfig() SessionConfig {
+	return SessionConfig{
+		CookieName:    "apiright_session",
+		CookiePath:    "/",
+		CookieExpires: 24 * time.Hour,
+		Store:         NewMemorySessionStore(),
+	}
+}
+
+func (c *SessionConfig) Validate() error {
+	if c.CookieName == "" {
+		c.CookieName = "apiright_session"
+	}
+	if c.CookiePath == "" {
+		c.CookiePath = "/"
+	}
+	if c.CookieExpires <= 0 {
+		c.CookieExpires = 24 * time.Hour
+	}
+	if c.Store == nil {
+		c.Store = NewMemorySessionStore()
+	}
+	return nil
+}
+
+func SessionMiddleware(config SessionConfig) Middleware {
+	if err := config.Validate(); err != nil {
+		panic(err)
+	}
+
+	return func(next Handler) Handler {
+		return func(c *Ctx) error {
+			cookie, err := c.Request.Cookie(config.CookieName)
+
+			var sess *Session
+			if err == nil && cookie.Value != "" {
+				sess, err = config.Store.Get(cookie.Value)
+				if err != nil {
+					if sess != nil && sess.IsExpired() {
+						_ = config.Store.Delete(sess.ID)
+					}
+					sess = nil
+				}
+			}
+
+			if sess == nil {
+				sessionID, err := GenerateSessionID()
+				if err != nil {
+					return err
+				}
+
+				sess = &Session{
+					ID:        sessionID,
+					Data:      make(map[string]any),
+					ExpiresAt: time.Now().Add(config.CookieExpires),
+					CreatedAt: time.Now(),
+				}
+
+				if err := config.Store.Set(sess); err != nil {
+					return err
+				}
+
+				c.Response.AddHeader("Set-Cookie", (&http.Cookie{
+					Name:     config.CookieName,
+					Value:    sessionID,
+					Path:     config.CookiePath,
+					Expires:  sess.ExpiresAt,
+					HttpOnly: true,
+				}).String())
+			}
+
+			c.Session = sess
+
+			if err := next(c); err != nil {
+				return err
+			}
+
+			return config.Store.Set(sess)
+		}
+	}
+}

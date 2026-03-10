@@ -281,6 +281,10 @@ func (a *App) DELETE(path string, handler Handler, opt ...RouteOption) {
 	a.router.DELETE(path, handler, opt...)
 }
 
+func (a *App) PATCH(path string, handler Handler, opt ...RouteOption) {
+	a.router.PATCH(path, handler, opt...)
+}
+
 func (a *App) OPTIONS(path string, handler Handler, opt ...RouteOption) {
 	a.router.OPTIONS(path, handler, opt...)
 }
@@ -309,29 +313,33 @@ func (a *App) handleFunc(route Route, endPoint Endpoint, router Router) {
 		}
 	}
 
-	h := endPoint.handleFunc
-	if len(router.middlewares) > 0 {
-		for _, m := range router.middlewares {
-			h = m(h)
-		}
-	}
-	if len(endPoint.middlewares) > 0 {
-		for _, m := range endPoint.middlewares {
-			h = m(h)
-		}
-	}
+	routerMiddlewares := router.middlewares
+	routeMiddlewares := endPoint.middlewares
+	skipHandler := endPoint.routeOptionConfig.skipHandler
 
 	a.handler.HandleFunc(handlerPath, func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
-		currentHandler := h
 		log.Debug("handling request", "method", r.Method, "url", r.URL.String(), "route_base", route.basePath, "router_base", router.GetBasePath())
-		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
-			currentHandler = a.defRouteHandler
-		}
 
 		c := NewCtx(w, r, route, endPoint)
 		r = r.WithContext(c.Request.Context())
+
+		currentHandler := endPoint.handleFunc
+
+		shouldSkip := skipHandler != nil && skipHandler(c)
+		if !shouldSkip {
+			for _, m := range routerMiddlewares {
+				currentHandler = m(currentHandler)
+			}
+			for _, m := range routeMiddlewares {
+				currentHandler = m(currentHandler)
+			}
+		}
+
+		if r.URL.String() != "/" && (route.basePath == "/" && r.URL.Path != router.GetBasePath()) {
+			currentHandler = a.defRouteHandler
+		}
 		// TODO: Integrate the ObjIn (object input) processing as a middleware to ensure it's part of the request handling chain.
 
 		// TODO: Modify the input object validation to collect and return all type-related errors in a single response, instead of only the first encountered error.

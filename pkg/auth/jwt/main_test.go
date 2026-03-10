@@ -92,8 +92,8 @@ func TestNewTokenPair(t *testing.T) {
 	}
 
 	// Check session
-	if ctx.Session["userID"] != userID {
-		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session["userID"])
+	if ctx.Session.Get("userID") != userID {
+		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session.Get("userID"))
 	}
 }
 
@@ -133,8 +133,8 @@ func TestNewAccessToken(t *testing.T) {
 	}
 
 	// Check session
-	if ctx.Session["userID"] != userID {
-		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session["userID"])
+	if ctx.Session.Get("userID") != userID {
+		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session.Get("userID"))
 	}
 }
 
@@ -189,8 +189,8 @@ func TestValidateAccessToken(t *testing.T) {
 		t.Errorf("ValidateAccessToken returned error for valid token: %v", err)
 	}
 
-	if ctx.Session["userID"] != userID {
-		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session["userID"])
+	if ctx.Session.Get("userID") != userID {
+		t.Errorf("Expected session userID '%s', got '%v'", userID, ctx.Session.Get("userID"))
 	}
 
 	// Test with Bearer prefix

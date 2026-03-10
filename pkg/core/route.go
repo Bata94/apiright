@@ -132,7 +132,9 @@ func NewCtx(w http.ResponseWriter, r *http.Request, route Route, ep Endpoint) *C
 
 		PathParams:  make(map[string]string),
 		QueryParams: make(map[string]string),
-		Session:     make(map[string]any),
+		Session: &Session{
+			Data: make(map[string]any),
+		},
 
 		conClosed:  make(chan bool, 1),
 		conStarted: time.Now(),
@@ -162,7 +164,7 @@ type Ctx struct {
 
 	PathParams  map[string]string
 	QueryParams map[string]string
-	Session     map[string]any
+	Session     *Session
 
 	conClosed  chan (bool)
 	conStarted time.Time
@@ -344,7 +346,11 @@ type RouteOptionConfig struct {
 		Example           any
 	}
 	middlewares []Middleware
+	skipHandler SkipHandler
 }
+
+// SkipHandler is a function that determines if a middleware should be skipped.
+type SkipHandler func(*Ctx) bool
 
 // GetOpenApiEnabled returns whether OpenAPI is enabled
 func (c RouteOptionConfig) GetOpenApiEnabled() bool {
@@ -403,6 +409,14 @@ func NewRouteOptionConfig(opts ...RouteOption) *RouteOptionConfig {
 func Use(m Middleware) RouteOption {
 	return func(c *RouteOptionConfig) {
 		c.middlewares = append(c.middlewares, m)
+	}
+}
+
+// SkipIf returns a RouteOption that sets a skip handler for middleware.
+// The middleware will be skipped if the skipHandler returns true.
+func SkipIf(skipHandler SkipHandler) RouteOption {
+	return func(c *RouteOptionConfig) {
+		c.skipHandler = skipHandler
 	}
 }
 

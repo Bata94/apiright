@@ -9,121 +9,121 @@ import (
 )
 
 type Request struct {
-	req *http.Request
+	Req *http.Request
 }
 
 func newRequest(r *http.Request) *Request {
-	return &Request{req: r}
+	return &Request{Req: r}
 }
 
 func (r *Request) Method() string {
-	return r.req.Method
+	return r.Req.Method
 }
 
 func (r *Request) URL() *url.URL {
-	return r.req.URL
+	return r.Req.URL
 }
 
 func (r *Request) Path() string {
-	return r.req.URL.Path
+	return r.Req.URL.Path
 }
 
 func (r *Request) RequestURI() string {
-	return r.req.RequestURI
+	return r.Req.RequestURI
 }
 
 func (r *Request) RemoteAddr() string {
-	return r.req.RemoteAddr
+	return r.Req.RemoteAddr
 }
 
 func (r *Request) Header() http.Header {
-	return r.req.Header
+	return r.Req.Header
 }
 
 func (r *Request) Body() io.ReadCloser {
-	return r.req.Body
+	return r.Req.Body
 }
 
 func (r *Request) Context() context.Context {
-	return r.req.Context()
+	return r.Req.Context()
 }
 
 func (r *Request) WithContext(ctx context.Context) *http.Request {
-	return r.req.WithContext(ctx)
+	return r.Req.WithContext(ctx)
 }
 
 func (r *Request) PathValue(name string) string {
-	return r.req.PathValue(name)
+	return r.Req.PathValue(name)
 }
 
 func (r *Request) FormFile(key string) (multipart.File, *multipart.FileHeader, error) {
-	return r.req.FormFile(key)
+	return r.Req.FormFile(key)
 }
 
 func (r *Request) Cookie(name string) (*http.Cookie, error) {
-	return r.req.Cookie(name)
+	return r.Req.Cookie(name)
 }
 
 func (r *Request) BasicAuth() (string, string, bool) {
-	return r.req.BasicAuth()
+	return r.Req.BasicAuth()
 }
 
 func (r *Request) Proto() string {
-	return r.req.Proto
+	return r.Req.Proto
 }
 
 func (r *Request) ProtoMajor() int {
-	return r.req.ProtoMajor
+	return r.Req.ProtoMajor
 }
 
 func (r *Request) ProtoMinor() int {
-	return r.req.ProtoMinor
+	return r.Req.ProtoMinor
 }
 
 func (r *Request) Host() string {
-	return r.req.Host
+	return r.Req.Host
 }
 
 func (r *Request) Referer() string {
-	return r.req.Referer()
+	return r.Req.Referer()
 }
 
 func (r *Request) UserAgent() string {
-	return r.req.UserAgent()
+	return r.Req.UserAgent()
 }
 
 func (r *Request) ParseForm() error {
-	return r.req.ParseForm()
+	return r.Req.ParseForm()
 }
 
 func (r *Request) ParseMultipartForm(maxMemory int64) error {
-	return r.req.ParseMultipartForm(maxMemory)
+	return r.Req.ParseMultipartForm(maxMemory)
 }
 
 func (r *Request) Form() url.Values {
-	return r.req.Form
+	return r.Req.Form
 }
 
 func (r *Request) PostForm() url.Values {
-	return r.req.PostForm
+	return r.Req.PostForm
 }
 
 func (r *Request) MultipartForm() *multipart.Form {
-	return r.req.MultipartForm
+	return r.Req.MultipartForm
 }
 
 func (r *Request) GetBody() (io.ReadCloser, error) {
-	return r.req.GetBody()
+	return r.Req.GetBody()
 }
 
 func (r *Request) Close() bool {
-	return r.req.Close
+	return r.Req.Close
 }
 
 func (r *Request) TransferEncoding() []string {
-	return r.req.TransferEncoding
+	return r.Req.TransferEncoding
 }
 
-func (r *Request) Unexported() *http.Request {
-	return r.req
+func (r *Request) Raw() *http.Request {
+	return r.Req
 }
