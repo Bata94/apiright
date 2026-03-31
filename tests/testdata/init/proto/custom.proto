@@ -1,0 +1,8 @@
+syntax = "proto3";
+package custom;
+import "gen/proto/db_ar_gen.proto";
+
+message ExtendedUser {
+  User user = 1;
+  string custom_field = 2;
+}

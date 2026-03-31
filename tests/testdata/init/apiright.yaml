@@ -1,0 +1,28 @@
+# APIRight Configuration
+project:
+  name: "test-init"
+  module: "github.com/bata/test-init"
+  
+database:
+  type: "sqlite"
+  # Additional database configuration
+  
+server:
+  http_port: 8080
+  grpc_port: 9090
+  host: "localhost"
+  
+generation:
+  output_dir: "gen"
+  gen_suffix: "_ar_gen"
+  content_types:
+    - "application/json"
+    - "application/xml"
+    - "application/yaml"
+    - "application/protobuf"
+    - "text/plain"
+  generate_tests: true
+  generate_docs: true
+  validation: true
+  
+plugins: []

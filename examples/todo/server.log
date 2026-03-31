@@ -1,0 +1,18 @@
+[INFO] Connected to database
+[INFO] No pending migrations
+[INFO] Starting Todo API server...
+[INFO] HTTP endpoints available at:
+[INFO]   - http://localhost:8080/health
+[INFO]   - http://localhost:8080/v1/todos
+[INFO]   - http://localhost:8080/v1/todos/1
+[INFO] 
+[INFO] Content formats supported: JSON, XML, YAML, Protobuf, Plain Text
+[INFO] Use Accept header to specify format:
+[INFO]   curl -H 'Accept: application/json' http://localhost:8080/v1/todos
+[INFO]   curl -H 'Accept: application/xml' http://localhost:8080/v1/todos
+[INFO]   curl -H 'Accept: application/yaml' http://localhost:8080/v1/todos
+[INFO] 
+[INFO] gRPC endpoint available at: grpc://localhost:9090
+[INFO] Starting HTTP server
+2026/01/23 21:24:33 Failed to start server: HTTP server failed: HTTP server error: listen tcp 127.0.0.1:8080: bind: address already in use
+exit status 1

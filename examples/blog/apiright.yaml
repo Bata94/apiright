@@ -1,0 +1,30 @@
+# APIRight Configuration - Blog Platform Example
+project:
+  name: "blog-api"
+  module: "github.com/example/blog-api"
+  version: "0.1.0"
+  description: "Blog platform with posts, comments, and users"
+
+database:
+  type: "sqlite"
+  name: "blog.db"
+
+server:
+  http_port: 8081
+  grpc_port: 9091
+  host: "localhost"
+
+generation:
+  output_dir: "gen"
+  gen_suffix: "_ar_gen"
+  content_types:
+    - "application/json"
+    - "application/xml"
+    - "application/yaml"
+    - "application/protobuf"
+    - "text/plain"
+  generate_tests: true
+  generate_docs: true
+  validation: true
+
+plugins: []

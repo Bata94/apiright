@@ -1,0 +1,20 @@
+# APIRight Configuration - Simple API
+project:
+  name: "simple-api"
+  module: "github.com/example/simple-api"
+  version: "0.1.0"
+
+database:
+  type: "sqlite"
+  name: "items.db"
+
+server:
+  http_port: 8082
+  grpc_port: 9092
+  host: "localhost"
+
+generation:
+  output_dir: "gen"
+  gen_suffix: "_ar_gen"
+  content_types:
+    - "application/json"

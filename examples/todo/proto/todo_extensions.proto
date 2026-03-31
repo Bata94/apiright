@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package extensions;
+
+option go_package = "github.com/example/todo/gen/go/extensions";
+
+import "gen/proto/db_ar_gen.proto";
+
+message TodoFilter {
+  bool completed = 1;
+  string priority = 2;
+  bool has_due_date = 3;
+}
+
+message BulkCreateRequest {
+  repeated db.Todo todos = 1;
+}
+
+message BulkCreateResponse {
+  repeated db.Todo created_todos = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
+}
+
+message TodoStatsRequest {}
+
+message TodoStatsResponse {
+  int64 total_count = 1;
+  int64 completed_count = 2;
+  int64 pending_count = 3;
+  int64 overdue_count = 4;
+  map<string, int64> by_priority = 5;
+}
+
+service TodoExtensions {
+  rpc GetTodosByFilter(TodoFilter) returns (db.ListTodoResponse);
+  rpc BulkCreateTodos(BulkCreateRequest) returns (BulkCreateResponse);
+  rpc GetTodoStats(TodoStatsRequest) returns (TodoStatsResponse);
+}

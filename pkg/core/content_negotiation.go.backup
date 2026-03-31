@@ -1,0 +1,248 @@
+package core
+
+import (
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"reflect"
+	"strings"
+
+	"google.golang.org/protobuf/proto"
+)
+
+// ContentNegotiatorImpl implements the ContentNegotiator interface
+type ContentNegotiatorImpl struct {
+	supportedTypes []string
+	defaultType    string
+}
+
+// NewContentNegotiator creates a new content negotiator
+func NewContentNegotiator() *ContentNegotiatorImpl {
+	return &ContentNegotiatorImpl{
+		supportedTypes: []string{
+			"application/json",
+			"application/xml",
+			"application/yaml",
+			"application/protobuf",
+			"text/plain",
+		},
+		defaultType: "application/json",
+	}
+}
+
+// SupportedTypes returns the list of supported content types
+func (cn *ContentNegotiatorImpl) SupportedTypes() []string {
+	return cn.supportedTypes
+}
+
+// SerializeResponse serializes data to the specified content type
+func (cn *ContentNegotiatorImpl) SerializeResponse(data interface{}, contentType string) ([]byte, error) {
+	switch contentType {
+	case "application/json":
+		return json.Marshal(data)
+	case "application/xml":
+		return cn.serializeToXML(data)
+	case "application/yaml":
+		return yaml.Marshal(data)
+	case "text/plain":
+		return []byte(fmt.Sprintf("%v", data)), nil
+	case "application/protobuf":
+		return cn.serializeProtobuf(data)
+	default:
+		return nil, fmt.Errorf("unsupported content type: %s", contentType)
+	}
+}
+
+// DeserializeRequest deserializes data from the specified content type
+func (cn *ContentNegotiatorImpl) DeserializeRequest(data []byte, contentType string, target interface{}) error {
+	switch contentType {
+	case "application/json":
+		return json.Unmarshal(data, target)
+	case "application/xml":
+		return xml.Unmarshal(data, target)
+	case "application/yaml":
+		return yaml.Unmarshal(data, target)
+	case "text/plain":
+		// For plain text, try to convert to string and set if target is string pointer
+		if strPtr, ok := target.(*string); ok {
+			*strPtr = string(data)
+			return nil
+		}
+		return fmt.Errorf("plain text deserialization only supports *string target")
+	case "application/protobuf":
+		return cn.deserializeProtobuf(data, target)
+	default:
+		return fmt.Errorf("unsupported content type: %s", contentType)
+	}
+}
+
+// DetectContentType detects content type from Accept header
+func (cn *ContentNegotiatorImpl) DetectContentType(header string) string {
+	if header == "" {
+		return cn.defaultType
+	}
+
+	// Parse Accept header and find best match
+	// Simple implementation - could be enhanced with q-values
+	acceptedTypes := strings.Split(header, ",")
+
+	for _, acceptedType := range acceptedTypes {
+		acceptedType = strings.TrimSpace(strings.Split(acceptedType, ";")[0])
+
+		// Check for wildcards
+		if acceptedType == "*/*" || acceptedType == "*/ *" {
+			return cn.defaultType
+		}
+
+		// Check for exact match
+		for _, supportedType := range cn.supportedTypes {
+			if acceptedType == supportedType {
+				return supportedType
+			}
+		}
+
+		// Check for type wildcard (e.g., "application/*")
+		if strings.HasSuffix(acceptedType, "/*") {
+			prefix := strings.TrimSuffix(acceptedType, "/*")
+			for _, supportedType := range cn.supportedTypes {
+				if strings.HasPrefix(supportedType, prefix+"/") {
+					return supportedType
+				}
+			}
+		}
+	}
+
+	// Fallback to default
+	return cn.defaultType
+}
+
+// Constants for content types
+const (
+	ContentTypeJSON     = "application/json"
+	ContentTypeXML      = "application/xml"
+	ContentTypeYAML     = "application/yaml"
+	ContentTypeProtobuf = "application/protobuf"
+	ContentTypeText     = "text/plain"
+	ContentTypeHTML     = "text/html"
+	ContentTypeForm     = "application/x-www-form-urlencoded"
+)
+
+// ContentInfo holds information about content negotiation
+type ContentInfo struct {
+	ContentType   string
+	ContentLength int
+	Charset       string
+	Encoding      string
+}
+
+// ParseContentHeader parses a content-related header (Content-Type or Accept)
+func ParseContentHeader(header string) *ContentInfo {
+	if header == "" {
+		return &ContentInfo{}
+	}
+
+	info := &ContentInfo{}
+	parts := strings.Split(header, ";")
+
+	// Main content type
+	if len(parts) > 0 {
+		info.ContentType = strings.TrimSpace(parts[0])
+	}
+
+	// Parameters
+	for _, part := range parts[1:] {
+		part = strings.TrimSpace(part)
+		if strings.HasPrefix(part, "charset=") {
+			info.Charset = strings.TrimPrefix(part, "charset=")
+		} else if strings.HasPrefix(part, "encoding=") {
+			info.Encoding = strings.TrimPrefix(part, "encoding=")
+		}
+	}
+
+	return info
+}
+
+// IsContentTypeSupported checks if a content type is supported
+func (cn *ContentNegotiatorImpl) IsContentTypeSupported(contentType string) bool {
+	for _, supportedType := range cn.supportedTypes {
+		if supportedType == contentType {
+			return true
+		}
+	}
+	return false
+}
+
+// SetSupportedTypes sets the list of supported content types
+func (cn *ContentNegotiatorImpl) SetSupportedTypes(types []string) {
+	cn.supportedTypes = types
+}
+
+// SetDefaultType sets the default content type
+func (cn *ContentNegotiatorImpl) SetDefaultType(defaultType string) {
+	cn.defaultType = defaultType
+}
+
+// serializeProtobuf serializes data to protobuf format
+func (cn *ContentNegotiatorImpl) serializeProtobuf(data interface{}) ([]byte, error) {
+	// Check if data is already a proto.Message
+	if protoMsg, ok := data.(proto.Message); ok {
+		return proto.Marshal(protoMsg)
+	}
+
+	// Try to handle common cases where we need to convert to protobuf
+	// This is a simple implementation - in a real scenario, you'd want to
+	// have proper mapping between Go types and protobuf messages
+
+	// For now, fall back to JSON if we can't handle it as protobuf
+	return nil, fmt.Errorf("data is not a protobuf message and no conversion available")
+}
+
+// deserializeProtobuf deserializes data from protobuf format
+func (cn *ContentNegotiatorImpl) deserializeProtobuf(data []byte, target interface{}) error {
+	// Check if target is a pointer to a proto.Message
+	targetValue := reflect.ValueOf(target)
+	if targetValue.Kind() != reflect.Ptr {
+		return fmt.Errorf("target must be a pointer")
+	}
+
+	// Try to cast to proto.Message
+	if protoMsg, ok := target.(proto.Message); ok {
+		return proto.Unmarshal(data, protoMsg)
+	}
+
+	return fmt.Errorf("target is not a protobuf message pointer")
+}
+
+// serializeToXML converts map[string]interface{} to XML-serializable format
+func (cn *ContentNegotiatorImpl) serializeToXML(data interface{}) ([]byte, error) {
+	// If data is already XML-serializable, use it directly
+	switch v := data.(type) {
+	case map[string]interface{}:
+		// Convert map to struct-based approach for XML compatibility
+		return cn.mapToXML(v)
+	default:
+		// Try to marshal directly
+		return xml.Marshal(data)
+	}
+}
+
+// mapToXML converts map to XML-compatible format
+func (cn *ContentNegotiatorImpl) mapToXML(data map[string]interface{}) ([]byte, error) {
+	// Create a simple XML structure manually
+	var xml strings.Builder
+	xml.WriteString(`<response>`)
+
+	for key, value := range data {
+		xml.WriteString("<")
+		xml.WriteString(key)
+		xml.WriteString(">")
+		xml.WriteString(fmt.Sprintf("%v", value))
+		xml.WriteString("</")
+		xml.WriteString(key)
+		xml.WriteString(">")
+	}
+
+	xml.WriteString(`</response>`)
+	return []byte(xml.String()), nil
+}

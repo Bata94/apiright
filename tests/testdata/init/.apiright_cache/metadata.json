@@ -1,0 +1,16 @@
+{
+  "schema_hash": "10f22af45ad41f10bd9e3c45e22922d9709494766024a9c808d7bb52534ddc6b",
+  "config_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sqlc_version": "1.0.0",
+  "generated_at": "2026-01-28T13:03:11.165689019+01:00",
+  "files": {
+    "go/db.go": "4011f4aeb75f181710a71c8ee829a75dd352bd47df728b5a3fee1a00a5ed83f9",
+    "go/models.go": "ebbec03605c8b551b645c6366f30ab4d65810788b05081c48f27640c66ba8b81",
+    "go/querier.go": "4b47c1a631e416769057ce059a63402c2544ff3e3129c93370ea1508f499125d",
+    "go/users.sql.go": "9a3684bdbb4df18f73c31b52870fa5f83eab8b9a53026bfe187ba868d9f45a79",
+    "proto/api_ar_gen.proto": "9423bd00309c870af508c62735f8d803032dd0e48ce10685ac88276e24bf01de",
+    "proto/db_ar_gen.proto": "03199d4ccb5cdc61121b827ece1e2dbcfe27378186682f7033dbfd0fbd01fe8f",
+    "sql/users_ar_gen.sql": "b8f753fe2324d1debd7e7f37e4fd9568c593543a8177fb29f8279db9bec0c7e4"
+  },
+  "plugins": []
+}
