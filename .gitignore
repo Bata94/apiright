@@ -1,8 +1,5 @@
 .direnv/
 
-./apiright
-apiright
-
 ./*.db
 ../*.db
 test*.go
