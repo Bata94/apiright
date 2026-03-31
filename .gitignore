@@ -11,10 +11,11 @@ test-project/
 
 # Generated code directory
 gen/
+.apiright_cache/
 
 bin/
 tmp/
-docs/
+# docs/
 
 # Local git hooks (auto-configured by just setup-hooks)
 hooks/pre-commit

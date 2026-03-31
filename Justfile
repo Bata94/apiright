@@ -179,6 +179,18 @@ setup-hooks:
 # Full CI pipeline: tidy, fmt, vet, lint, test, bench
 ci: tidy fmt vet lint test bench
 
+# ===== Release =====
+# Create a new release (provide type: just release patch|minor|major)
+release type:
+    @echo "Checking for uncommitted changes..."
+    @if [ -n "$(git status --porcelain)" ]; then \
+        echo "ERROR: Uncommitted changes detected. Commit or stash them first."; \
+        exit 1; \
+    fi
+    @echo "Running CI checks..."
+    just ci
+    @./scripts/release.sh {{type}}
+
 # ===== Help =====
 # List all recipes
 list:
