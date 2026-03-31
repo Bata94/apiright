@@ -4,6 +4,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8.svg)](https://golang.org/)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bata94/apiright)](https://goreportcard.com/report/github.com/bata94/apiright)
 
 ## Why APIRight?
 

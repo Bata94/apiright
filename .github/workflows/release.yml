@@ -31,10 +31,10 @@ jobs:
           nix develop --command bash -c "
             # Now 'go' and 'just' are available
             echo 'Running inside Nix dev shell'
-            rm -rf ./example
-            just mod-tidy
-            just pre-release
-            just build-cli-all
+            # rm -rf ./example
+            just tidy
+            just check
+            just build-all
           "
 
       - name: Create release
@@ -44,11 +44,11 @@ jobs:
         with:
           # Use the tag version in file name
           files: |
-            bin/apiright-cli-linux-amd64
-            bin/apiright-cli-linux-arm64
-            bin/apiright-cli-windows-amd64.exe
-            bin/apiright-cli-darwin-amd64
-            bin/apiright-cli-darwin-arm64
+            bin/apiright-linux-amd64
+            bin/apiright-linux-arm64
+            bin/apiright-windows-amd64.exe
+            bin/apiright-darwin-amd64
+            bin/apiright-darwin-arm64
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false

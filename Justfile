@@ -1,4 +1,5 @@
 # ===== Configuration =====
+BINARY-DIR := "bin"
 BINARY := "apiright"
 MAIN := "cmd/main.go"
 PKGS := "./..."
@@ -9,9 +10,19 @@ TEST_PKGS := "./tests/..."
 default: list
 
 # ===== Build & Run =====
-# Compile the apiright binary
+# Build the CLI for the current platform
 build:
-    go build -o {{BINARY}} {{MAIN}}
+  @echo "Building CLI..."
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}} {{MAIN}}
+
+# Build the CLI for all platforms
+build-all:
+  @echo "Building CLI for all platforms..."
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-amd64 {{MAIN}}
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-arm64 {{MAIN}}
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-windows-amd64.exe {{MAIN}}
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-amd64 {{MAIN}}
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-arm64 {{MAIN}}
 
 # Build and run apiright with arguments
 run +args:
