@@ -24,18 +24,14 @@ jobs:
             experimental-features = nix-command flakes
 
       # Enter the Nix development shell and run commands
-      - name: Run builds and checks in Nix shell
-        run: |
-          # The 'nix develop' command brings the packages and shellHook from flake.nix into scope
-          # Any commands run after this will have access to 'go', 'just', etc.
-          nix develop --command bash -c "
-            # Now 'go' and 'just' are available
-            echo 'Running inside Nix dev shell'
-            # rm -rf ./example
-            just tidy
-            just check
-            just build-all
-          "
+      - name: Run tidy
+        run: nix develop --command just tidy
+
+      - name: Run check
+        run: nix develop --command just check
+
+      - name: Build all platforms
+        run: nix develop --command just build-all
 
       - name: Create release
         id: create_release

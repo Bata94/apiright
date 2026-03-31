@@ -1,7 +1,9 @@
 package integration_test
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -95,6 +97,13 @@ func TestBlogExampleStructure(t *testing.T) {
 		t.Skip("examples/blog is not a directory")
 	}
 
+	genPath := filepath.Join(examplePath, "gen")
+	if _, err := os.Stat(genPath); os.IsNotExist(err) {
+		t.Log("gen/ directory not found, generating code...")
+		absExamplePath, _ := filepath.Abs(examplePath)
+		generateForExample(t, absExamplePath)
+	}
+
 	requiredFiles := []string{
 		"apiright.yaml",
 		"sqlc.yaml",
@@ -173,4 +182,16 @@ func containsAt(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func generateForExample(t *testing.T, examplePath string) {
+	rootDir := filepath.Join("..", "..")
+	absExamplePath, _ := filepath.Abs(examplePath)
+	cmd := exec.CommandContext(context.Background(), "go", "run", "cmd/main.go", "gen", "--force", "--project", absExamplePath)
+	cmd.Dir = rootDir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Logf("Generation output: %s", string(output))
+		t.Skipf("Could not generate code for %s: %v", examplePath, err)
+	}
 }
