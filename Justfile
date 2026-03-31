@@ -13,7 +13,7 @@ default: list
 # Build the CLI for the current platform
 build:
   @echo "Building CLI..."
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}} {{MAIN}}
+  CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}} {{MAIN}}
 
 # Build the CLI for all platforms
 build-all:
@@ -22,7 +22,7 @@ build-all:
   GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-arm64 {{MAIN}}
   GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-windows-amd64.exe {{MAIN}}
   GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-amd64 {{MAIN}}
-  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-arm64 {{MAIN}}
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-arm64 {{MAIN}}
 
 # Build and run apiright with arguments
 run +args:
