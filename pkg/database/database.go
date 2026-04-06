@@ -493,18 +493,18 @@ func (d *Database) Status() (string, error) {
 	}
 
 	var status strings.Builder
-	status.WriteString(fmt.Sprintf("Applied: %d\n", len(result.Applied)))
+	fmt.Fprintf(&status, "Applied: %d\n", len(result.Applied))
 	for _, m := range result.Applied {
 		executedAt := "N/A"
 		if m.ExecutedAt != nil {
 			executedAt = m.ExecutedAt.Format("2006-01-02 15:04:05")
 		}
-		status.WriteString(fmt.Sprintf("  ✓ %d: %s (executed: %s)\n", m.Version, m.Name, executedAt))
+		fmt.Fprintf(&status, "  ✓ %d: %s (executed: %s)\n", m.Version, m.Name, executedAt)
 	}
 
-	status.WriteString(fmt.Sprintf("Pending: %d\n", len(result.Pending)))
+	fmt.Fprintf(&status, "Pending: %d\n", len(result.Pending))
 	for _, m := range result.Pending {
-		status.WriteString(fmt.Sprintf("  ○ %d: %s\n", m.Version, m.Name))
+		fmt.Fprintf(&status, "  ○ %d: %s\n", m.Version, m.Name)
 	}
 
 	return status.String(), nil
