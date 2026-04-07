@@ -9,7 +9,7 @@ import (
 func TestJSONSerialization(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name":   "test",
 		"age":    42,
 		"active": true,
@@ -25,7 +25,7 @@ func TestJSONSerialization(t *testing.T) {
 		t.Errorf("JSON serialization mismatch:\nexpected: %s\ngot: %s", expected, string(data))
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	if err := cn.DeserializeRequest(data, "application/json", &result); err != nil {
 		t.Fatalf("Failed to deserialize JSON: %v", err)
 	}
@@ -38,7 +38,7 @@ func TestJSONSerialization(t *testing.T) {
 func TestXMLSerialization(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name": "test",
 		"age":  42,
 	}
@@ -60,7 +60,7 @@ func TestXMLSerialization(t *testing.T) {
 func TestYAMLSerialization(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name": "test",
 		"age":  42,
 	}
@@ -78,7 +78,7 @@ func TestYAMLSerialization(t *testing.T) {
 func TestTextSerialization(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name": "test",
 		"age":  42,
 	}
@@ -167,7 +167,7 @@ func TestWildcardMatching(t *testing.T) {
 func TestUnsupportedType(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name": "test",
 	}
 
@@ -176,7 +176,7 @@ func TestUnsupportedType(t *testing.T) {
 		t.Error("Expected error for unsupported type, got nil")
 	}
 
-	var target map[string]interface{}
+	var target map[string]any
 	err = cn.DeserializeRequest([]byte("test"), "application/unsupported", &target)
 	if err == nil {
 		t.Error("Expected error for unsupported type deserialization, got nil")
@@ -188,7 +188,7 @@ func TestRequestDeserialization(t *testing.T) {
 
 	t.Run("JSON", func(t *testing.T) {
 		data := []byte(`{"name":"test","age":42}`)
-		var result map[string]interface{}
+		var result map[string]any
 		if err := cn.DeserializeRequest(data, "application/json", &result); err != nil {
 			t.Fatalf("Failed to deserialize JSON: %v", err)
 		}

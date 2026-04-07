@@ -18,14 +18,14 @@ const (
 )
 
 type Logger interface {
-	Debug(msg string, fields ...interface{})
-	Info(msg string, fields ...interface{})
-	Warn(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-	DPanic(msg string, fields ...interface{})
-	Panic(msg string, fields ...interface{})
-	Fatal(msg string, fields ...interface{})
-	With(fields ...interface{}) Logger
+	Debug(msg string, fields ...any)
+	Info(msg string, fields ...any)
+	Warn(msg string, fields ...any)
+	Error(msg string, fields ...any)
+	DPanic(msg string, fields ...any)
+	Panic(msg string, fields ...any)
+	Fatal(msg string, fields ...any)
+	With(fields ...any) Logger
 	Sync() error
 }
 
@@ -81,7 +81,7 @@ func NewLoggerWithLevel(level string, development bool) (*ZapLogger, error) {
 	}, nil
 }
 
-func (l *ZapLogger) Debug(msg string, fields ...interface{}) {
+func (l *ZapLogger) Debug(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Debug(msg)
 	} else {
@@ -89,7 +89,7 @@ func (l *ZapLogger) Debug(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) Info(msg string, fields ...interface{}) {
+func (l *ZapLogger) Info(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Info(msg)
 	} else {
@@ -97,7 +97,7 @@ func (l *ZapLogger) Info(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) Warn(msg string, fields ...interface{}) {
+func (l *ZapLogger) Warn(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Warn(msg)
 	} else {
@@ -105,7 +105,7 @@ func (l *ZapLogger) Warn(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) Error(msg string, fields ...interface{}) {
+func (l *ZapLogger) Error(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Error(msg)
 	} else {
@@ -113,7 +113,7 @@ func (l *ZapLogger) Error(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) DPanic(msg string, fields ...interface{}) {
+func (l *ZapLogger) DPanic(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.DPanic(msg)
 	} else {
@@ -121,7 +121,7 @@ func (l *ZapLogger) DPanic(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) Panic(msg string, fields ...interface{}) {
+func (l *ZapLogger) Panic(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Panic(msg)
 	} else {
@@ -129,7 +129,7 @@ func (l *ZapLogger) Panic(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) Fatal(msg string, fields ...interface{}) {
+func (l *ZapLogger) Fatal(msg string, fields ...any) {
 	if len(fields) == 0 {
 		l.logger.Fatal(msg)
 	} else {
@@ -137,7 +137,7 @@ func (l *ZapLogger) Fatal(msg string, fields ...interface{}) {
 	}
 }
 
-func (l *ZapLogger) With(fields ...interface{}) Logger {
+func (l *ZapLogger) With(fields ...any) Logger {
 	return &ZapLogger{
 		logger: l.logger.With(l.fieldsToPairs(fields)...),
 	}
@@ -151,7 +151,7 @@ func (l *ZapLogger) Logger() *zap.Logger {
 	return l.logger
 }
 
-func (l *ZapLogger) fieldsToPairs(fields []interface{}) []zap.Field {
+func (l *ZapLogger) fieldsToPairs(fields []any) []zap.Field {
 	pairs := make([]zap.Field, 0, len(fields)/2)
 	for i := 0; i < len(fields)-1; i += 2 {
 		key, ok := fields[i].(string)
@@ -203,7 +203,7 @@ func Bool(key string, val bool) zap.Field {
 	return zap.Bool(key, val)
 }
 
-func Duration(key string, val interface{}) zap.Field {
+func Duration(key string, val any) zap.Field {
 	return zap.Any(key, val)
 }
 
@@ -211,7 +211,7 @@ func Error(err error) zap.Field {
 	return zap.Error(err)
 }
 
-func Any(key string, val interface{}) zap.Field {
+func Any(key string, val any) zap.Field {
 	return zap.Any(key, val)
 }
 
@@ -223,7 +223,7 @@ func NamedError(key string, err error) zap.Field {
 	return zap.NamedError(key, err)
 }
 
-func Time(key string, val interface{}) zap.Field {
+func Time(key string, val any) zap.Field {
 	return zap.Any(key, val)
 }
 

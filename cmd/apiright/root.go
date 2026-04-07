@@ -1,6 +1,10 @@
 package apiright
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/bata94/apiright/pkg/core"
 	"github.com/spf13/cobra"
 )
 
@@ -8,17 +12,18 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "apiright",
 	Short: "APIRight - Auto-generate APIs from SQL schemas",
-	Long: `APIRight is a modular Go framework that auto-generates v0 APIs 
+	Long: `APIRight is a modular Go framework that auto-generates v0 APIs
 from sqlc schemas, providing rapid development capabilities for startup teams.`,
 	Example: `  apiright init myproject
   apiright gen
   apiright serve
   apiright migrate up
   apiright --help`,
-	Version: "0.1.0",
 }
 
 func Execute() error {
+	rootCmd.Version = core.Version
+	fmt.Fprintf(os.Stderr, "APIRight version %s\n", core.Version)
 	return rootCmd.Execute()
 }
 

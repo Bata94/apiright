@@ -29,15 +29,15 @@ func (s *DualServer) initGRPCServer() error {
 }
 
 func (s *DualServer) chainGRPCInterceptors(interceptors []grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		var err error
-		var resp interface{}
+		var resp any
 
 		chain := handler
 		for i := len(interceptors) - 1; i >= 0; i-- {
 			currentInterceptor := interceptors[i]
 			nextChain := chain
-			chain = func(ctx context.Context, req interface{}) (interface{}, error) {
+			chain = func(ctx context.Context, req any) (any, error) {
 				resp, err = currentInterceptor(ctx, req, info, nextChain)
 				return resp, err
 			}
@@ -47,7 +47,7 @@ func (s *DualServer) chainGRPCInterceptors(interceptors []grpc.UnaryServerInterc
 	}
 }
 
-func (s *DualServer) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func (s *DualServer) unaryInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	start := time.Now()
 
 	s.logger.Info("gRPC call",

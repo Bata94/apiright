@@ -184,37 +184,37 @@ type simpleLogger struct {
 	verbose bool
 }
 
-func (l *simpleLogger) Debug(msg string, fields ...interface{}) {
+func (l *simpleLogger) Debug(msg string, fields ...any) {
 	if l.verbose {
 		fmt.Printf("[PLUGIN-DEBUG] %s %v\n", msg, fields)
 	}
 }
 
-func (l *simpleLogger) Info(msg string, fields ...interface{}) {
+func (l *simpleLogger) Info(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) Warn(msg string, fields ...interface{}) {
+func (l *simpleLogger) Warn(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN-WARN] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) Error(msg string, fields ...interface{}) {
+func (l *simpleLogger) Error(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN-ERROR] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) DPanic(msg string, fields ...interface{}) {
+func (l *simpleLogger) DPanic(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN-DPANIC] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) Panic(msg string, fields ...interface{}) {
+func (l *simpleLogger) Panic(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN-PANIC] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) Fatal(msg string, fields ...interface{}) {
+func (l *simpleLogger) Fatal(msg string, fields ...any) {
 	fmt.Printf("[PLUGIN-FATAL] %s %v\n", msg, fields)
 }
 
-func (l *simpleLogger) With(fields ...interface{}) core.Logger {
+func (l *simpleLogger) With(fields ...any) core.Logger {
 	return l
 }
 
@@ -274,7 +274,7 @@ func (pl *PluginLoader) LoadFromConfig(plugins []config.PluginConfig) error {
 type ConfigurablePlugin struct {
 	name    string
 	version string
-	config  map[string]interface{}
+	config  map[string]any
 }
 
 // Name returns the plugin name
@@ -391,7 +391,7 @@ const (
 type BasePlugin struct {
 	NameVal    string
 	VersionVal string
-	Config     map[string]interface{}
+	Config     map[string]any
 }
 
 // NewBasePlugin creates a new base plugin
@@ -399,7 +399,7 @@ func NewBasePlugin(name, version string) *BasePlugin {
 	return &BasePlugin{
 		NameVal:    name,
 		VersionVal: version,
-		Config:     make(map[string]interface{}),
+		Config:     make(map[string]any),
 	}
 }
 
@@ -414,12 +414,12 @@ func (bp *BasePlugin) Version() string {
 }
 
 // SetConfig sets the plugin configuration
-func (bp *BasePlugin) SetConfig(config map[string]interface{}) {
+func (bp *BasePlugin) SetConfig(config map[string]any) {
 	bp.Config = config
 }
 
 // GetConfig gets a configuration value
-func (bp *BasePlugin) GetConfig(key string) (interface{}, bool) {
+func (bp *BasePlugin) GetConfig(key string) (any, bool) {
 	value, exists := bp.Config[key]
 	return value, exists
 }

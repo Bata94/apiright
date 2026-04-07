@@ -71,11 +71,11 @@ type GenerationConfig struct {
 
 // PluginConfig holds plugin configuration
 type PluginConfig struct {
-	Name    string                 `yaml:"name"`
-	Version string                 `yaml:"version"`
-	Enabled bool                   `yaml:"enabled"`
-	Path    string                 `yaml:"path"`
-	Config  map[string]interface{} `yaml:"config"`
+	Name    string         `yaml:"name"`
+	Version string         `yaml:"version"`
+	Enabled bool           `yaml:"enabled"`
+	Path    string         `yaml:"path"`
+	Config  map[string]any `yaml:"config"`
 }
 
 // LoadConfig loads configuration from apiright.yaml file
@@ -365,7 +365,7 @@ func (c *PluginConfig) Merge(other *PluginConfig) *PluginConfig {
 	}
 	if other.Config != nil {
 		if result.Config == nil {
-			result.Config = make(map[string]interface{})
+			result.Config = make(map[string]any)
 		}
 		for k, v := range other.Config {
 			result.Config[k] = v

@@ -3,7 +3,11 @@ BINARY-DIR := "bin"
 BINARY := "apiright"
 MAIN := "cmd/main.go"
 PKGS := "./..."
-TEST_PKGS := "./tests/..."
+TEST_PKGS := "./tests..."
+
+# ===== Version =====
+# Read version from VERSION file (strips 'v' prefix)
+VERSION := `cat VERSION | sed 's/^v//'`
 
 # ===== Default =====
 # List all available recipes
@@ -12,17 +16,17 @@ default: list
 # ===== Build & Run =====
 # Build the CLI for the current platform
 build:
-  @echo "Building CLI..."
-  CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}} {{MAIN}}
+  @echo "Building CLI v{{VERSION }}..."
+  CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}} {{MAIN}}
 
 # Build the CLI for all platforms
 build-all:
   @echo "Building CLI for all platforms..."
-  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-amd64 {{MAIN}}
-  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-arm64 {{MAIN}}
-  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-windows-amd64.exe {{MAIN}}
-  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-amd64 {{MAIN}}
-  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-arm64 {{MAIN}}
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-amd64 {{MAIN}}
+  GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}}-linux-arm64 {{MAIN}}
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}}-windows-amd64.exe {{MAIN}}
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-amd64 {{MAIN}}
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-X github.com/bata94/apiright/pkg/core.Version={{VERSION }} -s -w" -o {{BINARY-DIR}}/{{BINARY}}-darwin-arm64 {{MAIN}}
 
 # Build and run apiright with arguments
 run +args:

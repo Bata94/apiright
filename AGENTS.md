@@ -69,6 +69,15 @@ All code must pass `just ci` (lint + vet + format check) before committing. We u
 4. Framework generates proto files to `gen/proto/`
 5. User imports directly from `gen/go/`
 
+### Version Management
+- **VERSION file** at project root is the single source of truth for CLI version
+- Version format: `vMAJOR.MINOR.PATCH` (e.g., `v0.7.7`)
+- The `v` prefix is stripped when injecting via ldflags
+- **CLI version**: Injected at build time via `go build -ldflags "-X .../core.Version={{VERSION }}"`
+- Use `just build` to produce versioned binaries
+- Use `go install` or `go get -tool` only for development (produces "dev" version)
+- **Generated code** references `apiright.yaml` version (project version, not CLI version)
+
 ## Development Rules
 
 ### When to Question Me

@@ -20,14 +20,14 @@ type ContentNegotiatorImpl struct {
 
 // XMLResponse represents a generic XML response with proper structure
 type XMLResponse struct {
-	XMLName xml.Name    `xml:"response"`
-	Data    interface{} `xml:",any"`
+	XMLName xml.Name `xml:"response"`
+	Data    any      `xml:",any"`
 }
 
 // XMLElement represents a generic XML element that can hold any data type
 type XMLElement struct {
 	XMLName  xml.Name
-	Value    interface{}  `xml:",chardata"`
+	Value    any          `xml:",chardata"`
 	Elements []XMLElement `xml:",any"`
 	Attrs    []xml.Attr   `xml:",attr"`
 }
@@ -52,7 +52,7 @@ func (cn *ContentNegotiatorImpl) SupportedTypes() []string {
 }
 
 // SerializeResponse serializes data to the specified content type
-func (cn *ContentNegotiatorImpl) SerializeResponse(data interface{}, contentType string) ([]byte, error) {
+func (cn *ContentNegotiatorImpl) SerializeResponse(data any, contentType string) ([]byte, error) {
 	switch contentType {
 	case "application/json":
 		return json.Marshal(data)
@@ -70,7 +70,7 @@ func (cn *ContentNegotiatorImpl) SerializeResponse(data interface{}, contentType
 }
 
 // DeserializeRequest deserializes data from the specified content type
-func (cn *ContentNegotiatorImpl) DeserializeRequest(data []byte, contentType string, target interface{}) error {
+func (cn *ContentNegotiatorImpl) DeserializeRequest(data []byte, contentType string, target any) error {
 	switch contentType {
 	case "application/json":
 		return json.Unmarshal(data, target)
@@ -242,7 +242,7 @@ func (cn *ContentNegotiatorImpl) SetDefaultType(defaultType string) {
 }
 
 // serializeProtobuf serializes data to protobuf format
-func (cn *ContentNegotiatorImpl) serializeProtobuf(data interface{}) ([]byte, error) {
+func (cn *ContentNegotiatorImpl) serializeProtobuf(data any) ([]byte, error) {
 	// Check if data is already a proto.Message
 	if protoMsg, ok := data.(proto.Message); ok {
 		return proto.Marshal(protoMsg)
@@ -257,7 +257,7 @@ func (cn *ContentNegotiatorImpl) serializeProtobuf(data interface{}) ([]byte, er
 }
 
 // deserializeProtobuf deserializes data from protobuf format
-func (cn *ContentNegotiatorImpl) deserializeProtobuf(data []byte, target interface{}) error {
+func (cn *ContentNegotiatorImpl) deserializeProtobuf(data []byte, target any) error {
 	// Check if target is a pointer to a proto.Message
 	targetValue := reflect.ValueOf(target)
 	if targetValue.Kind() != reflect.Ptr {
@@ -272,11 +272,11 @@ func (cn *ContentNegotiatorImpl) deserializeProtobuf(data []byte, target interfa
 	return fmt.Errorf("target is not a protobuf message pointer")
 }
 
-// serializeToXML converts map[string]interface{} to XML-serializable format
-func (cn *ContentNegotiatorImpl) serializeToXML(data interface{}) ([]byte, error) {
+// serializeToXML converts map[string]any to XML-serializable format
+func (cn *ContentNegotiatorImpl) serializeToXML(data any) ([]byte, error) {
 	// If data is already XML-serializable, use it directly
 	switch v := data.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		// Convert map to struct-based approach for XML compatibility
 		return cn.mapToXML(v)
 	default:
@@ -285,8 +285,8 @@ func (cn *ContentNegotiatorImpl) serializeToXML(data interface{}) ([]byte, error
 	}
 }
 
-// mapToXML converts map[string]interface{} to proper XML with full feature support
-func (cn *ContentNegotiatorImpl) mapToXML(data map[string]interface{}) ([]byte, error) {
+// mapToXML converts map[string]any to proper XML with full feature support
+func (cn *ContentNegotiatorImpl) mapToXML(data map[string]any) ([]byte, error) {
 	if data == nil {
 		return []byte("<response/>"), nil
 	}
@@ -304,7 +304,7 @@ func (cn *ContentNegotiatorImpl) mapToXML(data map[string]interface{}) ([]byte, 
 }
 
 // convertToXMLStructure recursively converts data to XML-serializable format
-func (cn *ContentNegotiatorImpl) convertToXMLStructure(data interface{}) interface{} {
+func (cn *ContentNegotiatorImpl) convertToXMLStructure(data any) any {
 	if data == nil {
 		return ""
 	}

@@ -15,7 +15,7 @@ func (s *DualServer) healthCheckHandler(w http.ResponseWriter, r *http.Request) 
 
 	contentType := s.detectContentType(r)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"status":    "ok",
 		"timestamp": time.Now().Format(time.RFC3339),
 		"version":   core.Version,
@@ -37,7 +37,7 @@ func (s *DualServer) healthCheckHandler(w http.ResponseWriter, r *http.Request) 
 func (s *DualServer) handleDefaultRoute(w http.ResponseWriter, r *http.Request) {
 	contentType := s.detectContentType(r)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"message":  "APIRight server is running",
 		"version":  core.Version,
 		"services": len(s.services),

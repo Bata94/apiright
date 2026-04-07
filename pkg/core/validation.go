@@ -30,12 +30,12 @@ func (e ValidationErrors) Error() string {
 }
 
 type ValidationRule interface {
-	Validate(field string, value interface{}) error
+	Validate(field string, value any) error
 }
 
 type RequiredRule struct{}
 
-func (r *RequiredRule) Validate(field string, value interface{}) error {
+func (r *RequiredRule) Validate(field string, value any) error {
 	if value == nil {
 		return ValidationError{Field: field, Message: "is required"}
 	}
@@ -57,7 +57,7 @@ type MinLenRule struct {
 	Min int
 }
 
-func (r *MinLenRule) Validate(field string, value interface{}) error {
+func (r *MinLenRule) Validate(field string, value any) error {
 	rv := reflect.ValueOf(value)
 	if rv.Kind() == reflect.String {
 		if rv.Len() < r.Min {
@@ -71,7 +71,7 @@ type MaxLenRule struct {
 	Max int
 }
 
-func (r *MaxLenRule) Validate(field string, value interface{}) error {
+func (r *MaxLenRule) Validate(field string, value any) error {
 	rv := reflect.ValueOf(value)
 	if rv.Kind() == reflect.String {
 		if rv.Len() > r.Max {
@@ -83,7 +83,7 @@ func (r *MaxLenRule) Validate(field string, value interface{}) error {
 
 type EmailRule struct{}
 
-func (r *EmailRule) Validate(field string, value interface{}) error {
+func (r *EmailRule) Validate(field string, value any) error {
 	rv := reflect.ValueOf(value)
 	if rv.Kind() == reflect.String {
 		emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
@@ -98,7 +98,7 @@ type MinValueRule struct {
 	Min int64
 }
 
-func (r *MinValueRule) Validate(field string, value interface{}) error {
+func (r *MinValueRule) Validate(field string, value any) error {
 	rv := reflect.ValueOf(value)
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -121,7 +121,7 @@ type MaxValueRule struct {
 	Max int64
 }
 
-func (r *MaxValueRule) Validate(field string, value interface{}) error {
+func (r *MaxValueRule) Validate(field string, value any) error {
 	rv := reflect.ValueOf(value)
 	switch rv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -178,7 +178,7 @@ func (v *BasicValidator) AddMaxValue(field string, max int64) {
 	v.AddRule(field, &MaxValueRule{Max: max})
 }
 
-func (v *BasicValidator) Validate(data map[string]interface{}) error {
+func (v *BasicValidator) Validate(data map[string]any) error {
 	var errors ValidationErrors
 	for field, rules := range v.rules {
 		value, exists := data[field]
@@ -226,7 +226,7 @@ func (cv *ColumnValidator) FromSchema(table string, schema *Schema) {
 	}
 }
 
-func (cv *ColumnValidator) Validate(data map[string]interface{}) error {
+func (cv *ColumnValidator) Validate(data map[string]any) error {
 	var errors ValidationErrors
 	for field, rules := range cv.columnRules {
 		value, exists := data[field]

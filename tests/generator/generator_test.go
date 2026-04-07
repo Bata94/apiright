@@ -9,15 +9,15 @@ import (
 
 type mockLogger struct{}
 
-func (l *mockLogger) Debug(msg string, fields ...interface{})  {}
-func (l *mockLogger) Info(msg string, fields ...interface{})   {}
-func (l *mockLogger) Warn(msg string, fields ...interface{})   {}
-func (l *mockLogger) Error(msg string, fields ...interface{})  {}
-func (l *mockLogger) DPanic(msg string, fields ...interface{}) {}
-func (l *mockLogger) Panic(msg string, fields ...interface{})  {}
-func (l *mockLogger) Fatal(msg string, fields ...interface{})  {}
-func (l *mockLogger) With(fields ...interface{}) core.Logger   { return l }
-func (l *mockLogger) Sync() error                              { return nil }
+func (l *mockLogger) Debug(msg string, fields ...any)  {}
+func (l *mockLogger) Info(msg string, fields ...any)   {}
+func (l *mockLogger) Warn(msg string, fields ...any)   {}
+func (l *mockLogger) Error(msg string, fields ...any)  {}
+func (l *mockLogger) DPanic(msg string, fields ...any) {}
+func (l *mockLogger) Panic(msg string, fields ...any)  {}
+func (l *mockLogger) Fatal(msg string, fields ...any)  {}
+func (l *mockLogger) With(fields ...any) core.Logger   { return l }
+func (l *mockLogger) Sync() error                      { return nil }
 
 func TestSQLGenerator_NewSQLGenerator(t *testing.T) {
 	logger := &mockLogger{}

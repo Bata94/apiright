@@ -13,7 +13,7 @@ func (s *DualServer) handleListRoute(w http.ResponseWriter, r *http.Request, tab
 	serviceName := s.toServiceName(tableName)
 	service, exists := s.serviceRegistry.GetService(serviceName)
 
-	var response interface{}
+	var response any
 	var err error
 
 	if exists {
@@ -61,7 +61,7 @@ func (s *DualServer) handleGetRoute(w http.ResponseWriter, r *http.Request, tabl
 	serviceName := s.toServiceName(tableName)
 	service, exists := s.serviceRegistry.GetService(serviceName)
 
-	var response interface{}
+	var response any
 	var err error
 
 	if exists {
@@ -88,12 +88,12 @@ func (s *DualServer) handleCreateRoute(w http.ResponseWriter, r *http.Request, t
 	serviceName := s.toServiceName(tableName)
 	service, exists := s.serviceRegistry.GetService(serviceName)
 
-	var response interface{}
+	var response any
 	var err error
 
 	if exists {
 		if serviceInterface, ok := service.(ServiceInterface); ok {
-			response, err = serviceInterface.Create(r.Context(), map[string]interface{}{
+			response, err = serviceInterface.Create(r.Context(), map[string]any{
 				"request_body": "would_be_deserialized",
 				"headers":      r.Header,
 			})
@@ -124,12 +124,12 @@ func (s *DualServer) handleUpdateRoute(w http.ResponseWriter, r *http.Request, t
 	serviceName := s.toServiceName(tableName)
 	service, exists := s.serviceRegistry.GetService(serviceName)
 
-	var response interface{}
+	var response any
 	var err error
 
 	if exists {
 		if serviceInterface, ok := service.(ServiceInterface); ok {
-			params := map[string]interface{}{
+			params := map[string]any{
 				"id":           id,
 				"request_body": "would_be_deserialized",
 				"headers":      r.Header,
@@ -174,7 +174,7 @@ func (s *DualServer) handleDeleteRoute(w http.ResponseWriter, r *http.Request, t
 		s.logger.Debug("No service found, using mock response", "table", tableName, "id", id)
 	}
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"message":   fmt.Sprintf("Delete %s successful", tableName),
 		"operation": "delete",
 		"id":        id,
@@ -198,7 +198,7 @@ func (s *DualServer) handleServiceError(w http.ResponseWriter, err error, conten
 		errorMsg = "Invalid request"
 	}
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"error":   errorMsg,
 		"message": err.Error(),
 		"status":  statusCode,
@@ -207,12 +207,12 @@ func (s *DualServer) handleServiceError(w http.ResponseWriter, err error, conten
 	s.serializeResponseWithStatus(w, response, contentType, statusCode)
 }
 
-func (s *DualServer) createMockResponse(operation, tableName, contentType string) interface{} {
+func (s *DualServer) createMockResponse(operation, tableName, contentType string) any {
 	opTitle := operation
 	if len(operation) > 0 {
 		opTitle = strings.ToUpper(string(operation[0])) + operation[1:]
 	}
-	return map[string]interface{}{
+	return map[string]any{
 		"message":   fmt.Sprintf("%s %s", opTitle, tableName),
 		"operation": operation,
 		"table":     tableName,
@@ -246,7 +246,7 @@ func parseInt32(s string) (int32, error) {
 	return int32(val), nil
 }
 
-func (s *DualServer) serializeResponseWithStatus(w http.ResponseWriter, response interface{}, contentType string, statusCode int) {
+func (s *DualServer) serializeResponseWithStatus(w http.ResponseWriter, response any, contentType string, statusCode int) {
 	data, err := s.contentNeg.SerializeResponse(response, contentType)
 	if err != nil {
 		http.Error(w, "Serialization failed", http.StatusInternalServerError)
@@ -260,7 +260,7 @@ func (s *DualServer) serializeResponseWithStatus(w http.ResponseWriter, response
 	}
 }
 
-func (s *DualServer) serializeResponse(w http.ResponseWriter, response interface{}, contentType string) {
+func (s *DualServer) serializeResponse(w http.ResponseWriter, response any, contentType string) {
 	data, err := s.contentNeg.SerializeResponse(response, contentType)
 	if err != nil {
 		http.Error(w, "Serialization failed", http.StatusInternalServerError)

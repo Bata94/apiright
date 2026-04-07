@@ -12,8 +12,8 @@ import (
 type ServiceRegistry struct {
 	db       *database.Database
 	logger   core.Logger
-	services map[string]interface{}
-	queriers map[string]interface{}
+	services map[string]any
+	queriers map[string]any
 }
 
 // NewServiceRegistry creates a new service registry
@@ -21,8 +21,8 @@ func NewServiceRegistry(db *database.Database, logger core.Logger) *ServiceRegis
 	return &ServiceRegistry{
 		db:       db,
 		logger:   logger,
-		services: make(map[string]interface{}),
-		queriers: make(map[string]interface{}),
+		services: make(map[string]any),
+		queriers: make(map[string]any),
 	}
 }
 
@@ -49,7 +49,7 @@ func (sr *ServiceRegistry) LoadGeneratedServices(projectDir string) error {
 }
 
 // createQuerier creates a sqlc querier from the database connection
-func (sr *ServiceRegistry) createQuerier() (interface{}, error) {
+func (sr *ServiceRegistry) createQuerier() (any, error) {
 	// Get the underlying database connection
 	db := sr.db.GetDB()
 	if db == nil {
@@ -65,25 +65,25 @@ func (sr *ServiceRegistry) createQuerier() (interface{}, error) {
 }
 
 // GetService returns a service by name
-func (sr *ServiceRegistry) GetService(name string) (interface{}, bool) {
+func (sr *ServiceRegistry) GetService(name string) (any, bool) {
 	service, exists := sr.services[name]
 	return service, exists
 }
 
 // GetQuerier returns a querier by name
-func (sr *ServiceRegistry) GetQuerier(name string) (interface{}, bool) {
+func (sr *ServiceRegistry) GetQuerier(name string) (any, bool) {
 	querier, exists := sr.queriers[name]
 	return querier, exists
 }
 
 // RegisterService manually registers a service (for testing or custom services)
-func (sr *ServiceRegistry) RegisterService(name string, service interface{}) {
+func (sr *ServiceRegistry) RegisterService(name string, service any) {
 	sr.services[name] = service
 	sr.logger.Info("Manually registered service", "name", name, "type", fmt.Sprintf("%T", service))
 }
 
 // CreateServiceFactory creates a service for a given table
-func (sr *ServiceRegistry) CreateServiceFactory(tableName string) (interface{}, error) {
+func (sr *ServiceRegistry) CreateServiceFactory(tableName string) (any, error) {
 	sr.logger.Info(fmt.Sprintf("CreateServiceFactory ENTRY for table: %s", tableName))
 
 	// Simple return for testing
@@ -106,11 +106,11 @@ type mockService struct {
 }
 
 // Get implements the Get method for mock service
-func (ms *mockService) Get(ctx context.Context, id interface{}) (interface{}, error) {
+func (ms *mockService) Get(ctx context.Context, id any) (any, error) {
 	ms.logger.Info("Mock Get called", "table", ms.tableName, "id", id)
 
 	// Return mock data
-	return map[string]interface{}{
+	return map[string]any{
 		"id":         id,
 		"name":       fmt.Sprintf("Mock %s", ms.tableName),
 		"created_at": "2026-01-28T12:00:00Z",
@@ -119,18 +119,18 @@ func (ms *mockService) Get(ctx context.Context, id interface{}) (interface{}, er
 }
 
 // List implements the List method for mock service
-func (ms *mockService) List(ctx context.Context, limit, offset int32) (interface{}, error) {
+func (ms *mockService) List(ctx context.Context, limit, offset int32) (any, error) {
 	ms.logger.Info("Mock List called", "table", ms.tableName, "limit", limit, "offset", offset)
 
 	// Return mock data
-	return []interface{}{
-		map[string]interface{}{
+	return []any{
+		map[string]any{
 			"id":         1,
 			"name":       fmt.Sprintf("Mock %s 1", ms.tableName),
 			"created_at": "2026-01-28T12:00:00Z",
 			"mock":       true,
 		},
-		map[string]interface{}{
+		map[string]any{
 			"id":         2,
 			"name":       fmt.Sprintf("Mock %s 2", ms.tableName),
 			"created_at": "2026-01-28T12:01:00Z",
@@ -140,11 +140,11 @@ func (ms *mockService) List(ctx context.Context, limit, offset int32) (interface
 }
 
 // Create implements the Create method for mock service
-func (ms *mockService) Create(ctx context.Context, params interface{}) (interface{}, error) {
+func (ms *mockService) Create(ctx context.Context, params any) (any, error) {
 	ms.logger.Info("Mock Create called", "table", ms.tableName, "params", params)
 
 	// Return mock created data
-	return map[string]interface{}{
+	return map[string]any{
 		"id":         999,
 		"name":       fmt.Sprintf("Created %s", ms.tableName),
 		"created_at": "2026-01-28T12:00:00Z",
@@ -154,11 +154,11 @@ func (ms *mockService) Create(ctx context.Context, params interface{}) (interfac
 }
 
 // Update implements the Update method for mock service
-func (ms *mockService) Update(ctx context.Context, params interface{}) (interface{}, error) {
+func (ms *mockService) Update(ctx context.Context, params any) (any, error) {
 	ms.logger.Info("Mock Update called", "table", ms.tableName, "params", params)
 
 	// Return mock updated data
-	return map[string]interface{}{
+	return map[string]any{
 		"id":         999,
 		"name":       fmt.Sprintf("Updated %s", ms.tableName),
 		"updated_at": "2026-01-28T12:00:00Z",
@@ -168,18 +168,18 @@ func (ms *mockService) Update(ctx context.Context, params interface{}) (interfac
 }
 
 // Delete implements the Delete method for mock service
-func (ms *mockService) Delete(ctx context.Context, id interface{}) error {
+func (ms *mockService) Delete(ctx context.Context, id any) error {
 	ms.logger.Info("Mock Delete called", "table", ms.tableName, "id", id)
 	return nil
 }
 
 // ServiceInterface defines the common interface for all services
 type ServiceInterface interface {
-	Get(ctx context.Context, id interface{}) (interface{}, error)
-	List(ctx context.Context, limit, offset int32) (interface{}, error)
-	Create(ctx context.Context, params interface{}) (interface{}, error)
-	Update(ctx context.Context, params interface{}) (interface{}, error)
-	Delete(ctx context.Context, id interface{}) error
+	Get(ctx context.Context, id any) (any, error)
+	List(ctx context.Context, limit, offset int32) (any, error)
+	Create(ctx context.Context, params any) (any, error)
+	Update(ctx context.Context, params any) (any, error)
+	Delete(ctx context.Context, id any) error
 }
 
 // Ensure mockService implements ServiceInterface

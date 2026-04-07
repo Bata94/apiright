@@ -73,7 +73,7 @@ func (lm *LoggingMiddleware) Handler() func(http.Handler) http.Handler {
 
 // GRPCInterceptor returns gRPC interceptor
 func (lm *LoggingMiddleware) GRPCInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		start := time.Now()
 
 		lm.logger.Info("gRPC request",
@@ -270,7 +270,7 @@ func (rm *RateLimitMiddleware) Handler() func(http.Handler) http.Handler {
 
 // GRPCInterceptor returns gRPC interceptor
 func (rm *RateLimitMiddleware) GRPCInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		// Extract client info from context (if available)
 		clientIP := rm.extractGRPCClientIP(ctx)
 
@@ -383,7 +383,7 @@ func (vm *ValidationMiddleware) Handler() func(http.Handler) http.Handler {
 
 // GRPCInterceptor returns gRPC interceptor
 func (vm *ValidationMiddleware) GRPCInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		// Basic validation
 		if vm.validator != nil {
 			if err := vm.validator.Validate(req); err != nil {

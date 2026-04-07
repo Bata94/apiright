@@ -346,21 +346,21 @@ type simpleLogger struct {
 	verbose bool
 }
 
-func (l *simpleLogger) Debug(msg string, fields ...interface{}) {
+func (l *simpleLogger) Debug(msg string, fields ...any) {
 	if l.verbose {
 		fmt.Println("[DEBUG]", msg, fields)
 	}
 }
 
-func (l *simpleLogger) Info(msg string, fields ...interface{}) {
+func (l *simpleLogger) Info(msg string, fields ...any) {
 	fmt.Println("[INFO]", msg)
 }
 
-func (l *simpleLogger) Warn(msg string, fields ...interface{}) {
+func (l *simpleLogger) Warn(msg string, fields ...any) {
 	fmt.Println("[WARN]", msg, fields)
 }
 
-func (l *simpleLogger) Error(msg string, fields ...interface{}) {
+func (l *simpleLogger) Error(msg string, fields ...any) {
 	fmt.Println("[ERROR]", msg, fields)
 }
 `, projectName)

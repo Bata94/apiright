@@ -13,7 +13,7 @@ import (
 func TestContentNegotiationIntegration(t *testing.T) {
 	cn := core.NewContentNegotiator()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"id":   1,
 		"name": "test",
 	}

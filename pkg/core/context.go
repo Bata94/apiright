@@ -17,7 +17,7 @@ type GenerationContext struct {
 	ModulePath   string
 	Schema       *Schema
 	Logger       Logger
-	Config       map[string]interface{}
+	Config       map[string]any
 	Output       io.Writer
 	ContentTypes []string
 }
@@ -28,7 +28,7 @@ func NewGenerationContext(projectDir string) *GenerationContext {
 		ProjectDir:  projectDir,
 		GenDir:      filepath.Join(projectDir, "gen"),
 		UserQueries: filepath.Join(projectDir, "queries"),
-		Config:      make(map[string]interface{}),
+		Config:      make(map[string]any),
 		Output:      os.Stdout,
 		ContentTypes: []string{
 			"application/json",
@@ -65,13 +65,13 @@ func (gc *GenerationContext) WithSchema(schema *Schema) *GenerationContext {
 }
 
 // WithConfig sets a configuration value
-func (gc *GenerationContext) WithConfig(key string, value interface{}) *GenerationContext {
+func (gc *GenerationContext) WithConfig(key string, value any) *GenerationContext {
 	gc.Config[key] = value
 	return gc
 }
 
 // GetConfig gets a configuration value
-func (gc *GenerationContext) GetConfig(key string) (interface{}, bool) {
+func (gc *GenerationContext) GetConfig(key string) (any, bool) {
 	value, exists := gc.Config[key]
 	return value, exists
 }
@@ -97,7 +97,7 @@ func (gc *GenerationContext) GetConfigBool(key string) bool {
 }
 
 // Log logs a message if logger is available
-func (gc *GenerationContext) Log(level, message string, args ...interface{}) {
+func (gc *GenerationContext) Log(level, message string, args ...any) {
 	if gc.Logger != nil {
 		switch level {
 		case "debug":
@@ -129,7 +129,7 @@ func (gc *GenerationContext) Writeln(message string) {
 }
 
 // Writef writes a formatted message to the output
-func (gc *GenerationContext) Writef(format string, args ...interface{}) {
+func (gc *GenerationContext) Writef(format string, args ...any) {
 	if gc.Output != nil {
 		_, _ = fmt.Fprintf(gc.Output, format, args...)
 	}

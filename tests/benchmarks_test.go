@@ -170,7 +170,7 @@ func BenchmarkContentNegotiationDetection(b *testing.B) {
 }
 
 func BenchmarkContentNegotiationSerialization(b *testing.B) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"id":    1,
 		"name":  "Test Item",
 		"count": 42,
@@ -235,7 +235,7 @@ func detectContentType(accept string) string {
 	return "application/json"
 }
 
-func serializeToJSON(data map[string]interface{}) string {
+func serializeToJSON(data map[string]any) string {
 	var sb strings.Builder
 	sb.WriteString("{")
 	first := true

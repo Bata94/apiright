@@ -16,7 +16,7 @@ func main() {
 
 	// Example 1: Using structpb for dynamic data (useful for generic APIs)
 	fmt.Println("\n1. Dynamic protobuf with structpb:")
-	dynamicData := map[string]interface{}{
+	dynamicData := map[string]any{
 		"user_id":  123,
 		"username": "johndoe",
 		"active":   true,

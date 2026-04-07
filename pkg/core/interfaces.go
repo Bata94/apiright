@@ -13,7 +13,7 @@ type Server interface {
 	Stop() error
 
 	// RegisterService registers a service with the server
-	RegisterService(service interface{}) error
+	RegisterService(service any) error
 
 	// Address returns the listening address
 	Address() string
@@ -34,7 +34,7 @@ type Database interface {
 	Migrate() error
 
 	// Connection returns the underlying database connection
-	Connection() interface{}
+	Connection() any
 }
 
 // Plugin defines the interface for framework plugins
@@ -69,10 +69,10 @@ type ContentNegotiator interface {
 	SupportedTypes() []string
 
 	// SerializeResponse serializes data to the specified content type
-	SerializeResponse(data interface{}, contentType string) ([]byte, error)
+	SerializeResponse(data any, contentType string) ([]byte, error)
 
 	// DeserializeRequest deserializes data from the specified content type
-	DeserializeRequest(data []byte, contentType string, target interface{}) error
+	DeserializeRequest(data []byte, contentType string, target any) error
 
 	// DetectContentType detects content type from Accept header
 	DetectContentType(header string) string
@@ -81,16 +81,16 @@ type ContentNegotiator interface {
 // Validator defines the interface for data validation
 type Validator interface {
 	// Validate validates the given data
-	Validate(data interface{}) error
+	Validate(data any) error
 
 	// ValidateField validates a specific field
-	ValidateField(field string, value interface{}) error
+	ValidateField(field string, value any) error
 }
 
 // Config defines the interface for configuration
 type Config interface {
 	// Get returns a configuration value
-	Get(key string) interface{}
+	Get(key string) any
 
 	// GetString returns a string configuration value
 	GetString(key string) string
@@ -102,7 +102,7 @@ type Config interface {
 	GetBool(key string) bool
 
 	// Set sets a configuration value
-	Set(key string, value interface{})
+	Set(key string, value any)
 }
 
 // Schema represents a database schema
@@ -176,10 +176,10 @@ type Type struct {
 
 // ServiceMethod represents a service method
 type ServiceMethod struct {
-	Name        string      `json:"name"`
-	Input       interface{} `json:"input"`
-	Output      interface{} `json:"output"`
-	Description string      `json:"description"`
+	Name        string `json:"name"`
+	Input       any    `json:"input"`
+	Output      any    `json:"output"`
+	Description string `json:"description"`
 }
 
 // Service represents a service definition

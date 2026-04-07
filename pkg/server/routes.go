@@ -53,7 +53,7 @@ func (s *DualServer) setupHTTPRoutes(mux *http.ServeMux) {
 	}
 }
 
-func (s *DualServer) registerHTTPService(service interface{}) error {
+func (s *DualServer) registerHTTPService(service any) error {
 	serviceType := fmt.Sprintf("%T", service)
 	s.logger.Info("Registering HTTP service", "service", serviceType)
 
@@ -69,7 +69,7 @@ func (s *DualServer) registerHTTPService(service interface{}) error {
 	return nil
 }
 
-func (s *DualServer) registerCRUDRoutes(tableName string, service interface{}) {
+func (s *DualServer) registerCRUDRoutes(tableName string, service any) {
 	s.logger.Debug("CRUD routes placeholder registered", "table", tableName)
 }
 

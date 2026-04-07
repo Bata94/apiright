@@ -2,7 +2,7 @@ package core
 
 import "strings"
 
-const Version = "0.1.0"
+var Version = "dev"
 
 var sqlToGoTypeMap = map[string]string{
 	"INTEGER":   "int64",
@@ -84,7 +84,7 @@ func SQLTypeToOpenAPI(sqlType string) string {
 	}
 }
 
-func GetExampleValue(sqlType string) interface{} {
+func GetExampleValue(sqlType string) any {
 	sqlType = strings.ToLower(sqlType)
 
 	switch {

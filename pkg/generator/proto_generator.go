@@ -112,7 +112,7 @@ func (pg *ProtoGenerator) generateMessages(schema *core.Schema, ctx *core.Genera
 
 	// Execute template
 	var buf strings.Builder
-	data := map[string]interface{}{
+	data := map[string]any{
 		"PackageName": "db",
 		"Messages":    messages,
 		"GoPackage":   "gen/go/db",
@@ -143,7 +143,7 @@ func (pg *ProtoGenerator) generateServices(schema *core.Schema, ctx *core.Genera
 
 	// Execute template
 	var buf strings.Builder
-	data := map[string]interface{}{
+	data := map[string]any{
 		"PackageName": "api",
 		"Services":    services,
 		"GoPackage":   "gen/go/api",

@@ -83,7 +83,7 @@ type OpenAPIRequestBody struct {
 
 type OpenAPIMediaType struct {
 	Schema  *OpenAPISchema `yaml:"schema,omitempty"`
-	Example interface{}    `yaml:"example,omitempty"`
+	Example any            `yaml:"example,omitempty"`
 }
 
 type OpenAPIResponse struct {
@@ -101,7 +101,7 @@ type OpenAPISchema struct {
 	Required   []string                 `yaml:"required,omitempty"`
 	Items      *OpenAPISchema           `yaml:"items,omitempty"`
 	Format     string                   `yaml:"format,omitempty"`
-	Example    interface{}              `yaml:"example,omitempty"`
+	Example    any                      `yaml:"example,omitempty"`
 }
 
 func (g *OpenAPIGenerator) Generate(schema *core.Schema, ctx *core.GenerationContext) error {
@@ -328,8 +328,8 @@ func (g *OpenAPIGenerator) getInputProperties(table core.Table) map[string]OpenA
 	return props
 }
 
-func (g *OpenAPIGenerator) getCreateExample(table core.Table) map[string]interface{} {
-	example := make(map[string]interface{})
+func (g *OpenAPIGenerator) getCreateExample(table core.Table) map[string]any {
+	example := make(map[string]any)
 	for _, col := range table.Columns {
 		if col.AutoIncrement {
 			continue

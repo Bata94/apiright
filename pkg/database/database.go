@@ -165,7 +165,7 @@ func (d *Database) Migrate() error {
 }
 
 // Connection returns the underlying database connection
-func (d *Database) Connection() interface{} {
+func (d *Database) Connection() any {
 	return d.db
 }
 

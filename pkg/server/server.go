@@ -31,7 +31,7 @@ type DualServer struct {
 	logger             core.Logger
 	mu                 sync.RWMutex
 	started            bool
-	services           []interface{}
+	services           []any
 	middlewareRegistry *middleware.MiddlewareRegistry
 	serviceRegistry    *ServiceRegistry
 }
@@ -43,7 +43,7 @@ func NewServer(cfg *config.ServerConfig, db *database.Database, logger core.Logg
 		db:                 db,
 		contentNeg:         core.NewContentNegotiator(),
 		logger:             logger,
-		services:           []interface{}{},
+		services:           []any{},
 		middlewareRegistry: middleware.NewMiddlewareRegistry(logger),
 		serviceRegistry:    NewServiceRegistry(db, logger),
 	}
@@ -248,12 +248,12 @@ func (s *DualServer) Stop() error {
 }
 
 // RegisterService registers a service with enabled HTTP and/or gRPC servers
-func (s *DualServer) RegisterService(service interface{}) error {
+func (s *DualServer) RegisterService(service any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.services == nil {
-		s.services = make([]interface{}, 0)
+		s.services = make([]any, 0)
 	}
 
 	s.services = append(s.services, service)
@@ -321,7 +321,7 @@ func (s *DualServer) createHTTPHandler() http.Handler {
 }
 
 // registerGRPCService registers a service with the gRPC server
-func (s *DualServer) registerGRPCService(service interface{}) error {
+func (s *DualServer) registerGRPCService(service any) error {
 	serviceType := fmt.Sprintf("%T", service)
 	s.logger.Info("Registering gRPC service", "service", serviceType)
 	s.logger.Debug("Service registered successfully", "service", serviceType)

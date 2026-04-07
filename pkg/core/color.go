@@ -30,34 +30,34 @@ func checkColorSupport() bool {
 	return os.Getenv("TERM") != "dumb"
 }
 
-func colorize(color Color, format string, args ...interface{}) string {
+func colorize(color Color, format string, args ...any) string {
 	if !supportsColor {
 		return fmt.Sprintf(format, args...)
 	}
 	return fmt.Sprintf("\033[%dm%s\033[0m", color, fmt.Sprintf(format, args...))
 }
 
-func Greenf(format string, args ...interface{}) string {
+func Greenf(format string, args ...any) string {
 	return colorize(Green, format, args...)
 }
 
-func Redf(format string, args ...interface{}) string {
+func Redf(format string, args ...any) string {
 	return colorize(Red, format, args...)
 }
 
-func Yellowf(format string, args ...interface{}) string {
+func Yellowf(format string, args ...any) string {
 	return colorize(Yellow, format, args...)
 }
 
-func Bluef(format string, args ...interface{}) string {
+func Bluef(format string, args ...any) string {
 	return colorize(Blue, format, args...)
 }
 
-func Cyanf(format string, args ...interface{}) string {
+func Cyanf(format string, args ...any) string {
 	return colorize(Cyan, format, args...)
 }
 
-func Boldf(format string, args ...interface{}) string {
+func Boldf(format string, args ...any) string {
 	if !supportsColor {
 		return fmt.Sprintf(format, args...)
 	}

@@ -94,7 +94,7 @@ func (spl *SourcePluginLoader) parseAndInstantiatePlugin(source, path string) (c
 	plugin := &ConfigurablePlugin{
 		name:    pluginInfo.name,
 		version: pluginInfo.version,
-		config:  make(map[string]interface{}),
+		config:  make(map[string]any),
 	}
 
 	return plugin, nil

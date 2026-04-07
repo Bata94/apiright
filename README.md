@@ -108,7 +108,15 @@ Available exports include:
 
 ### 1. Install
 
-**Standard install** (adds `apiright` to PATH):
+**For versioned binaries** (recommended):
+```bash
+git clone https://github.com/bata94/apiright
+cd apiright
+just build
+./bin/apiright --help
+```
+
+**For development/testing** (gives "dev" version):
 ```bash
 go install github.com/bata94/apiright/cmd/apiright@latest
 apiright --help
