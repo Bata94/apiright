@@ -1,6 +1,10 @@
-package apiright
+package main
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/bata94/apiright/cmd/apiright"
 	"github.com/bata94/apiright/pkg/config"
 	"github.com/bata94/apiright/pkg/core"
 	"github.com/bata94/apiright/pkg/database"
@@ -97,3 +101,10 @@ var ToPascalCase = core.ToPascalCase
 var ParseContentHeader = core.ParseContentHeader
 
 var Version = core.Version
+
+func main() {
+	if err := apiright.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}
