@@ -199,6 +199,7 @@ func runServe(cmd *cobra.Command) error {
 	<-quit
 
 	logger.Info("Shutting down server...")
+	cancel()
 	if err := srv.Stop(); err != nil {
 		logger.Error("Error stopping server", "error", err)
 	}

@@ -130,15 +130,16 @@ func (s *DualServer) discoverTables(projectDir string) ([]string, error) {
 // Start starts HTTP and/or gRPC servers based on config
 func (s *DualServer) Start(ctx context.Context) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	if s.started {
+		s.mu.Unlock()
 		return fmt.Errorf("server already started")
 	}
 
 	// Initialize HTTP server if enabled
 	if s.config.EnableHTTP {
 		if err := s.initHTTPServer(); err != nil {
+			s.mu.Unlock()
 			return fmt.Errorf("failed to initialize HTTP server: %w", err)
 		}
 	}
@@ -146,9 +147,14 @@ func (s *DualServer) Start(ctx context.Context) error {
 	// Initialize gRPC server if enabled
 	if s.config.EnableGRPC {
 		if err := s.initGRPCServer(); err != nil {
+			s.mu.Unlock()
 			return fmt.Errorf("failed to initialize gRPC server: %w", err)
 		}
 	}
+
+	// Mark server as started before releasing lock
+	s.started = true
+	s.mu.Unlock()
 
 	// Start HTTP server in goroutine if enabled
 	httpErrChan := make(chan error, 1)
@@ -194,18 +200,30 @@ func (s *DualServer) Start(ctx context.Context) error {
 		close(runningChan)
 	}()
 
-	// Wait for context cancellation or server errors
+	// Wait for servers to start before setting up shutdown
+	<-runningChan
+
+	// Create dedicated shutdown channel
+	shutdownChan := make(chan struct{})
+
+	// Goroutine to translate context cancellation to shutdown signal
+	go func() {
+		<-ctx.Done()
+		close(shutdownChan)
+	}()
+
+	// Wait for shutdown signal or server errors
 	for {
 		select {
-		case <-ctx.Done():
+		case <-shutdownChan:
 			s.logger.Info("Shutdown signal received")
 			return s.Stop()
 		case err := <-httpErrChan:
 			return fmt.Errorf("HTTP server failed: %w", err)
 		case err := <-grpcErrChan:
 			return fmt.Errorf("gRPC server failed: %w", err)
-		case <-runningChan:
-			// Servers started, now wait for shutdown
+		default:
+			time.Sleep(time.Millisecond)
 		}
 	}
 }
