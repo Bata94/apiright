@@ -108,8 +108,16 @@ Available exports include:
 
 ### 1. Install
 
+**Standard install** (adds `apiright` to PATH):
 ```bash
 go install github.com/bata94/apiright/cmd/apiright@latest
+apiright --help
+```
+
+**Go tool install** (Go 1.22+, keeps tool in module cache):
+```bash
+go get -tool github.com/bata94/apiright@latest
+go tool apiright --help
 ```
 
 ### 2. Initialize Project

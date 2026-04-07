@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bata94/apiright/cmd/apiright"
+
 	"github.com/bata94/apiright/pkg/config"
 	"github.com/bata94/apiright/pkg/core"
 	"github.com/bata94/apiright/pkg/database"
