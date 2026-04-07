@@ -40,6 +40,7 @@ project/
 ├── queries/          # User-written custom SQL queries
 ├── proto/            # User-written custom protobuf extensions
 ├── migrations/       # Database migration files
+├── apiright.go       # Root package re-exports for library consumers
 ├── sqlc.yaml         # Single sqlc configuration
 └── apiright.yaml     # Framework configuration
 ```

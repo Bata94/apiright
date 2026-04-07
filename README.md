@@ -13,6 +13,30 @@
 - **Flexible**: Customize with custom queries and plugins
 - **Modern**: HTTP + gRPC with automatic content negotiation
 
+## Library Usage
+
+Import the root package for convenient access to all core types:
+
+```go
+import "github.com/bata94/apiright"
+
+func main() {
+    // Use types directly from root package
+    cfg := apiright.DefaultConfig()
+    logger, _ := apiright.NewLogger(false)
+    ctx := apiright.NewGenerationContext(".")
+    
+    // Generate code
+    gen, _ := apiright.NewGenerator(".", apiright.GenerateOptions{}, logger, nil)
+    gen.Generate(ctx, apiright.GenerateOptions{})
+}
+```
+
+Available exports include:
+- **Types**: `Schema`, `Table`, `Column`, `Database`, `DualServer`, `Config`, `Generator`
+- **Functions**: `NewLogger`, `NewGenerator`, `NewServer`, `LoadConfig`, `NewDatabase`
+- **Constants**: Content types, log levels, status codes
+
 ## Features
 
 ### Server
