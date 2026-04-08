@@ -14,6 +14,7 @@ import (
 	"github.com/bata94/apiright/pkg/database"
 	"github.com/bata94/apiright/pkg/middleware"
 	"github.com/bata94/apiright/pkg/server"
+	"github.com/example/blog-api/gen/go/adapters"
 )
 
 var devMode = flag.Bool("dev", true, "Development mode")
@@ -60,11 +61,13 @@ func main() {
 	mwRegistry.RegisterGRPC(middleware.GRPCLoggingInterceptor(logger))
 	mwRegistry.RegisterGRPC(middleware.GRPCRecoveryInterceptor())
 
-	srv := server.NewServer(&cfg.Server, db, logger)
+	srv := server.NewServer(&cfg.Server, ".", db, logger)
 	srv.SetMiddlewareRegistry(mwRegistry)
 
-	if err := srv.RegisterGeneratedServices("."); err != nil {
-		logger.Warn("Failed to register services", core.Error(err))
+	// Initialize service adapters (real database-backed services)
+	if err := adapters.Init(srv, db, logger); err != nil {
+		logger.Error("Failed to initialize service adapters", core.Error(err))
+		os.Exit(1)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

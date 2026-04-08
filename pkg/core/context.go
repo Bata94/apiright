@@ -20,6 +20,16 @@ type GenerationContext struct {
 	Config       map[string]any
 	Output       io.Writer
 	ContentTypes []string
+	ServerConfig ServerConfig // Server configuration for generation
+}
+
+// ServerConfig holds server config relevant to code generation
+type ServerConfig struct {
+	Host       string
+	HTTPPort   int
+	GRPCPort   int
+	APIVersion string
+	BasePath   string
 }
 
 // NewGenerationContext creates a new generation context
@@ -67,6 +77,12 @@ func (gc *GenerationContext) WithSchema(schema *Schema) *GenerationContext {
 // WithConfig sets a configuration value
 func (gc *GenerationContext) WithConfig(key string, value any) *GenerationContext {
 	gc.Config[key] = value
+	return gc
+}
+
+// WithServerConfig sets the server configuration
+func (gc *GenerationContext) WithServerConfig(cfg ServerConfig) *GenerationContext {
+	gc.ServerConfig = cfg
 	return gc
 }
 

@@ -1,18 +1,16 @@
 package apiright
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/bata94/apiright/pkg/config"
 	"github.com/bata94/apiright/pkg/core"
-	"github.com/bata94/apiright/pkg/database"
 	"github.com/bata94/apiright/pkg/generator"
 	"github.com/bata94/apiright/pkg/plugins"
-	"github.com/bata94/apiright/pkg/server"
 	"github.com/spf13/cobra"
 )
 
@@ -75,8 +73,16 @@ func runGenerate(cmd *cobra.Command, options generator.GenerateOptions) error {
 	// Create generation context
 	ctx := core.NewGenerationContext(projectDir).
 		WithLogger(logger).
+		WithModulePath(cfg.Project.Module).
 		WithConfig("database_type", cfg.Database.Type).
-		WithConfig("gen_suffix", cfg.Generation.GenSuffix)
+		WithConfig("gen_suffix", cfg.Generation.GenSuffix).
+		WithServerConfig(core.ServerConfig{
+			Host:       cfg.Server.Host,
+			HTTPPort:   cfg.Server.HTTPPort,
+			GRPCPort:   cfg.Server.GRPCPort,
+			APIVersion: cfg.Server.APIVersion,
+			BasePath:   cfg.Server.BasePath,
+		})
 
 	// Create plugin registry
 	pluginRegistry := plugins.NewPluginRegistry()
@@ -157,53 +163,113 @@ func runServe(cmd *cobra.Command) error {
 	}
 	defer core.SyncLogger(logger)
 
-	// Initialize database
-	db, err := database.NewDatabase(&cfg.Database, logger)
+	// Check if user has their own main.go
+	userMainPath := filepath.Join(projectDir, "main.go")
+	if _, err := os.Stat(userMainPath); err == nil {
+		// User has their own main.go, use it
+		logger.Info("Using project's main.go")
+		return runUserMain(projectDir, logger)
+	}
+
+	// Check if adapters exist
+	adaptersDir := filepath.Join(projectDir, "gen", "go", "adapters")
+	if _, err := os.Stat(adaptersDir); os.IsNotExist(err) {
+		return fmt.Errorf("no generated adapters found in %s. Run 'apiright gen' first", adaptersDir)
+	}
+
+	// Generate and run temporary server with real adapters
+	return runTempServer(projectDir, cfg, logger)
+}
+
+// runUserMain runs the project's own main.go
+func runUserMain(projectDir string, logger core.Logger) error {
+	logger.Info("Compiling project server...")
+
+	cmd := exec.Command("go", "run", ".")
+	cmd.Dir = projectDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
+}
+
+// runTempServer generates and runs a temporary server with real adapters
+func runTempServer(projectDir string, cfg *config.Config, logger core.Logger) error {
+	// Get apiright directory (current binary location)
+	apirightDir := getAPIRightDir()
+
+	// Create temp server generator
+	tsg := generator.NewTempServerGenerator(logger)
+
+	// Check cache first
+	cacheKey := tsg.GetCacheKey(projectDir, cfg)
+	cachedBinary, found := tsg.CheckCache(projectDir, cacheKey)
+
+	if found {
+		logger.Info("✅ Using cached server")
+		return runBinary(cachedBinary, projectDir)
+	}
+
+	logger.Info("🔨 Compiling server with real database services...")
+	logger.Info("⏳ This takes 5-10 seconds on first run")
+
+	// Generate temp server files
+	tempDir, err := tsg.GenerateTempServer(projectDir, cfg, apirightDir)
 	if err != nil {
-		return fmt.Errorf("failed to create database: %w", err)
+		return fmt.Errorf("failed to generate temp server: %w", err)
 	}
 
-	// Connect to database
-	if err := db.Connect(); err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
-	}
-	defer core.Close("database", db, logger)
+	// Build the binary
+	binaryPath := filepath.Join(tempDir, "server")
+	buildCmd := exec.Command("go", "build", "-o", binaryPath, ".")
+	buildCmd.Dir = tempDir
+	buildCmd.Env = os.Environ()
 
-	// Run migrations
-	if err := db.Migrate(); err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
-	}
-
-	// Initialize server
-	srv := server.NewServer(&cfg.Server, projectDir, db, logger)
-
-	logger.Info("Starting APIRight server",
-		"http", cfg.Server.GetHTTPAddress(),
-		"grpc", cfg.Server.GetGRPCAddress(),
-		"database", cfg.Database.Type,
-	)
-
-	// Start server
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func() {
-		if err := srv.Start(ctx); err != nil {
-			logger.Error("Server error", "error", err)
-		}
-	}()
-
-	// Wait for interrupt signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	logger.Info("Shutting down server...")
-	cancel()
-	if err := srv.Stop(); err != nil {
-		logger.Error("Error stopping server", "error", err)
+	output, err := buildCmd.CombinedOutput()
+	if err != nil {
+		// Show full compiler output
+		fmt.Fprintf(os.Stderr, "\n❌ Compilation failed:\n%s\n", string(output))
+		return fmt.Errorf("failed to build server: %w", err)
 	}
 
-	logger.Info("Server stopped")
-	return nil
+	// Cache the binary
+	if err := tsg.SaveCache(projectDir, cacheKey, binaryPath); err != nil {
+		logger.Warn("Failed to cache binary", "error", err)
+	}
+
+	logger.Info("✅ Compilation complete")
+	return runBinary(binaryPath, projectDir)
+}
+
+// runBinary runs a compiled binary with proper environment
+func runBinary(binaryPath, projectDir string) error {
+	cmd := exec.Command(binaryPath)
+	cmd.Dir = projectDir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd.Run()
+}
+
+// getAPIRightDir returns the directory containing the apiright source code
+func getAPIRightDir() string {
+	// Try to find apiright directory from GOPATH or module cache
+	// For now, assume it's in the current working directory's parent
+	// or use the executable path
+
+	exec, err := os.Executable()
+	if err != nil {
+		// Fallback: try common locations
+		return "/home/bata/Projects/personal/apiright"
+	}
+
+	// If running from go run, exec will be a temp file
+	// Try to find the actual source
+	if strings.Contains(exec, "/go-build/") || strings.Contains(exec, "/tmp/go-build") {
+		return "/home/bata/Projects/personal/apiright"
+	}
+
+	return filepath.Dir(exec)
 }

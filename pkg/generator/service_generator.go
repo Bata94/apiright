@@ -64,6 +64,12 @@ func (sg *ServiceGenerator) parseTemplates() error {
 	}
 
 	sg.templates = template.New("service").Option("missingkey=error")
+
+	// Add template function for PascalCase conversion
+	sg.templates.Funcs(template.FuncMap{
+		"pascal": sg.toTitleCase,
+	})
+
 	for name, content := range templates {
 		_, err := sg.templates.New(name).Parse(content)
 		if err != nil {
@@ -155,10 +161,11 @@ func (sg *ServiceGenerator) prepareServiceData(table core.Table, ctx *core.Gener
 	updateParams := append([]ColumnData{}, columns...)
 
 	// Build dynamic db import path
-	dbImport := ctx.ModulePath + "/gen/go/db"
-	if dbImport == "/gen/go/db" {
+	// The db package is in gen/go directory with package name "db"
+	dbImport := ctx.ModulePath + "/gen/go"
+	if dbImport == "/gen/go" {
 		// Fallback if module path not set
-		dbImport = "github.com/yourmodule/gen/go/db"
+		dbImport = "github.com/yourmodule/gen/go"
 	}
 
 	return ServiceData{
@@ -188,7 +195,7 @@ func (sg *ServiceGenerator) executeTemplate(templateName string, data ServiceDat
 	return buf.String()
 }
 
-// toTitleCase converts a string to TitleCase for naming
+// toTitleCase converts a string to PascalCase for naming
 func (sg *ServiceGenerator) toTitleCase(s string) string {
 	if s == "" {
 		return ""
@@ -205,14 +212,14 @@ func (sg *ServiceGenerator) toTitleCase(s string) string {
 		return sg.toTitleCase(s[:len(s)-1])
 	}
 
-	// Simple snake_case to TitleCase conversion
-	words := strings.Split(strings.ReplaceAll(s, "_", " "), " ")
+	// Simple snake_case to PascalCase conversion
+	words := strings.Split(s, "_")
 	for i, word := range words {
 		if len(word) > 0 {
 			words[i] = strings.ToUpper(string(word[0])) + word[1:]
 		}
 	}
-	return strings.Join(words, " ")
+	return strings.Join(words, "")
 }
 
 // singularize converts plural to singular form (basic implementation)
@@ -239,20 +246,21 @@ import (
 	{{- range .Imports}}
 	"{{.}}"
 	{{- end}}
-	"{{.DBImport}}"
+	db "{{.DBImport}}"
 )
 
 // Create{{.Title}}Params holds parameters for creating a {{.Title}}
 type Create{{.Title}}Params struct {
 {{- range .CreateParams}}
-	{{.Name}} {{.GoType}}
+	{{pascal .Name}} {{.GoType}}
 {{- end}}
 }
 
 // Update{{.Title}}Params holds parameters for updating a {{.Title}}
 type Update{{.Title}}Params struct {
+	Id {{.PrimaryKey.GoType}}
 {{- range .UpdateParams}}
-	{{.Name}} {{.GoType}}
+	{{pascal .Name}} {{.GoType}}
 {{- end}}
 }
 
@@ -271,7 +279,7 @@ func New{{.Title}}Service(querier {{.QuerierName}}, logger core.Logger) *{{.Titl
 }
 
 // Get{{.Title}} retrieves a single {{.ModelName}} by {{.PrimaryKey.Name}}
-func (s *{{.Title}}Service) Get{{.Title}}(ctx context.Context, {{.PrimaryKey.Name}} {{.PrimaryKey.GoType}}) (*{{.ModelName}}, error) {
+func (s *{{.Title}}Service) Get{{.Title}}(ctx context.Context, {{.PrimaryKey.Name}} {{.PrimaryKey.GoType}}) (*db.{{.ModelName}}, error) {
 	result, err := s.querier.Get{{.Title}}_ar_gen(ctx, {{.PrimaryKey.Name}})
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -285,7 +293,7 @@ func (s *{{.Title}}Service) Get{{.Title}}(ctx context.Context, {{.PrimaryKey.Nam
 }
 
 // List{{.Title}} retrieves multiple {{.TableName}} records with pagination
-func (s *{{.Title}}Service) List{{.Title}}(ctx context.Context, limit, offset int32) ([]{{.ModelName}}, error) {
+func (s *{{.Title}}Service) List{{.Title}}(ctx context.Context, limit, offset int32) ([]db.{{.ModelName}}, error) {
 	if limit <= 0 {
 		limit = 50 // Default limit
 	}
@@ -303,28 +311,33 @@ func (s *{{.Title}}Service) List{{.Title}}(ctx context.Context, limit, offset in
 }
 
 // Create{{.Title}} creates a new {{.TableName}} record
-func (s *{{.Title}}Service) Create{{.Title}}(ctx context.Context, params Create{{.Title}}Params) (*{{.ModelName}}, error) {
+func (s *{{.Title}}Service) Create{{.Title}}(ctx context.Context, params Create{{.Title}}Params) (*db.{{.ModelName}}, error) {
 	result, err := s.querier.Create{{.Title}}_ar_gen(ctx, params)
 	if err != nil {
 		s.logger.Error("Failed to create {{.TableName}}", "params", params, "error", err)
 		return nil, fmt.Errorf("failed to create {{.TableName}}: %w", err)
 	}
-
-	return &result, nil
+	
+	// Get the last inserted ID and fetch the record
+	id, err := result.LastInsertId()
+	if err != nil {
+		s.logger.Error("Failed to get last insert id", "error", err)
+		return nil, fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	
+	return s.Get{{.Title}}(ctx, id)
 }
 
 // Update{{.Title}} updates an existing {{.TableName}} record
-func (s *{{.Title}}Service) Update{{.Title}}(ctx context.Context, params Update{{.Title}}Params) (*{{.ModelName}}, error) {
-	result, err := s.querier.Update{{.Title}}_ar_gen(ctx, params)
+func (s *{{.Title}}Service) Update{{.Title}}(ctx context.Context, params Update{{.Title}}Params) (*db.{{.ModelName}}, error) {
+	_, err := s.querier.Update{{.Title}}_ar_gen(ctx, params)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("{{.TableName}} not found for update")
-		}
 		s.logger.Error("Failed to update {{.TableName}}", "params", params, "error", err)
 		return nil, fmt.Errorf("failed to update {{.TableName}}: %w", err)
 	}
-
-	return &result, nil
+	
+	// Fetch the updated record
+	return s.Get{{.Title}}(ctx, params.Id)
 }
 
 // Delete{{.Title}} deletes a {{.TableName}} record by {{.PrimaryKey.Name}}
@@ -340,10 +353,10 @@ func (s *{{.Title}}Service) Delete{{.Title}}(ctx context.Context, {{.PrimaryKey.
 
 // {{.Title}}ServiceInterface defines the interface for {{.Title}}Service
 type {{.Title}}ServiceInterface interface {
-	Get{{.Title}}(ctx context.Context, {{.PrimaryKey.Name}} {{.PrimaryKey.GoType}}) (*{{.ModelName}}, error)
-	List{{.Title}}(ctx context.Context, limit, offset int32) ([]{{.ModelName}}, error)
-	Create{{.Title}}(ctx context.Context, params Create{{.Title}}Params) (*{{.ModelName}}, error)
-	Update{{.Title}}(ctx context.Context, params Update{{.Title}}Params) (*{{.ModelName}}, error)
+	Get{{.Title}}(ctx context.Context, {{.PrimaryKey.Name}} {{.PrimaryKey.GoType}}) (*db.{{.ModelName}}, error)
+	List{{.Title}}(ctx context.Context, limit, offset int32) ([]db.{{.ModelName}}, error)
+	Create{{.Title}}(ctx context.Context, params Create{{.Title}}Params) (*db.{{.ModelName}}, error)
+	Update{{.Title}}(ctx context.Context, params Update{{.Title}}Params) (*db.{{.ModelName}}, error)
 	Delete{{.Title}}(ctx context.Context, {{.PrimaryKey.Name}} {{.PrimaryKey.GoType}}) error
 }
 

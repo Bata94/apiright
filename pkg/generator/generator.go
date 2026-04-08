@@ -17,6 +17,7 @@ type Generator struct {
 	protoGen          *ProtoGenerator
 	protoExtProcessor *ProtoExtensionProcessor
 	serviceGen        *ServiceGenerator
+	adapterGen        *AdapterGenerator
 	openapiGen        *OpenAPIGenerator
 	cache             *Cache
 	plugins           *plugins.PluginRegistry
@@ -65,6 +66,7 @@ func NewGenerator(projectDir string, options GenerateOptions, logger core.Logger
 	protoGen := NewProtoGenerator(cfg.Generation.GenSuffix, logger)
 	protoExtProcessor := NewProtoExtensionProcessor(cfg.Generation.GenSuffix, logger)
 	serviceGen := NewServiceGenerator(cfg.Generation.GenSuffix, logger)
+	adapterGen := NewAdapterGenerator(cfg.Generation.GenSuffix, logger)
 	openapiGen := NewOpenAPIGenerator(cfg.Generation.GenSuffix, logger)
 
 	return &Generator{
@@ -74,6 +76,7 @@ func NewGenerator(projectDir string, options GenerateOptions, logger core.Logger
 		protoGen:          protoGen,
 		protoExtProcessor: protoExtProcessor,
 		serviceGen:        serviceGen,
+		adapterGen:        adapterGen,
 		openapiGen:        openapiGen,
 		cache:             cache,
 		plugins:           pluginRegistry,
@@ -216,7 +219,16 @@ func (g *Generator) Generate(ctx *core.GenerationContext, options GenerateOption
 		g.logger.Info("Generated service implementations")
 	}
 
-	// 13. Save to cache (unless sql-only)
+	// 13. Generate service adapters (unless sql-only or proto-only)
+	if !options.SQLOnly && !options.ProtoOnly {
+		spinner.SetMessage("Generating service adapters")
+		if err := g.adapterGen.GenerateAdapters(schema, ctx); err != nil {
+			return g.formatError("adapter_generation", err, "")
+		}
+		g.logger.Info("Generated service adapters")
+	}
+
+	// 14. Save to cache (unless sql-only)
 	if !options.SQLOnly {
 		if err := g.cache.SaveToCache(ctx,
 			ctx.Join(ctx.ProjectDir, "migrations"),
@@ -226,7 +238,7 @@ func (g *Generator) Generate(ctx *core.GenerationContext, options GenerateOption
 		}
 	}
 
-	// 14. Execute after generation hooks
+	// 15. Execute after generation hooks
 	if g.plugins != nil {
 		if err := g.plugins.ExecuteHooks("after_generation", ctx); err != nil {
 			return g.formatError("after_generation_hooks", err, "")
@@ -247,6 +259,7 @@ func (g *Generator) formatError(errorType string, err error, context string) err
 		"protobuf_generation":     "Failed to generate protobuf definitions",
 		"openapi_generation":      "Failed to generate OpenAPI documentation",
 		"service_generation":      "Failed to generate service implementations",
+		"adapter_generation":      "Failed to generate service adapters",
 		"before_generation_hooks": "Before-generation plugin hooks failed",
 		"before_sqlc_hooks":       "Before-sqlc plugin hooks failed",
 		"after_sqlc_hooks":        "After-sqlc plugin hooks failed",

@@ -32,7 +32,7 @@ type DualServer struct {
 	logger             core.Logger
 	mu                 sync.RWMutex
 	started            bool
-	services           []any
+	services           map[string]any // key is table name
 	middlewareRegistry *middleware.MiddlewareRegistry
 	serviceRegistry    *ServiceRegistry
 }
@@ -45,7 +45,7 @@ func NewServer(cfg *config.ServerConfig, projectDir string, db *database.Databas
 		db:                 db,
 		contentNeg:         core.NewContentNegotiator(),
 		logger:             logger,
-		services:           []any{},
+		services:           make(map[string]any),
 		middlewareRegistry: middleware.NewMiddlewareRegistry(logger),
 		serviceRegistry:    NewServiceRegistry(db, logger),
 	}
@@ -77,7 +77,7 @@ func (s *DualServer) RegisterGeneratedServices(projectDir string) error {
 			continue
 		}
 
-		if err := s.RegisterService(service); err != nil {
+		if err := s.registerServiceInternal(tableName, service); err != nil {
 			s.logger.Error("Failed to register service", "table", tableName, "error", err)
 			continue
 		}
@@ -272,15 +272,33 @@ func (s *DualServer) RegisterService(service any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.services == nil {
-		s.services = make([]any, 0)
+	// Check if service implements TableNamer interface
+	var tableName string
+	if namer, ok := service.(interface{ TableName() string }); ok {
+		tableName = namer.TableName()
+	} else {
+		// Extract table name from service type
+		serviceType := fmt.Sprintf("%T", service)
+		if idx := strings.LastIndex(serviceType, "."); idx >= 0 {
+			serviceType = serviceType[idx+1:]
+		}
+		tableName = s.toTableName(serviceType)
 	}
 
-	s.services = append(s.services, service)
+	return s.registerServiceInternal(tableName, service)
+}
+
+// registerServiceInternal registers a service without locking (caller must hold lock)
+func (s *DualServer) registerServiceInternal(tableName string, service any) error {
+	if s.services == nil {
+		s.services = make(map[string]any)
+	}
+
+	s.services[tableName] = service
 	serviceType := fmt.Sprintf("%T", service)
 
 	if s.httpServer != nil && s.config.EnableHTTP {
-		if err := s.registerHTTPService(service); err != nil {
+		if err := s.registerHTTPService(tableName, service); err != nil {
 			return fmt.Errorf("failed to register HTTP service: %w", err)
 		}
 	}
@@ -291,7 +309,7 @@ func (s *DualServer) RegisterService(service any) error {
 		}
 	}
 
-	s.logger.Debug("Service registered", "service", serviceType, "total", len(s.services))
+	s.logger.Debug("Service registered", "service", serviceType, "table", tableName, "total", len(s.services))
 	return nil
 }
 

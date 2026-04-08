@@ -13,13 +13,8 @@ func (s *DualServer) setupHTTPRoutes(mux *http.ServeMux) {
 		"api_version", s.config.APIVersion,
 	)
 
-	for _, service := range s.services {
+	for tableName, service := range s.services {
 		serviceType := fmt.Sprintf("%T", service)
-
-		if idx := strings.LastIndex(serviceType, "."); idx >= 0 {
-			serviceType = serviceType[idx+1:]
-		}
-		tableName := s.toTableName(serviceType)
 
 		s.logger.Info("Registering routes for service", "service_type", serviceType, "table", tableName)
 
@@ -53,16 +48,10 @@ func (s *DualServer) setupHTTPRoutes(mux *http.ServeMux) {
 	}
 }
 
-func (s *DualServer) registerHTTPService(service any) error {
+func (s *DualServer) registerHTTPService(tableName string, service any) error {
 	serviceType := fmt.Sprintf("%T", service)
-	s.logger.Info("Registering HTTP service", "service", serviceType)
+	s.logger.Info("Registering HTTP service", "service", serviceType, "table", tableName)
 
-	typeName := serviceType
-	if idx := strings.LastIndex(typeName, "."); idx >= 0 {
-		typeName = typeName[idx+1:]
-	}
-
-	tableName := s.toTableName(typeName)
 	s.registerCRUDRoutes(tableName, service)
 
 	s.logger.Debug("HTTP service registered successfully", "service", serviceType, "table", tableName)

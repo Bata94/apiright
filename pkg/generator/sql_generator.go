@@ -303,18 +303,16 @@ SELECT {{.ColumnsList}} FROM {{.Name}} ORDER BY {{.OrderByClause}} LIMIT ? OFFSE
 	createQueryTemplatePostgres = `-- name: Create{{.Title}}_ar_gen :one
 INSERT INTO {{.Name}} ({{.InsertColumns}}) VALUES ({{.InsertValues}}) RETURNING {{.ColumnsList}};`
 
-	createQueryTemplateSQLite = `-- name: Create{{.Title}}_ar_gen :one
-INSERT INTO {{.Name}} ({{.InsertColumns}}) VALUES ({{.InsertValues}});
-SELECT last_insert_rowid() AS id;`
+	createQueryTemplateSQLite = `-- name: Create{{.Title}}_ar_gen :exec
+INSERT INTO {{.Name}} ({{.InsertColumns}}) VALUES ({{.InsertValues}});`
 
-	createQueryTemplateMySQL = `-- name: Create{{.Title}}_ar_gen :one
-INSERT INTO {{.Name}} ({{.InsertColumns}}) VALUES ({{.InsertValues}});
-SELECT LAST_INSERT_ID() AS id;`
+	createQueryTemplateMySQL = `-- name: Create{{.Title}}_ar_gen :exec
+INSERT INTO {{.Name}} ({{.InsertColumns}}) VALUES ({{.InsertValues}});`
 
 	updateQueryTemplatePostgres = `-- name: Update{{.Title}}_ar_gen :one
 UPDATE {{.Name}} SET {{.UpdateSet}} WHERE {{.PrimaryKeyWhere}} RETURNING {{.ColumnsList}};`
 
-	updateQueryTemplateGeneric = `-- name: Update{{.Title}}_ar_gen :one
+	updateQueryTemplateGeneric = `-- name: Update{{.Title}}_ar_gen :exec
 UPDATE {{.Name}} SET {{.UpdateSet}} WHERE {{.PrimaryKeyWhere}};`
 
 	deleteQueryTemplate = `-- name: Delete{{.Title}}_ar_gen :exec

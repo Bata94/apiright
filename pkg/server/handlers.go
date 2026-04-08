@@ -12,8 +12,8 @@ import (
 func (s *DualServer) handleListRoute(w http.ResponseWriter, r *http.Request, tableName string) {
 	contentType := s.detectContentType(r)
 
-	serviceName := s.toServiceName(tableName)
-	service, exists := s.serviceRegistry.GetService(serviceName)
+	// Get service directly from services map (adapters are stored here)
+	service, exists := s.services[tableName]
 
 	var response any
 	var err error
@@ -40,7 +40,7 @@ func (s *DualServer) handleListRoute(w http.ResponseWriter, r *http.Request, tab
 				return
 			}
 		} else {
-			s.logger.Warn("Service doesn't implement ServiceInterface", "service", serviceName)
+			s.logger.Warn("Service doesn't implement ServiceInterface", "table", tableName)
 			response = s.createMockResponse("list", tableName, contentType)
 		}
 	} else {
@@ -60,8 +60,8 @@ func (s *DualServer) handleGetRoute(w http.ResponseWriter, r *http.Request, tabl
 		return
 	}
 
-	serviceName := s.toServiceName(tableName)
-	service, exists := s.serviceRegistry.GetService(serviceName)
+	// Get service directly from services map (adapters are stored here)
+	service, exists := s.services[tableName]
 
 	var response any
 	var err error
@@ -87,8 +87,8 @@ func (s *DualServer) handleGetRoute(w http.ResponseWriter, r *http.Request, tabl
 func (s *DualServer) handleCreateRoute(w http.ResponseWriter, r *http.Request, tableName string) {
 	contentType := s.detectContentType(r)
 
-	serviceName := s.toServiceName(tableName)
-	service, exists := s.serviceRegistry.GetService(serviceName)
+	// Get service directly from services map (adapters are stored here)
+	service, exists := s.services[tableName]
 
 	var response any
 	var err error
@@ -123,8 +123,8 @@ func (s *DualServer) handleUpdateRoute(w http.ResponseWriter, r *http.Request, t
 		return
 	}
 
-	serviceName := s.toServiceName(tableName)
-	service, exists := s.serviceRegistry.GetService(serviceName)
+	// Get service directly from services map (adapters are stored here)
+	service, exists := s.services[tableName]
 
 	var response any
 	var err error
@@ -161,8 +161,8 @@ func (s *DualServer) handleDeleteRoute(w http.ResponseWriter, r *http.Request, t
 		return
 	}
 
-	serviceName := s.toServiceName(tableName)
-	service, exists := s.serviceRegistry.GetService(serviceName)
+	// Get service directly from services map (adapters are stored here)
+	service, exists := s.services[tableName]
 
 	if exists {
 		if serviceInterface, ok := service.(ServiceInterface); ok {
@@ -274,17 +274,6 @@ func (s *DualServer) serializeResponse(w http.ResponseWriter, response any, cont
 	if _, err := w.Write(data); err != nil {
 		s.logger.Warn("failed to write response", "error", err)
 	}
-}
-
-func (s *DualServer) toServiceName(tableName string) string {
-	parts := strings.Split(tableName, "_")
-	var result string
-	for _, part := range parts {
-		if part != "" && len(part) > 0 {
-			result += strings.ToUpper(string(part[0])) + part[1:]
-		}
-	}
-	return result + "Service"
 }
 
 func (s *DualServer) docsHandler(w http.ResponseWriter, r *http.Request) {
