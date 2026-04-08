@@ -42,6 +42,8 @@ type DatabaseConfig struct {
 type ServerConfig struct {
 	EnableHTTP bool      `yaml:"enable_http"`
 	EnableGRPC bool      `yaml:"enable_grpc"`
+	EnableDocs *bool     `yaml:"enable_docs"`
+	DocsPath   string    `yaml:"docs_path"`
 	APIVersion string    `yaml:"api_version"`
 	BasePath   string    `yaml:"base_path"`
 	HTTPPort   int       `yaml:"http_port"`
@@ -148,6 +150,8 @@ func DefaultConfig() *Config {
 		Server: ServerConfig{
 			EnableHTTP: true,
 			EnableGRPC: true,
+			EnableDocs: func() *bool { v := true; return &v }(),
+			DocsPath:   "/docs",
 			APIVersion: "v0",
 			BasePath:   "/api",
 			HTTPPort:   8080,
@@ -207,6 +211,13 @@ func applyDefaults(config *Config) {
 	// Server defaults
 	if !config.Server.EnableHTTP && !config.Server.EnableGRPC {
 		config.Server.EnableHTTP = true
+	}
+	if config.Server.EnableDocs == nil {
+		config.Server.EnableDocs = new(bool)
+		*config.Server.EnableDocs = true
+	}
+	if config.Server.DocsPath == "" {
+		config.Server.DocsPath = "/docs"
 	}
 	if config.Server.APIVersion == "" {
 		config.Server.APIVersion = "v0"
@@ -350,6 +361,7 @@ func expandEnv(config *Config) {
 	config.Database.SSLMode = os.ExpandEnv(config.Database.SSLMode)
 	config.Database.URL = os.ExpandEnv(config.Database.URL)
 	config.Server.Host = os.ExpandEnv(config.Server.Host)
+	config.Server.DocsPath = os.ExpandEnv(config.Server.DocsPath)
 	config.Server.TLS.CertFile = os.ExpandEnv(config.Server.TLS.CertFile)
 	config.Server.TLS.KeyFile = os.ExpandEnv(config.Server.TLS.KeyFile)
 }

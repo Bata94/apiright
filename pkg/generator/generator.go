@@ -102,7 +102,7 @@ func (g *Generator) Generate(ctx *core.GenerationContext, options GenerateOption
 			g.logger.Warn("Cache check failed, proceeding with generation", "error", err)
 		} else if !shouldRegen {
 			if err := g.cache.RestoreFromCache(ctx); err == nil {
-				g.logger.Info("Restored from cache - skipping generation")
+				spinner.Success("Restored from cache")
 				return nil
 			}
 			g.logger.Warn("Failed to restore from cache, proceeding with generation", "error", err)

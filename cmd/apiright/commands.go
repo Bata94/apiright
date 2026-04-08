@@ -175,7 +175,7 @@ func runServe(cmd *cobra.Command) error {
 	}
 
 	// Initialize server
-	srv := server.NewServer(&cfg.Server, db, logger)
+	srv := server.NewServer(&cfg.Server, projectDir, db, logger)
 
 	logger.Info("Starting APIRight server",
 		"http", cfg.Server.GetHTTPAddress(),

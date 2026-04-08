@@ -10,6 +10,8 @@ database:
   name: "blog.db"
 
 server:
+  enable_docs: true
+  docs_path: "/docs"
   http_port: 8081
   grpc_port: 9091
   host: "localhost"

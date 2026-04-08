@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -283,4 +285,81 @@ func (s *DualServer) toServiceName(tableName string) string {
 		}
 	}
 	return result + "Service"
+}
+
+func (s *DualServer) docsHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := docsFS.ReadFile("static/docs/index.html")
+	if err != nil {
+		http.Error(w, "Failed to load SwaggerUI", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		s.logger.Warn("failed to write docs response", "error", err)
+	}
+}
+
+func (s *DualServer) docsOpenAPIHandler(w http.ResponseWriter, r *http.Request) {
+	filePath := filepath.Join(s.projectDir, "gen/openapi/openapi.json")
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "OpenAPI documentation not found. Run 'apiright gen' first.", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to read OpenAPI documentation", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		s.logger.Warn("failed to write docs response", "error", err)
+	}
+}
+
+func (s *DualServer) docsCSSHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := docsFS.ReadFile("static/docs/swagger-ui.css")
+	if err != nil {
+		http.Error(w, "Failed to load CSS", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/css")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		s.logger.Warn("failed to write docs CSS response", "error", err)
+	}
+}
+
+func (s *DualServer) docsJSHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := docsFS.ReadFile("static/docs/swagger-ui-bundle.js")
+	if err != nil {
+		http.Error(w, "Failed to load JavaScript", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/javascript")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		s.logger.Warn("failed to write docs JS response", "error", err)
+	}
+}
+
+func (s *DualServer) docsStandalonePresetHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := docsFS.ReadFile("static/docs/swagger-ui-standalone-preset.js")
+	if err != nil {
+		http.Error(w, "Failed to load standalone preset", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/javascript")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(data); err != nil {
+		s.logger.Warn("failed to write docs standalone preset response", "error", err)
+	}
+}
+
+func (s *DualServer) docsJSONRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, s.config.DocsPath, http.StatusMovedPermanently)
 }

@@ -24,6 +24,7 @@ import (
 // DualServer implements both HTTP and gRPC servers
 type DualServer struct {
 	config             *config.ServerConfig
+	projectDir         string
 	db                 *database.Database
 	contentNeg         *core.ContentNegotiatorImpl
 	httpServer         *http.Server
@@ -37,9 +38,10 @@ type DualServer struct {
 }
 
 // NewServer creates a new dual HTTP/gRPC server
-func NewServer(cfg *config.ServerConfig, db *database.Database, logger core.Logger) *DualServer {
+func NewServer(cfg *config.ServerConfig, projectDir string, db *database.Database, logger core.Logger) *DualServer {
 	return &DualServer{
 		config:             cfg,
+		projectDir:         projectDir,
 		db:                 db,
 		contentNeg:         core.NewContentNegotiator(),
 		logger:             logger,
@@ -326,6 +328,17 @@ func (s *DualServer) createHTTPHandler() http.Handler {
 
 	// Register health check endpoint
 	mux.HandleFunc("/health", s.healthCheckHandler)
+
+	// Register OpenAPI docs endpoint if enabled
+	if s.config.EnableDocs != nil && *s.config.EnableDocs {
+		mux.HandleFunc(s.config.DocsPath, s.docsHandler)
+		mux.HandleFunc(s.config.DocsPath+"/", s.docsHandler)
+		mux.HandleFunc(s.config.DocsPath+"/openapi.json", s.docsOpenAPIHandler)
+		mux.HandleFunc(s.config.DocsPath+"/swagger-ui.css", s.docsCSSHandler)
+		mux.HandleFunc(s.config.DocsPath+"/swagger-ui-bundle.js", s.docsJSHandler)
+		mux.HandleFunc(s.config.DocsPath+"/swagger-ui-standalone-preset.js", s.docsStandalonePresetHandler)
+		mux.HandleFunc(s.config.DocsPath+".json", s.docsJSONRedirect)
+	}
 
 	// Set up routes for registered services
 	s.setupHTTPRoutes(mux)
